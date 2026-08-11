@@ -11,7 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { ImportarDadosLocais } from "@/components/ImportarDadosLocais";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Cake, ClipboardList, Layers, Users, Wheat } from "lucide-react";
+import { Cake, ClipboardList, Layers, Receipt, TrendingUp, Users, Wheat } from "lucide-react";
 import { brl, calcularCusto, dataBR, margem } from "@/lib/domain";
 import {
   useBolos,
