@@ -17,9 +17,11 @@ export function AppNav() {
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-3 sm:px-6">
         <div className="flex items-center gap-3">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-vintage">
-            <span className="font-display text-lg">AB</span>
-          </div>
+          <img
+            src={logoAsset.url}
+            alt="Logomarca Amor de Brigadeiro"
+            className="h-11 w-11 rounded-full border border-border object-cover shadow-vintage"
+          />
           <div className="leading-tight">
             <p className="font-display text-xl text-primary">Amor de Brigadeiro</p>
             <p className="text-xs text-muted-foreground">Gestão de bolos, receitas e pedidos</p>
