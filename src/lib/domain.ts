@@ -38,6 +38,13 @@ export interface Cliente {
   whatsapp: string;
 }
 
+export interface Despesa {
+  id: number;
+  data: string;
+  descricao: string;
+  valor: number;
+}
+
 export interface Pedido {
   id: number;
   clienteId: number;
@@ -107,6 +114,16 @@ export const pedidoSchema = z.object({
   data: z.string().min(4, "Informe a data do pedido"),
 });
 export type PedidoInput = z.infer<typeof pedidoSchema>;
+
+export const despesaSchema = z.object({
+  data: z.string().min(4, "Informe a data da despesa"),
+  descricao: z.string().trim().min(2, "Informe a descrição").max(120),
+  valor: z.coerce
+    .number({ invalid_type_error: "Informe um número" })
+    .nonnegative("O valor não pode ser negativo")
+    .max(1_000_000),
+});
+export type DespesaInput = z.infer<typeof despesaSchema>;
 
 /* ------------------------------- cálculos ------------------------------- */
 

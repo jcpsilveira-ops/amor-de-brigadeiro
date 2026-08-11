@@ -20,6 +20,8 @@ import {
   type ClienteInput,
   type Pedido,
   type PedidoInput,
+  type Despesa,
+  type DespesaInput,
   type ReceitaInput,
   type Unidade,
 } from "./domain";
@@ -329,3 +331,55 @@ export const pedidosApi = {
 };
 
 export { calcularCusto };
+
+
+/* ---------------------------- outras despesas ----------------------------- */
+
+interface DespesaRow {
+  id: number;
+  data: string;
+  descricao: string;
+  valor: number | string;
+}
+
+const toDespesa = (row: DespesaRow): Despesa => ({
+  id: row.id,
+  data: String(row.data).slice(0, 10),
+  descricao: row.descricao,
+  valor: Number(row.valor),
+});
+
+export const despesasApi = {
+  list: async (): Promise<Despesa[]> => {
+    if (apiBase()) return http("/despesas");
+    const rows = check(
+      await supabase
+        .from("outras_despesas")
+        .select("*")
+        .order("data", { ascending: false })
+        .order("id", { ascending: false }),
+    );
+    return (rows as unknown as DespesaRow[]).map(toDespesa);
+  },
+  create: async (input: DespesaInput): Promise<Despesa> => {
+    if (apiBase()) return http("/despesas", { method: "POST", body: JSON.stringify(input) });
+    const row = check(
+      await supabase.from("outras_despesas").insert(input).select("*").single(),
+    );
+    return toDespesa(row as unknown as DespesaRow);
+  },
+  update: async (id: number, input: DespesaInput): Promise<Despesa> => {
+    if (apiBase()) {
+      return http(`/despesas/${id}`, { method: "PUT", body: JSON.stringify(input) });
+    }
+    const row = check(
+      await supabase.from("outras_despesas").update(input).eq("id", id).select("*").single(),
+    );
+    return toDespesa(row as unknown as DespesaRow);
+  },
+  remove: async (id: number): Promise<void> => {
+    if (apiBase()) return http(`/despesas/${id}`, { method: "DELETE" });
+    const { error } = await supabase.from("outras_despesas").delete().eq("id", id);
+    if (error) throw new ApiError(error.message);
+  },
+};
