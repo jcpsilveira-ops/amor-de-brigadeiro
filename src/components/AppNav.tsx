@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import { Cake, ClipboardList, Home, Layers, Users, Wheat } from "lucide-react";
+import logoAsset from "@/assets/logo.jpg.asset.json";
 
 const links = [
   { to: "/", label: "Painel", icon: Home },
