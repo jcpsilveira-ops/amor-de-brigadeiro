@@ -17,7 +17,7 @@ export const Route = createFileRoute("/coberturas")({
       {
         name: "description",
         content:
-          "Cadastre coberturas com até 10 ingredientes e acompanhe custo de produção, preço e lucro por receita.",
+          "Cadastre coberturas com até 20 ingredientes e acompanhe custo de produção, preço e lucro por receita.",
       },
       { property: "og:title", content: "Coberturas | Amor de Brigadeiro" },
       {
@@ -55,7 +55,7 @@ function CoberturasPage() {
   return (
     <PageShell
       title="Coberturas"
-      subtitle="O brilho final: receitas de cobertura com limite de 10 ingredientes e custo automático."
+      subtitle="O brilho final: receitas de cobertura com limite de 20 ingredientes e custo automático."
     >
       <div className="grid gap-6 xl:grid-cols-[minmax(0,460px)_1fr]">
         <Card>

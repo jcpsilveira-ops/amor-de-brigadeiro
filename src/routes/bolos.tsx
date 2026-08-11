@@ -17,7 +17,7 @@ export const Route = createFileRoute("/bolos")({
       {
         name: "description",
         content:
-          "Monte receitas de bolos com até 10 ingredientes e veja o custo de produção e a margem calculados na hora.",
+          "Monte receitas de bolos com até 20 ingredientes e veja o custo de produção e a margem calculados na hora.",
       },
       { property: "og:title", content: "Bolos | Amor de Brigadeiro" },
       {
@@ -55,7 +55,7 @@ function BolosPage() {
   return (
     <PageShell
       title="Bolos"
-      subtitle="Até 10 ingredientes por receita, com custo de produção calculado automaticamente."
+      subtitle="Até 20 ingredientes por receita, com custo de produção calculado automaticamente."
     >
       <div className="grid gap-6 xl:grid-cols-[minmax(0,460px)_1fr]">
         <Card>
