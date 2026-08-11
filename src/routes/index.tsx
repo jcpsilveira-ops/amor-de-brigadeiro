@@ -1,5 +1,14 @@
+import { useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { ImportarDadosLocais } from "@/components/ImportarDadosLocais";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cake, ClipboardList, Layers, Users, Wheat } from "lucide-react";
@@ -40,12 +49,38 @@ const atalhos = [
   { to: "/pedidos", label: "Pedidos", icon: ClipboardList },
 ] as const;
 
+const TODOS = "todos";
+
+const nomeMes = (chave: string) => {
+  const [ano, mes] = chave.split("-");
+  const rotulo = new Date(Number(ano), Number(mes) - 1, 1).toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
+  return rotulo.charAt(0).toUpperCase() + rotulo.slice(1);
+};
+
 function Painel() {
   const { data: ingredientes = [] } = useIngredientes();
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
   const { data: clientes = [] } = useClientes();
-  const { data: pedidos = [] } = usePedidos();
+  const { data: todosPedidos = [] } = usePedidos();
+
+  const [mes, setMes] = useState<string>(TODOS);
+
+  const mesesDisponiveis = useMemo(
+    () =>
+      Array.from(new Set(todosPedidos.map((p) => p.data.slice(0, 7)))).sort((a, b) =>
+        b.localeCompare(a),
+      ),
+    [todosPedidos],
+  );
+
+  const pedidos = useMemo(
+    () => (mes === TODOS ? todosPedidos : todosPedidos.filter((p) => p.data.startsWith(mes))),
+    [todosPedidos, mes],
+  );
 
   const receitaPrevista = pedidos.reduce((acc, p) => {
     const bolo = bolos.find((b) => b.id === p.boloId);
