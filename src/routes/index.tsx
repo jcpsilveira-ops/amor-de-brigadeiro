@@ -155,7 +155,93 @@ function Painel() {
         <Metrica rotulo="Pedidos" valor={String(pedidos.length)} />
       </div>
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
+      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-accent" />
+              Resumo de despesas
+              {mes !== TODOS && <span className="text-sm font-normal text-muted-foreground">· {nomeMes(mes)}</span>}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="panel p-4">
+                <p className="label-caps">Total de despesas no mês</p>
+                <p className="mt-1 font-display text-2xl text-primary">{brl(totalOutrasDespesas)}</p>
+              </div>
+              <div className="panel p-4">
+                <p className="label-caps">Maior despesa</p>
+                <p className="mt-1 font-display text-2xl text-primary">
+                  {despesas.length > 0 ? brl(Math.max(...despesas.map((d) => d.valor))) : brl(0)}
+                </p>
+              </div>
+            </div>
+
+            {despesas.length > 0 && (
+              <>
+                <div>
+                  <p className="mb-2 flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <TrendingUp className="h-4 w-4 text-accent" />
+                    Despesas mais altas
+                  </p>
+                  <div className="space-y-2">
+                    {[...despesas]
+                      .sort((a, b) => b.valor - a.valor)
+                      .slice(0, 3)
+                      .map((d) => (
+                        <div
+                          key={`top-${d.id}`}
+                          className="flex items-center justify-between rounded-xl bg-secondary/60 px-4 py-2"
+                        >
+                          <p className="truncate pr-3 text-sm font-medium">{d.descricao}</p>
+                          <p className="shrink-0 font-display text-base text-primary">{brl(d.valor)}</p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-2 text-sm font-semibold text-foreground">Últimas despesas</p>
+                  <div className="space-y-2">
+                    {[...despesas]
+                      .sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime())
+                      .slice(0, 5)
+                      .map((d) => (
+                        <div
+                          key={`recent-${d.id}`}
+                          className="flex items-center justify-between rounded-xl border border-border px-4 py-2"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{d.descricao}</p>
+                            <p className="text-xs text-muted-foreground">{dataBR(d.data)}</p>
+                          </div>
+                          <p className="shrink-0 font-display text-base text-primary">{brl(d.valor)}</p>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {despesas.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Nenhuma despesa registrada neste período. Cadastre despesas em {" "}
+                <Link to="/despesas" className="text-accent hover:underline">
+                  Outras despesas
+                </Link>
+                .
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Últimos pedidos</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
         <Card>
           <CardHeader>
             <CardTitle>Últimos pedidos</CardTitle>
