@@ -9,7 +9,8 @@
     "build:dev": "vite build --mode development",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "build:desktop": "env -u LOVABLE_SANDBOX -u DEV_SERVER__PROJECT_PATH vite build -c vite.config.electron.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
@@ -85,5 +86,7 @@
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.56.1",
     "vite": "^8.2.0"
-  }
+  },
+  "main": "electron/main.cjs",
+  "productName": "Amor de Brigadeiro"
 }
