@@ -88,15 +88,17 @@ function Painel() {
     return acc + (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0);
   }, 0);
 
-  const custoPrevisto = pedidos.reduce((acc, p) => {
+  const custoBolos = pedidos.reduce((acc, p) => {
     const bolo = bolos.find((b) => b.id === p.boloId);
-    const cobertura = coberturas.find((c) => c.id === p.coberturaId);
-    return (
-      acc +
-      (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
-      (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0)
-    );
+    return acc + (bolo ? calcularCusto(bolo.itens, ingredientes) : 0);
   }, 0);
+
+  const custoCoberturas = pedidos.reduce((acc, p) => {
+    const cobertura = coberturas.find((c) => c.id === p.coberturaId);
+    return acc + (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0);
+  }, 0);
+
+  const custoPrevisto = custoBolos + custoCoberturas;
 
   const { percentual } = margem(receitaPrevista, custoPrevisto);
 
@@ -128,9 +130,11 @@ function Painel() {
 
 
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Metrica rotulo="Faturamento em pedidos" valor={brl(receitaPrevista)} />
-        <Metrica rotulo="Custo de produção" valor={brl(custoPrevisto)} />
+        <Metrica rotulo="Custo de produção dos bolos" valor={brl(custoBolos)} />
+        <Metrica rotulo="Custo de produção das coberturas" valor={brl(custoCoberturas)} />
+        <Metrica rotulo="Custo total da produção" valor={brl(custoPrevisto)} />
         <Metrica rotulo="Margem média" valor={`${percentual.toFixed(1)}%`} />
         <Metrica rotulo="Pedidos" valor={String(pedidos.length)} />
       </div>
