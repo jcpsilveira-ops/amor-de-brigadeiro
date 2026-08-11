@@ -109,3 +109,21 @@
   color: var(--color-muted-foreground);
   font-weight: 700;
 }
+
+@media print {
+  body {
+    background: white;
+    background-image: none;
+  }
+
+  header,
+  nav,
+  footer {
+    display: none !important;
+  }
+
+  .panel {
+    box-shadow: none;
+    break-inside: avoid;
+  }
+}

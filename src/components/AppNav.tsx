@@ -1,5 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Cake, ClipboardList, Home, Layers, Users, Wheat } from "lucide-react";
+import { Cake, ClipboardList, FileText, Home, Layers, Users, Wheat } from "lucide-react";
 import logoAsset from "@/assets/logo.jpg.asset.json";
 
 const links = [
@@ -9,6 +9,7 @@ const links = [
   { to: "/coberturas", label: "Coberturas", icon: Layers },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/pedidos", label: "Pedidos", icon: ClipboardList },
+  { to: "/relatorio", label: "Relatório", icon: FileText },
 ] as const;
 
 export function AppNav() {

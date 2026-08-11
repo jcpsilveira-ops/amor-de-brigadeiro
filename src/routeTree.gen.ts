@@ -16,6 +16,7 @@ import { Route as CoberturasRouteImport } from './routes/coberturas'
 import { Route as IngredientesRouteImport } from './routes/ingredientes'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PedidosRouteImport } from './routes/pedidos'
+import { Route as RelatorioRouteImport } from './routes/relatorio'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
@@ -55,6 +56,11 @@ const PedidosRoute = PedidosRouteImport.update({
   path: '/pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RelatorioRoute = RelatorioRouteImport.update({
+  id: '/relatorio',
+  path: '/relatorio',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93ListToolsRoute =
   Char91DotmcpChar93ListToolsRouteImport.update({
     id: '/.mcp/list-tools',
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/ingredientes': typeof IngredientesRoute
   '/mcp': typeof McpRoute
   '/pedidos': typeof PedidosRoute
+  '/relatorio': typeof RelatorioRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -94,6 +101,7 @@ export interface FileRoutesByTo {
   '/ingredientes': typeof IngredientesRoute
   '/mcp': typeof McpRoute
   '/pedidos': typeof PedidosRoute
+  '/relatorio': typeof RelatorioRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -107,6 +115,7 @@ export interface FileRoutesById {
   '/ingredientes': typeof IngredientesRoute
   '/mcp': typeof McpRoute
   '/pedidos': typeof PedidosRoute
+  '/relatorio': typeof RelatorioRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -121,6 +130,7 @@ export interface FileRouteTypes {
     | '/ingredientes'
     | '/mcp'
     | '/pedidos'
+    | '/relatorio'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.mcp/invoke-tool/$tool'
@@ -133,6 +143,7 @@ export interface FileRouteTypes {
     | '/ingredientes'
     | '/mcp'
     | '/pedidos'
+    | '/relatorio'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.mcp/invoke-tool/$tool'
@@ -145,6 +156,7 @@ export interface FileRouteTypes {
     | '/ingredientes'
     | '/mcp'
     | '/pedidos'
+    | '/relatorio'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
     | '/.mcp/invoke-tool/$tool'
@@ -158,6 +170,7 @@ export interface RootRouteChildren {
   IngredientesRoute: typeof IngredientesRoute
   McpRoute: typeof McpRoute
   PedidosRoute: typeof PedidosRoute
+  RelatorioRoute: typeof RelatorioRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -214,6 +227,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/relatorio': {
+      id: '/relatorio'
+      path: '/relatorio'
+      fullPath: '/relatorio'
+      preLoaderRoute: typeof RelatorioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/list-tools': {
       id: '/.mcp/list-tools'
       path: '/.mcp/list-tools'
@@ -246,6 +266,7 @@ const rootRouteChildren: RootRouteChildren = {
   IngredientesRoute: IngredientesRoute,
   McpRoute: McpRoute,
   PedidosRoute: PedidosRoute,
+  RelatorioRoute: RelatorioRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
