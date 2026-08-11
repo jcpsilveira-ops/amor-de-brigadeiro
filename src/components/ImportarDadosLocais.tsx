@@ -45,7 +45,7 @@ export function ImportarDadosLocais() {
         Object.values(keys).map((key) => qc.invalidateQueries({ queryKey: key })),
       );
       marcarImportacaoConcluida();
-      setResumo(null);
+      setJaEnviado(true);
       const total = Object.values(feito).reduce((a, b) => a + b, 0);
       toast.success(
         total === 0
@@ -71,21 +71,26 @@ export function ImportarDadosLocais() {
       </CardHeader>
       <CardContent className="space-y-3">
         <p className="text-sm text-muted-foreground">
-          Encontrei dados salvos apenas neste dispositivo: {resumo.ingredientes} ingredientes,{" "}
-          {resumo.bolos} bolos, {resumo.coberturas} coberturas, {resumo.clientes} clientes e{" "}
-          {resumo.pedidos} pedidos. Ao enviar, eles passam a aparecer para todos que abrirem o
-          link. Nada é duplicado: registros com o mesmo nome já existentes são reaproveitados.
+          {jaEnviado ? "Este dispositivo ainda tem uma cópia local: " : "Encontrei dados salvos apenas neste dispositivo: "}
+          {resumo.ingredientes} ingredientes, {resumo.bolos} bolos, {resumo.coberturas}{" "}
+          coberturas, {resumo.clientes} clientes e {resumo.pedidos} pedidos. Ao enviar, eles
+          passam a aparecer para todos que abrirem o link. Nada é duplicado: registros com o
+          mesmo nome já existentes são reaproveitados.
         </p>
         <div className="flex gap-2">
           <Button onClick={enviar} disabled={enviando}>
-            {enviando ? "Enviando..." : "Enviar para o banco compartilhado"}
+            {enviando
+              ? "Enviando..."
+              : jaEnviado
+                ? "Enviar novamente"
+                : "Enviar para o banco compartilhado"}
           </Button>
           <Button
             variant="ghost"
             disabled={enviando}
             onClick={() => {
               marcarImportacaoConcluida();
-              setResumo(null);
+              setOculto(true);
             }}
           >
             Agora não
