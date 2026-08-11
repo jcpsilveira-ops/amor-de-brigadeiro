@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil } from "lucide-react";
+import { AlertTriangle, Pencil } from "lucide-react";
 import {
   UNIDADES,
   brl,
@@ -22,7 +22,17 @@ import {
   type Ingrediente,
   type Unidade,
 } from "@/lib/domain";
-import { ingredientesApi, keys, useAppMutation, useIngredientes } from "@/lib/queries";
+import { analisarEstoqueProximoPedido, converterQuantidade, qtd } from "@/lib/estoque";
+import {
+  ingredientesApi,
+  keys,
+  useAppMutation,
+  useBolos,
+  useCoberturas,
+  useIngredientes,
+  usePedidos,
+} from "@/lib/queries";
+import { dataBR } from "@/lib/domain";
 
 export const Route = createFileRoute("/ingredientes")({
   head: () => ({
@@ -45,6 +55,9 @@ export const Route = createFileRoute("/ingredientes")({
 
 function IngredientesPage() {
   const { data: ingredientes = [], isLoading } = useIngredientes();
+  const { data: pedidos = [] } = usePedidos();
+  const { data: bolos = [] } = useBolos();
+  const { data: coberturas = [] } = useCoberturas();
   const [editando, setEditando] = useState<Ingrediente | null>(null);
   const [nome, setNome] = useState("");
   const [unidade, setUnidade] = useState<Unidade | "">("");
@@ -64,6 +77,27 @@ function IngredientesPage() {
   if (!parsed.success) {
     for (const issue of parsed.error.issues) erros[issue.path.join(".")] = issue.message;
   }
+
+  const analise = analisarEstoqueProximoPedido(ingredientes, pedidos, bolos, coberturas);
+
+  // Aviso ao editar: o estoque informado no formulário cobre o próximo pedido?
+  const necessidadeEditando = editando ? analise.porIngrediente.get(editando.id) : undefined;
+  const unidadeCompra = (unidade || editando?.unidade) as typeof UNIDADES[number] | undefined;
+  const estoqueDigitado = estoque === "" ? 0 : Number(estoque);
+  const disponivelForm =
+    unidadeCompra && (estoqueUnidade || unidadeCompra)
+      ? converterQuantidade(
+          Number.isFinite(estoqueDigitado) ? estoqueDigitado : 0,
+          (estoqueUnidade || unidadeCompra) as typeof UNIDADES[number],
+          unidadeCompra,
+        )
+      : null;
+  const avisoForm =
+    necessidadeEditando && disponivelForm !== null && disponivelForm < necessidadeEditando.necessario
+      ? `Estoque abaixo do necessário para o próximo pedido: precisa de ${qtd(
+          necessidadeEditando.necessario,
+        )} ${unidadeCompra} e faltam ${qtd(necessidadeEditando.necessario - disponivelForm)} ${unidadeCompra}.`
+      : null;
 
   function limpar() {
     setEditando(null);
@@ -98,6 +132,33 @@ function IngredientesPage() {
       title="Ingredientes"
       subtitle="Base de custos da confeitaria: cada ingrediente alimenta o cálculo automático das receitas."
     >
+      {analise.insuficientes.length > 0 ? (
+        <div
+          role="alert"
+          className="mb-6 flex gap-3 rounded-lg border border-destructive/40 bg-destructive/10 p-4"
+        >
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-destructive" />
+          <div className="space-y-1 text-sm">
+            <p className="font-semibold text-destructive">
+              Estoque insuficiente para o próximo pedido
+              {analise.pedido ? ` (${dataBR(analise.pedido.data)})` : ""}
+            </p>
+            <ul className="list-inside list-disc text-muted-foreground">
+              {analise.insuficientes.map((i) => {
+                const n = analise.porIngrediente.get(i.id)!;
+                return (
+                  <li key={i.id}>
+                    <span className="font-medium text-foreground">{i.nome}</span>: precisa de{" "}
+                    {qtd(n.necessario)} {i.unidade}, disponível {qtd(n.disponivel ?? 0)} {i.unidade} —
+                    faltam {qtd(n.faltando)} {i.unidade}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <Card>
           <CardHeader>
@@ -176,6 +237,15 @@ function IngredientesPage() {
                   <FieldError message={tocado ? erros["estoqueUnidade"] : undefined} />
                 </div>
               </div>
+              {avisoForm ? (
+                <p
+                  role="alert"
+                  className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive"
+                >
+                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                  <span>{avisoForm}</span>
+                </p>
+              ) : null}
               <div className="flex gap-2">
                 <Button type="submit" disabled={salvar.isPending}>
                   {editando ? "Salvar alterações" : "Cadastrar"}
@@ -217,7 +287,26 @@ function IngredientesPage() {
                       <TableCell className="text-muted-foreground">{i.unidade}</TableCell>
                       <TableCell>{brl(i.custoUnitario)}</TableCell>
                       <TableCell>
-                        {i.estoqueQuantidade.toLocaleString("pt-BR")} {i.estoqueUnidade}
+                        <span
+                          className={
+                            analise.porIngrediente.get(i.id)?.insuficiente
+                              ? "font-semibold text-destructive"
+                              : undefined
+                          }
+                        >
+                          {i.estoqueQuantidade.toLocaleString("pt-BR")} {i.estoqueUnidade}
+                        </span>
+                        {analise.porIngrediente.get(i.id)?.insuficiente ? (
+                          <span
+                            className="mt-1 flex items-center gap-1 text-xs font-medium text-destructive"
+                            title={`Faltam ${qtd(
+                              analise.porIngrediente.get(i.id)!.faltando,
+                            )} ${i.unidade} para o próximo pedido`}
+                          >
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            Faltam {qtd(analise.porIngrediente.get(i.id)!.faltando)} {i.unidade}
+                          </span>
+                        ) : null}
                       </TableCell>
                       <TableCell className="text-right">
                         <Button
