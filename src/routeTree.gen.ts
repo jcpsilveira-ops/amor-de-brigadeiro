@@ -10,33 +10,92 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BolosRouteImport } from './routes/bolos'
+import { Route as ClientesRouteImport } from './routes/clientes'
+import { Route as CoberturasRouteImport } from './routes/coberturas'
+import { Route as IngredientesRouteImport } from './routes/ingredientes'
+import { Route as PedidosRouteImport } from './routes/pedidos'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BolosRoute = BolosRouteImport.update({
+  id: '/bolos',
+  path: '/bolos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClientesRoute = ClientesRouteImport.update({
+  id: '/clientes',
+  path: '/clientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoberturasRoute = CoberturasRouteImport.update({
+  id: '/coberturas',
+  path: '/coberturas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IngredientesRoute = IngredientesRouteImport.update({
+  id: '/ingredientes',
+  path: '/ingredientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PedidosRoute = PedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bolos': typeof BolosRoute
+  '/clientes': typeof ClientesRoute
+  '/coberturas': typeof CoberturasRoute
+  '/ingredientes': typeof IngredientesRoute
+  '/pedidos': typeof PedidosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bolos': typeof BolosRoute
+  '/clientes': typeof ClientesRoute
+  '/coberturas': typeof CoberturasRoute
+  '/ingredientes': typeof IngredientesRoute
+  '/pedidos': typeof PedidosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bolos': typeof BolosRoute
+  '/clientes': typeof ClientesRoute
+  '/coberturas': typeof CoberturasRoute
+  '/ingredientes': typeof IngredientesRoute
+  '/pedidos': typeof PedidosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    '/' | '/bolos' | '/clientes' | '/coberturas' | '/ingredientes' | '/pedidos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/bolos' | '/clientes' | '/coberturas' | '/ingredientes' | '/pedidos'
+  id:
+    | '__root__'
+    | '/'
+    | '/bolos'
+    | '/clientes'
+    | '/coberturas'
+    | '/ingredientes'
+    | '/pedidos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BolosRoute: typeof BolosRoute
+  ClientesRoute: typeof ClientesRoute
+  CoberturasRoute: typeof CoberturasRoute
+  IngredientesRoute: typeof IngredientesRoute
+  PedidosRoute: typeof PedidosRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +107,52 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bolos': {
+      id: '/bolos'
+      path: '/bolos'
+      fullPath: '/bolos'
+      preLoaderRoute: typeof BolosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clientes': {
+      id: '/clientes'
+      path: '/clientes'
+      fullPath: '/clientes'
+      preLoaderRoute: typeof ClientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coberturas': {
+      id: '/coberturas'
+      path: '/coberturas'
+      fullPath: '/coberturas'
+      preLoaderRoute: typeof CoberturasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ingredientes': {
+      id: '/ingredientes'
+      path: '/ingredientes'
+      fullPath: '/ingredientes'
+      preLoaderRoute: typeof IngredientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pedidos': {
+      id: '/pedidos'
+      path: '/pedidos'
+      fullPath: '/pedidos'
+      preLoaderRoute: typeof PedidosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BolosRoute: BolosRoute,
+  ClientesRoute: ClientesRoute,
+  CoberturasRoute: CoberturasRoute,
+  IngredientesRoute: IngredientesRoute,
+  PedidosRoute: PedidosRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
