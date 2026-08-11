@@ -1,0 +1,270 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { PageShell, EmptyState, FieldError } from "@/components/PageShell";
+import { ConfirmDelete } from "@/components/ConfirmDelete";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Pencil } from "lucide-react";
+import {
+  brl,
+  calcularCusto,
+  dataBR,
+  hojeISO,
+  pedidoSchema,
+  type Pedido,
+} from "@/lib/domain";
+import {
+  keys,
+  pedidosApi,
+  useAppMutation,
+  useBolos,
+  useClientes,
+  useCoberturas,
+  useIngredientes,
+  usePedidos,
+} from "@/lib/queries";
+
+export const Route = createFileRoute("/pedidos")({
+  head: () => ({
+    meta: [
+      { title: "Pedidos | Amor de Brigadeiro" },
+      {
+        name: "description",
+        content:
+          "Registre pedidos ligando cliente, bolo e cobertura, com custo e preço total calculados automaticamente.",
+      },
+      { property: "og:title", content: "Pedidos | Amor de Brigadeiro" },
+      {
+        property: "og:description",
+        content: "Controle de pedidos da confeitaria com totais de custo e venda.",
+      },
+    ],
+  }),
+  component: PedidosPage,
+});
+
+const SEM_COBERTURA = "sem";
+
+function PedidosPage() {
+  const { data: pedidos = [], isLoading } = usePedidos();
+  const { data: clientes = [] } = useClientes();
+  const { data: bolos = [] } = useBolos();
+  const { data: coberturas = [] } = useCoberturas();
+  const { data: ingredientes = [] } = useIngredientes();
+
+  const [editando, setEditando] = useState<Pedido | null>(null);
+  const [clienteId, setClienteId] = useState("");
+  const [boloId, setBoloId] = useState("");
+  const [coberturaId, setCoberturaId] = useState(SEM_COBERTURA);
+  const [data, setData] = useState(hojeISO());
+  const [tocado, setTocado] = useState(false);
+
+  const parsed = pedidoSchema.safeParse({
+    clienteId,
+    boloId,
+    coberturaId: coberturaId === SEM_COBERTURA ? null : coberturaId,
+    data,
+  });
+  const erros: Record<string, string> = {};
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) erros[issue.path.join(".")] = issue.message;
+  }
+
+  function limpar() {
+    setEditando(null);
+    setClienteId("");
+    setBoloId("");
+    setCoberturaId(SEM_COBERTURA);
+    setData(hojeISO());
+    setTocado(false);
+  }
+
+  const salvar = useAppMutation({
+    mutationFn: async () => {
+      if (!parsed.success) return;
+      return editando
+        ? pedidosApi.update(editando.id, parsed.data)
+        : pedidosApi.create(parsed.data);
+    },
+    invalidate: [keys.pedidos],
+    successMessage: editando ? "Pedido atualizado!" : "Pedido registrado!",
+    onSuccess: limpar,
+  });
+
+  const excluir = useAppMutation({
+    mutationFn: (id: number) => pedidosApi.remove(id),
+    invalidate: [keys.pedidos],
+    successMessage: "Pedido excluído.",
+  });
+
+  return (
+    <PageShell title="Pedidos" subtitle="Cliente + bolo + cobertura, com custo e preço somados na hora.">
+      <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>{editando ? `Editar pedido #${editando.id}` : "Novo pedido"}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                setTocado(true);
+                if (parsed.success) salvar.mutate(undefined as never);
+              }}
+            >
+              <div>
+                <Label>Cliente</Label>
+                <Select value={clienteId} onValueChange={setClienteId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o cliente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientes.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError message={tocado ? erros["clienteId"] : undefined} />
+              </div>
+              <div>
+                <Label>Bolo</Label>
+                <Select value={boloId} onValueChange={setBoloId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o bolo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {bolos.map((b) => (
+                      <SelectItem key={b.id} value={String(b.id)}>
+                        {b.nome} — {brl(b.precoVenda)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FieldError message={tocado ? erros["boloId"] : undefined} />
+              </div>
+              <div>
+                <Label>Cobertura</Label>
+                <Select value={coberturaId} onValueChange={setCoberturaId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a cobertura" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SEM_COBERTURA}>Sem cobertura</SelectItem>
+                    {coberturas.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.nome} — {brl(c.precoVenda)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="data">Data do pedido</Label>
+                <Input id="data" type="date" value={data} onChange={(e) => setData(e.target.value)} />
+                <FieldError message={tocado ? erros["data"] : undefined} />
+              </div>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={salvar.isPending}>
+                  {editando ? "Salvar alterações" : "Registrar pedido"}
+                </Button>
+                {editando ? (
+                  <Button type="button" variant="ghost" onClick={limpar}>
+                    Cancelar
+                  </Button>
+                ) : null}
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Pedidos registrados ({pedidos.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <EmptyState message="Carregando..." />
+            ) : pedidos.length === 0 ? (
+              <EmptyState message="Nenhum pedido registrado ainda." />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>#</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Bolo / Cobertura</TableHead>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Custo</TableHead>
+                    <TableHead>Total</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {pedidos.map((p) => {
+                    const cliente = clientes.find((c) => c.id === p.clienteId);
+                    const bolo = bolos.find((b) => b.id === p.boloId);
+                    const cobertura = coberturas.find((c) => c.id === p.coberturaId);
+                    const custo =
+                      (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
+                      (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0);
+                    const total = (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0);
+                    return (
+                      <TableRow key={p.id}>
+                        <TableCell className="text-muted-foreground">{p.id}</TableCell>
+                        <TableCell className="font-semibold">{cliente?.nome ?? "—"}</TableCell>
+                        <TableCell>
+                          <p>{bolo?.nome ?? "—"}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {cobertura?.nome ?? "Sem cobertura"}
+                          </p>
+                        </TableCell>
+                        <TableCell>{dataBR(p.data)}</TableCell>
+                        <TableCell>{brl(custo)}</TableCell>
+                        <TableCell className="font-semibold">{brl(total)}</TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            aria-label="Editar"
+                            onClick={() => {
+                              setEditando(p);
+                              setClienteId(String(p.clienteId));
+                              setBoloId(String(p.boloId));
+                              setCoberturaId(p.coberturaId ? String(p.coberturaId) : SEM_COBERTURA);
+                              setData(p.data.slice(0, 10));
+                              setTocado(false);
+                            }}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <ConfirmDelete
+                            description={`Excluir o pedido #${p.id}?`}
+                            onConfirm={() => excluir.mutate(p.id)}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </PageShell>
+  );
+}

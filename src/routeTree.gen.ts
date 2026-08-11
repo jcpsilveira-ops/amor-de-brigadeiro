@@ -10,7 +10,9 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BolosRouteImport } from './routes/bolos'
 import { Route as ClientesRouteImport } from './routes/clientes'
+import { Route as CoberturasRouteImport } from './routes/coberturas'
 import { Route as IngredientesRouteImport } from './routes/ingredientes'
 
 const IndexRoute = IndexRouteImport.update({
@@ -18,9 +20,19 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BolosRoute = BolosRouteImport.update({
+  id: '/bolos',
+  path: '/bolos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClientesRoute = ClientesRouteImport.update({
   id: '/clientes',
   path: '/clientes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoberturasRoute = CoberturasRouteImport.update({
+  id: '/coberturas',
+  path: '/coberturas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IngredientesRoute = IngredientesRouteImport.update({
@@ -31,31 +43,40 @@ const IngredientesRoute = IngredientesRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/bolos': typeof BolosRoute
   '/clientes': typeof ClientesRoute
+  '/coberturas': typeof CoberturasRoute
   '/ingredientes': typeof IngredientesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/bolos': typeof BolosRoute
   '/clientes': typeof ClientesRoute
+  '/coberturas': typeof CoberturasRoute
   '/ingredientes': typeof IngredientesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/bolos': typeof BolosRoute
   '/clientes': typeof ClientesRoute
+  '/coberturas': typeof CoberturasRoute
   '/ingredientes': typeof IngredientesRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/clientes' | '/ingredientes'
+  fullPaths: '/' | '/bolos' | '/clientes' | '/coberturas' | '/ingredientes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/clientes' | '/ingredientes'
-  id: '__root__' | '/' | '/clientes' | '/ingredientes'
+  to: '/' | '/bolos' | '/clientes' | '/coberturas' | '/ingredientes'
+  id:
+    '__root__' | '/' | '/bolos' | '/clientes' | '/coberturas' | '/ingredientes'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BolosRoute: typeof BolosRoute
   ClientesRoute: typeof ClientesRoute
+  CoberturasRoute: typeof CoberturasRoute
   IngredientesRoute: typeof IngredientesRoute
 }
 
@@ -68,11 +89,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/bolos': {
+      id: '/bolos'
+      path: '/bolos'
+      fullPath: '/bolos'
+      preLoaderRoute: typeof BolosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clientes': {
       id: '/clientes'
       path: '/clientes'
       fullPath: '/clientes'
       preLoaderRoute: typeof ClientesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/coberturas': {
+      id: '/coberturas'
+      path: '/coberturas'
+      fullPath: '/coberturas'
+      preLoaderRoute: typeof CoberturasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ingredientes': {
@@ -87,7 +122,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BolosRoute: BolosRoute,
   ClientesRoute: ClientesRoute,
+  CoberturasRoute: CoberturasRoute,
   IngredientesRoute: IngredientesRoute,
 }
 export const routeTree = rootRouteImport
