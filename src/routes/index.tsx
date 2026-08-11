@@ -70,6 +70,8 @@ function Painel() {
       title="Painel da confeitaria"
       subtitle="Uma visão rápida das receitas, dos clientes e do dinheiro que entra."
     >
+      <ImportarDadosLocais />
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Metrica rotulo="Faturamento em pedidos" valor={brl(receitaPrevista)} />
         <Metrica rotulo="Custo de produção" valor={brl(custoPrevisto)} />
