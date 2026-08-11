@@ -2,15 +2,16 @@
  * Cliente de dados único para toda a aplicação.
  *
  * - No executável Windows, `window.AMOR_API_BASE` é injetado pelo Electron e
- *   as chamadas vão para a API Express (Node + SQLite).
- * - No navegador/preview, usa a persistência local (localStorage).
+ *   as chamadas vão para a API Express local (Node + SQLite).
+ * - No navegador (link compartilhado), usa o banco de dados na nuvem, de forma
+ *   que qualquer pessoa que acesse o link vê e edita os MESMOS dados.
  *
  * As telas nunca conversam com o armazenamento diretamente — sempre por aqui.
  */
+import { supabase } from "@/integrations/supabase/client";
 import {
   MAX_INGREDIENTES,
   calcularCusto,
-  hojeISO,
   type Bolo,
   type Cliente,
   type Cobertura,
@@ -20,8 +21,8 @@ import {
   type Pedido,
   type PedidoInput,
   type ReceitaInput,
+  type Unidade,
 } from "./domain";
-import { nextId, readDB, writeDB, type LocalDB } from "./local-db";
 
 export class ApiError extends Error {}
 
@@ -43,59 +44,134 @@ async function http<T>(path: string, init?: RequestInit): Promise<T> {
   return (res.status === 204 ? undefined : await res.json()) as T;
 }
 
-/* ---------------------------- helpers locais ---------------------------- */
+/* --------------------------------- helpers -------------------------------- */
 
-function mutate<T>(fn: (db: LocalDB) => T): T {
-  const db = readDB();
-  const result = fn(db);
-  writeDB(db);
-  return result;
+function check<T>(result: { data: T | null; error: { message: string } | null }): T {
+  if (result.error) throw new ApiError(traduzErro(result.error.message));
+  return result.data as T;
 }
 
-function assertReceita(db: LocalDB, input: ReceitaInput) {
+function traduzErro(msg: string) {
+  if (/violates foreign key/i.test(msg) && /pedidos/i.test(msg)) {
+    return "Registro vinculado a um pedido.";
+  }
+  if (/violates foreign key/i.test(msg)) return "Registro em uso em outro cadastro.";
+  return msg;
+}
+
+type IngredienteRow = {
+  id: number;
+  nome: string;
+  unidade: string;
+  custo_unitario: number | string;
+};
+type ReceitaRow = {
+  id: number;
+  nome: string;
+  preco_venda: number | string;
+  itens: unknown;
+  criado_em: string;
+};
+type ClienteRow = { id: number; nome: string; whatsapp: string };
+type PedidoRow = {
+  id: number;
+  cliente_id: number;
+  bolo_id: number;
+  cobertura_id: number | null;
+  data: string;
+};
+
+const toIngrediente = (r: IngredienteRow): Ingrediente => ({
+  id: r.id,
+  nome: r.nome,
+  unidade: r.unidade as Unidade,
+  custoUnitario: Number(r.custo_unitario),
+});
+
+const toReceita = (r: ReceitaRow): Bolo => ({
+  id: r.id,
+  nome: r.nome,
+  precoVenda: Number(r.preco_venda),
+  criadoEm: r.criado_em,
+  itens: (Array.isArray(r.itens) ? r.itens : []) as Bolo["itens"],
+});
+
+const toCliente = (r: ClienteRow): Cliente => ({
+  id: r.id,
+  nome: r.nome,
+  whatsapp: r.whatsapp,
+});
+
+const toPedido = (r: PedidoRow): Pedido => ({
+  id: r.id,
+  clienteId: r.cliente_id,
+  boloId: r.bolo_id,
+  coberturaId: r.cobertura_id,
+  data: r.data,
+});
+
+function assertReceita(input: ReceitaInput) {
   if (input.itens.length > MAX_INGREDIENTES) {
     throw new ApiError(`Máximo de ${MAX_INGREDIENTES} ingredientes.`);
   }
   const ids = input.itens.map((i) => i.ingredienteId);
   if (new Set(ids).size !== ids.length) throw new ApiError("Ingredientes repetidos.");
-  for (const id of ids) {
-    if (!db.ingredientes.some((i) => i.id === id)) {
-      throw new ApiError("Ingrediente inexistente.");
-    }
-  }
 }
 
 /* ------------------------------ ingredientes ------------------------------ */
 
 export const ingredientesApi = {
-  list: async (): Promise<Ingrediente[]> =>
-    apiBase() ? http("/ingredientes") : readDB().ingredientes,
-  create: async (input: IngredienteInput): Promise<Ingrediente> =>
-    apiBase()
-      ? http("/ingredientes", { method: "POST", body: JSON.stringify(input) })
-      : mutate((db) => {
-          const item: Ingrediente = { id: nextId(db, "ingredientes"), ...input };
-          db.ingredientes.push(item);
-          return item;
-        }),
-  update: async (id: number, input: IngredienteInput): Promise<Ingrediente> =>
-    apiBase()
-      ? http(`/ingredientes/${id}`, { method: "PUT", body: JSON.stringify(input) })
-      : mutate((db) => {
-          const idx = db.ingredientes.findIndex((i) => i.id === id);
-          if (idx < 0) throw new ApiError("Ingrediente não encontrado.");
-          db.ingredientes[idx] = { id, ...input };
-          return db.ingredientes[idx];
-        }),
+  list: async (): Promise<Ingrediente[]> => {
+    if (apiBase()) return http("/ingredientes");
+    const rows = check(
+      await supabase.from("ingredientes").select("*").order("nome", { ascending: true }),
+    );
+    return (rows as unknown as IngredienteRow[]).map(toIngrediente);
+  },
+  create: async (input: IngredienteInput): Promise<Ingrediente> => {
+    if (apiBase()) {
+      return http("/ingredientes", { method: "POST", body: JSON.stringify(input) });
+    }
+    const row = check(
+      await supabase
+        .from("ingredientes")
+        .insert({
+          nome: input.nome,
+          unidade: input.unidade,
+          custo_unitario: input.custoUnitario,
+        })
+        .select("*")
+        .single(),
+    );
+    return toIngrediente(row as unknown as IngredienteRow);
+  },
+  update: async (id: number, input: IngredienteInput): Promise<Ingrediente> => {
+    if (apiBase()) {
+      return http(`/ingredientes/${id}`, { method: "PUT", body: JSON.stringify(input) });
+    }
+    const row = check(
+      await supabase
+        .from("ingredientes")
+        .update({
+          nome: input.nome,
+          unidade: input.unidade,
+          custo_unitario: input.custoUnitario,
+        })
+        .eq("id", id)
+        .select("*")
+        .single(),
+    );
+    return toIngrediente(row as unknown as IngredienteRow);
+  },
   remove: async (id: number): Promise<void> => {
     if (apiBase()) return http(`/ingredientes/${id}`, { method: "DELETE" });
-    mutate((db) => {
-      const usado = [...db.bolos, ...db.coberturas].some((r) =>
-        r.itens.some((i) => i.ingredienteId === id),
-      );
-      if (usado) throw new ApiError("Ingrediente em uso em um bolo ou cobertura.");
-      db.ingredientes = db.ingredientes.filter((i) => i.id !== id);
-    });
+    const [bolos, coberturas] = await Promise.all([bolosApi.list(), coberturasApi.list()]);
+    const usado = [...bolos, ...coberturas].some((r) =>
+      r.itens.some((i) => i.ingredienteId === id),
+    );
+    if (usado) throw new ApiError("Ingrediente em uso em um bolo ou cobertura.");
+    const { error } = await supabase.from("ingredientes").delete().eq("id", id);
+    if (error) throw new ApiError(traduzErro(error.message));
   },
 };
 
@@ -104,45 +180,52 @@ export const ingredientesApi = {
 function receitasApi(tabela: "bolos" | "coberturas") {
   const path = `/${tabela}`;
   return {
-    list: async (): Promise<Bolo[]> => (apiBase() ? http(path) : readDB()[tabela]),
-    create: async (input: ReceitaInput): Promise<Bolo> =>
-      apiBase()
-        ? http(path, { method: "POST", body: JSON.stringify(input) })
-        : mutate((db) => {
-            assertReceita(db, input);
-            const item: Bolo = {
-              id: nextId(db, tabela),
-              nome: input.nome,
-              precoVenda: input.precoVenda,
-              criadoEm: hojeISO(),
-              itens: input.itens,
-            };
-            db[tabela].push(item);
-            return item;
-          }),
-    update: async (id: number, input: ReceitaInput): Promise<Bolo> =>
-      apiBase()
-        ? http(`${path}/${id}`, { method: "PUT", body: JSON.stringify(input) })
-        : mutate((db) => {
-            assertReceita(db, input);
-            const atual = db[tabela].find((r) => r.id === id);
-            if (!atual) throw new ApiError("Registro não encontrado.");
-            Object.assign(atual, {
-              nome: input.nome,
-              precoVenda: input.precoVenda,
-              itens: input.itens,
-            });
-            return atual;
-          }),
+    list: async (): Promise<Bolo[]> => {
+      if (apiBase()) return http(path);
+      const rows = check(
+        await supabase.from(tabela).select("*").order("nome", { ascending: true }),
+      );
+      return (rows as unknown as ReceitaRow[]).map(toReceita);
+    },
+    create: async (input: ReceitaInput): Promise<Bolo> => {
+      if (apiBase()) return http(path, { method: "POST", body: JSON.stringify(input) });
+      assertReceita(input);
+      const row = check(
+        await supabase
+          .from(tabela)
+          .insert({
+            nome: input.nome,
+            preco_venda: input.precoVenda,
+            itens: input.itens,
+          })
+          .select("*")
+          .single(),
+      );
+      return toReceita(row as unknown as ReceitaRow);
+    },
+    update: async (id: number, input: ReceitaInput): Promise<Bolo> => {
+      if (apiBase()) {
+        return http(`${path}/${id}`, { method: "PUT", body: JSON.stringify(input) });
+      }
+      assertReceita(input);
+      const row = check(
+        await supabase
+          .from(tabela)
+          .update({
+            nome: input.nome,
+            preco_venda: input.precoVenda,
+            itens: input.itens,
+          })
+          .eq("id", id)
+          .select("*")
+          .single(),
+      );
+      return toReceita(row as unknown as ReceitaRow);
+    },
     remove: async (id: number): Promise<void> => {
       if (apiBase()) return http(`${path}/${id}`, { method: "DELETE" });
-      mutate((db) => {
-        const emPedido = db.pedidos.some((p) =>
-          tabela === "bolos" ? p.boloId === id : p.coberturaId === id,
-        );
-        if (emPedido) throw new ApiError("Registro vinculado a um pedido.");
-        db[tabela] = db[tabela].filter((r) => r.id !== id);
-      });
+      const { error } = await supabase.from(tabela).delete().eq("id", id);
+      if (error) throw new ApiError(traduzErro(error.message));
     },
   };
 }
@@ -158,61 +241,82 @@ export const coberturasApi = receitasApi("coberturas") as {
 /* -------------------------------- clientes -------------------------------- */
 
 export const clientesApi = {
-  list: async (): Promise<Cliente[]> => (apiBase() ? http("/clientes") : readDB().clientes),
-  create: async (input: ClienteInput): Promise<Cliente> =>
-    apiBase()
-      ? http("/clientes", { method: "POST", body: JSON.stringify(input) })
-      : mutate((db) => {
-          const item: Cliente = { id: nextId(db, "clientes"), ...input };
-          db.clientes.push(item);
-          return item;
-        }),
-  update: async (id: number, input: ClienteInput): Promise<Cliente> =>
-    apiBase()
-      ? http(`/clientes/${id}`, { method: "PUT", body: JSON.stringify(input) })
-      : mutate((db) => {
-          const idx = db.clientes.findIndex((c) => c.id === id);
-          if (idx < 0) throw new ApiError("Cliente não encontrado.");
-          db.clientes[idx] = { id, ...input };
-          return db.clientes[idx];
-        }),
+  list: async (): Promise<Cliente[]> => {
+    if (apiBase()) return http("/clientes");
+    const rows = check(
+      await supabase.from("clientes").select("*").order("nome", { ascending: true }),
+    );
+    return (rows as unknown as ClienteRow[]).map(toCliente);
+  },
+  create: async (input: ClienteInput): Promise<Cliente> => {
+    if (apiBase()) return http("/clientes", { method: "POST", body: JSON.stringify(input) });
+    const row = check(await supabase.from("clientes").insert(input).select("*").single());
+    return toCliente(row as unknown as ClienteRow);
+  },
+  update: async (id: number, input: ClienteInput): Promise<Cliente> => {
+    if (apiBase()) {
+      return http(`/clientes/${id}`, { method: "PUT", body: JSON.stringify(input) });
+    }
+    const row = check(
+      await supabase.from("clientes").update(input).eq("id", id).select("*").single(),
+    );
+    return toCliente(row as unknown as ClienteRow);
+  },
   remove: async (id: number): Promise<void> => {
     if (apiBase()) return http(`/clientes/${id}`, { method: "DELETE" });
-    mutate((db) => {
-      if (db.pedidos.some((p) => p.clienteId === id)) {
-        throw new ApiError("Cliente possui pedidos registrados.");
-      }
-      db.clientes = db.clientes.filter((c) => c.id !== id);
-    });
+    const { error } = await supabase.from("clientes").delete().eq("id", id);
+    if (error) {
+      throw new ApiError(
+        /violates foreign key/i.test(error.message)
+          ? "Cliente possui pedidos registrados."
+          : error.message,
+      );
+    }
   },
 };
 
 /* --------------------------------- pedidos -------------------------------- */
 
+const pedidoPayload = (input: PedidoInput) => ({
+  cliente_id: input.clienteId,
+  bolo_id: input.boloId,
+  cobertura_id: input.coberturaId,
+  data: input.data,
+});
+
 export const pedidosApi = {
-  list: async (): Promise<Pedido[]> => (apiBase() ? http("/pedidos") : readDB().pedidos),
-  create: async (input: PedidoInput): Promise<Pedido> =>
-    apiBase()
-      ? http("/pedidos", { method: "POST", body: JSON.stringify(input) })
-      : mutate((db) => {
-          const item: Pedido = { id: nextId(db, "pedidos"), ...input };
-          db.pedidos.push(item);
-          return item;
-        }),
-  update: async (id: number, input: PedidoInput): Promise<Pedido> =>
-    apiBase()
-      ? http(`/pedidos/${id}`, { method: "PUT", body: JSON.stringify(input) })
-      : mutate((db) => {
-          const idx = db.pedidos.findIndex((p) => p.id === id);
-          if (idx < 0) throw new ApiError("Pedido não encontrado.");
-          db.pedidos[idx] = { id, ...input };
-          return db.pedidos[idx];
-        }),
+  list: async (): Promise<Pedido[]> => {
+    if (apiBase()) return http("/pedidos");
+    const rows = check(
+      await supabase.from("pedidos").select("*").order("data", { ascending: false }),
+    );
+    return (rows as unknown as PedidoRow[]).map(toPedido);
+  },
+  create: async (input: PedidoInput): Promise<Pedido> => {
+    if (apiBase()) return http("/pedidos", { method: "POST", body: JSON.stringify(input) });
+    const row = check(
+      await supabase.from("pedidos").insert(pedidoPayload(input)).select("*").single(),
+    );
+    return toPedido(row as unknown as PedidoRow);
+  },
+  update: async (id: number, input: PedidoInput): Promise<Pedido> => {
+    if (apiBase()) {
+      return http(`/pedidos/${id}`, { method: "PUT", body: JSON.stringify(input) });
+    }
+    const row = check(
+      await supabase
+        .from("pedidos")
+        .update(pedidoPayload(input))
+        .eq("id", id)
+        .select("*")
+        .single(),
+    );
+    return toPedido(row as unknown as PedidoRow);
+  },
   remove: async (id: number): Promise<void> => {
     if (apiBase()) return http(`/pedidos/${id}`, { method: "DELETE" });
-    mutate((db) => {
-      db.pedidos = db.pedidos.filter((p) => p.id !== id);
-    });
+    const { error } = await supabase.from("pedidos").delete().eq("id", id);
+    if (error) throw new ApiError(traduzErro(error.message));
   },
 };
 
