@@ -21,17 +21,21 @@ import {
 export function ImportarDadosLocais() {
   const qc = useQueryClient();
   const [resumo, setResumo] = useState<ResumoImportacao | null>(null);
+  const [jaEnviado, setJaEnviado] = useState(false);
+  const [oculto, setOculto] = useState(false);
   const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    if (importacaoJaFeita()) return;
     const contagem = contarDadosLocais();
     if (!contagem) return;
     const total = Object.values(contagem).reduce((a, b) => a + b, 0);
-    if (total > 0) setResumo(contagem);
+    if (total > 0) {
+      setResumo(contagem);
+      setJaEnviado(importacaoJaFeita());
+    }
   }, []);
 
-  if (!resumo) return null;
+  if (!resumo || oculto) return null;
 
   const enviar = async () => {
     setEnviando(true);
