@@ -1,0 +1,125 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.2",
+  "path": "/mcp",
+  "auth": {
+    "type": "none"
+  },
+  "mcp": {
+    "server": {
+      "name": "amor-de-brigadeiro",
+      "version": "0.1.0",
+      "title": "Amor de Brigadeiro"
+    },
+    "tools": [
+      {
+        "name": "calcular_receita",
+        "title": "Calcular custo e margem de uma receita",
+        "description": "Calcula o custo de produção de um bolo ou cobertura a partir dos ingredientes informados (quantidade x custo unitário) e retorna lucro e margem em relação ao preço de venda. Máximo de 20 ingredientes.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "nome": {
+              "type": "string",
+              "description": "Nome do bolo ou cobertura."
+            },
+            "precoVenda": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Preço de venda em reais."
+            },
+            "ingredientes": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "nome": {
+                    "type": "string",
+                    "description": "Nome do ingrediente."
+                  },
+                  "quantidade": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Quantidade usada na receita."
+                  },
+                  "custoUnitario": {
+                    "type": "number",
+                    "exclusiveMinimum": 0,
+                    "description": "Custo por unidade do ingrediente em reais."
+                  }
+                },
+                "required": [
+                  "nome",
+                  "quantidade",
+                  "custoUnitario"
+                ],
+                "additionalProperties": false
+              },
+              "description": "Lista de ingredientes da receita."
+            }
+          },
+          "required": [
+            "nome",
+            "precoVenda",
+            "ingredientes"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "sugerir_preco",
+        "title": "Sugerir preço de venda",
+        "description": "Sugere o preço de venda de um bolo ou cobertura a partir do custo de produção e da margem de lucro desejada (em % sobre o preço de venda).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "custo": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "description": "Custo de produção em reais."
+            },
+            "margemDesejada": {
+              "type": "number",
+              "description": "Margem de lucro desejada em porcentagem do preço de venda (ex.: 40 para 40%)."
+            }
+          },
+          "required": [
+            "custo",
+            "margemDesejada"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "regras_do_sistema",
+        "title": "Regras de cadastro da confeitaria",
+        "description": "Retorna as regras de cadastro do sistema Amor de Brigadeiro: unidades de medida aceitas, limite de ingredientes por receita e como o custo e a margem são calculados.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
