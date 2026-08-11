@@ -11,7 +11,10 @@ export interface Ingrediente {
   nome: string;
   unidade: Unidade;
   custoUnitario: number;
+  estoqueQuantidade: number;
+  estoqueUnidade: Unidade;
 }
+
 
 export interface ItemReceita {
   ingredienteId: number;
