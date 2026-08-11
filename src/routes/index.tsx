@@ -17,6 +17,7 @@ import {
   useBolos,
   useClientes,
   useCoberturas,
+  useDespesas,
   useIngredientes,
   usePedidos,
 } from "@/lib/queries";
@@ -66,20 +67,29 @@ function Painel() {
   const { data: coberturas = [] } = useCoberturas();
   const { data: clientes = [] } = useClientes();
   const { data: todosPedidos = [] } = usePedidos();
+  const { data: todasDespesas = [] } = useDespesas();
 
   const [mes, setMes] = useState<string>(TODOS);
 
   const mesesDisponiveis = useMemo(
     () =>
-      Array.from(new Set(todosPedidos.map((p) => p.data.slice(0, 7)))).sort((a, b) =>
-        b.localeCompare(a),
-      ),
-    [todosPedidos],
+      Array.from(
+        new Set([
+          ...todosPedidos.map((p) => p.data.slice(0, 7)),
+          ...todasDespesas.map((d) => d.data.slice(0, 7)),
+        ]),
+      ).sort((a, b) => b.localeCompare(a)),
+    [todosPedidos, todasDespesas],
   );
 
   const pedidos = useMemo(
     () => (mes === TODOS ? todosPedidos : todosPedidos.filter((p) => p.data.startsWith(mes))),
     [todosPedidos, mes],
+  );
+
+  const despesas = useMemo(
+    () => (mes === TODOS ? todasDespesas : todasDespesas.filter((d) => d.data.startsWith(mes))),
+    [todasDespesas, mes],
   );
 
   const receitaPrevista = pedidos.reduce((acc, p) => {
@@ -99,6 +109,10 @@ function Painel() {
   }, 0);
 
   const custoPrevisto = custoBolos + custoCoberturas;
+
+  const totalOutrasDespesas = despesas.reduce((acc, d) => acc + d.valor, 0);
+
+  const lucroLiquido = receitaPrevista - (custoPrevisto + totalOutrasDespesas);
 
   const { percentual } = margem(receitaPrevista, custoPrevisto);
 
@@ -135,6 +149,8 @@ function Painel() {
         <Metrica rotulo="Custo de produção dos bolos" valor={brl(custoBolos)} />
         <Metrica rotulo="Custo de produção das coberturas" valor={brl(custoCoberturas)} />
         <Metrica rotulo="Custo total da produção" valor={brl(custoPrevisto)} />
+        <Metrica rotulo="Total de outras despesas" valor={brl(totalOutrasDespesas)} />
+        <Metrica rotulo="Lucro líquido" valor={brl(lucroLiquido)} />
         <Metrica rotulo="Margem média" valor={`${percentual.toFixed(1)}%`} />
         <Metrica rotulo="Pedidos" valor={String(pedidos.length)} />
       </div>
