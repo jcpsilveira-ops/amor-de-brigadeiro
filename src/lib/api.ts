@@ -64,6 +64,8 @@ type IngredienteRow = {
   nome: string;
   unidade: string;
   custo_unitario: number | string;
+  estoque_quantidade?: number | string | null;
+  estoque_unidade?: string | null;
 };
 type ReceitaRow = {
   id: number;
@@ -86,6 +88,8 @@ const toIngrediente = (r: IngredienteRow): Ingrediente => ({
   nome: r.nome,
   unidade: r.unidade as Unidade,
   custoUnitario: Number(r.custo_unitario),
+  estoqueQuantidade: Number(r.estoque_quantidade ?? 0),
+  estoqueUnidade: ((r.estoque_unidade ?? r.unidade) as Unidade),
 });
 
 const toReceita = (r: ReceitaRow): Bolo => ({
@@ -139,6 +143,8 @@ export const ingredientesApi = {
           nome: input.nome,
           unidade: input.unidade,
           custo_unitario: input.custoUnitario,
+          estoque_quantidade: input.estoqueQuantidade,
+          estoque_unidade: input.estoqueUnidade,
         })
         .select("*")
         .single(),
@@ -156,6 +162,8 @@ export const ingredientesApi = {
           nome: input.nome,
           unidade: input.unidade,
           custo_unitario: input.custoUnitario,
+          estoque_quantidade: input.estoqueQuantidade,
+          estoque_unidade: input.estoqueUnidade,
         })
         .eq("id", id)
         .select("*")
