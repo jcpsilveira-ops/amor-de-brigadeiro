@@ -87,6 +87,8 @@ export type Database = {
         Row: {
           criado_em: string
           custo_unitario: number
+          estoque_quantidade: number
+          estoque_unidade: string | null
           id: number
           nome: string
           unidade: string
@@ -94,6 +96,8 @@ export type Database = {
         Insert: {
           criado_em?: string
           custo_unitario?: number
+          estoque_quantidade?: number
+          estoque_unidade?: string | null
           id?: number
           nome: string
           unidade: string
@@ -101,6 +105,8 @@ export type Database = {
         Update: {
           criado_em?: string
           custo_unitario?: number
+          estoque_quantidade?: number
+          estoque_unidade?: string | null
           id?: number
           nome?: string
           unidade?: string
