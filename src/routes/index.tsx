@@ -107,6 +107,27 @@ function Painel() {
     >
       <ImportarDadosLocais />
 
+      <div className="mb-6 flex flex-wrap items-center gap-3 panel p-4">
+        <Label htmlFor="filtro-mes" className="label-caps">
+          Mês de referência
+        </Label>
+        <Select value={mes} onValueChange={setMes}>
+          <SelectTrigger id="filtro-mes" className="w-full sm:w-[240px]">
+            <SelectValue placeholder="Escolha o mês" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={TODOS}>Todos os meses</SelectItem>
+            {mesesDisponiveis.map((m) => (
+              <SelectItem key={m} value={m}>
+                {nomeMes(m)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Metrica rotulo="Faturamento em pedidos" valor={brl(receitaPrevista)} />
         <Metrica rotulo="Custo de produção" valor={brl(custoPrevisto)} />
