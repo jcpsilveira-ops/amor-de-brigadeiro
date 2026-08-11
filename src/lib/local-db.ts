@@ -21,13 +21,13 @@ export interface LocalDB {
 
 function seed(): LocalDB {
   const ingredientes: Ingrediente[] = [
-    { id: 1, nome: "Leite condensado", unidade: "unidade", custoUnitario: 6.5 },
-    { id: 2, nome: "Chocolate em pó", unidade: "kg", custoUnitario: 28 },
-    { id: 3, nome: "Farinha de trigo", unidade: "kg", custoUnitario: 5.2 },
-    { id: 4, nome: "Ovos", unidade: "unidade", custoUnitario: 0.85 },
-    { id: 5, nome: "Manteiga", unidade: "kg", custoUnitario: 42 },
-    { id: 6, nome: "Açúcar", unidade: "kg", custoUnitario: 4.4 },
-    { id: 7, nome: "Creme de leite", unidade: "unidade", custoUnitario: 3.9 },
+    { id: 1, nome: "Leite condensado", unidade: "unidade", custoUnitario: 6.5, estoqueQuantidade: 0, estoqueUnidade: "unidade" },
+    { id: 2, nome: "Chocolate em pó", unidade: "kg", custoUnitario: 28, estoqueQuantidade: 0, estoqueUnidade: "kg" },
+    { id: 3, nome: "Farinha de trigo", unidade: "kg", custoUnitario: 5.2, estoqueQuantidade: 0, estoqueUnidade: "kg" },
+    { id: 4, nome: "Ovos", unidade: "unidade", custoUnitario: 0.85, estoqueQuantidade: 0, estoqueUnidade: "unidade" },
+    { id: 5, nome: "Manteiga", unidade: "kg", custoUnitario: 42, estoqueQuantidade: 0, estoqueUnidade: "kg" },
+    { id: 6, nome: "Açúcar", unidade: "kg", custoUnitario: 4.4, estoqueQuantidade: 0, estoqueUnidade: "kg" },
+    { id: 7, nome: "Creme de leite", unidade: "unidade", custoUnitario: 3.9, estoqueQuantidade: 0, estoqueUnidade: "unidade" },
   ];
   const bolos: Bolo[] = [
     {

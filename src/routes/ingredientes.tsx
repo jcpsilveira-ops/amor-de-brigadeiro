@@ -49,9 +49,17 @@ function IngredientesPage() {
   const [nome, setNome] = useState("");
   const [unidade, setUnidade] = useState<Unidade | "">("");
   const [custo, setCusto] = useState("");
+  const [estoque, setEstoque] = useState("");
+  const [estoqueUnidade, setEstoqueUnidade] = useState<Unidade | "">("");
   const [tocado, setTocado] = useState(false);
 
-  const parsed = ingredienteSchema.safeParse({ nome, unidade, custoUnitario: custo });
+  const parsed = ingredienteSchema.safeParse({
+    nome,
+    unidade,
+    custoUnitario: custo,
+    estoqueQuantidade: estoque === "" ? 0 : estoque,
+    estoqueUnidade: estoqueUnidade === "" ? unidade : estoqueUnidade,
+  });
   const erros: Record<string, string> = {};
   if (!parsed.success) {
     for (const issue of parsed.error.issues) erros[issue.path.join(".")] = issue.message;
@@ -62,6 +70,8 @@ function IngredientesPage() {
     setNome("");
     setUnidade("");
     setCusto("");
+    setEstoque("");
+    setEstoqueUnidade("");
     setTocado(false);
   }
 
@@ -134,6 +144,38 @@ function IngredientesPage() {
                 />
                 <FieldError message={(tocado || custo !== "") ? erros["custoUnitario"] : undefined} />
               </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="estoque">Estoque disponível</Label>
+                  <Input
+                    id="estoque"
+                    inputMode="decimal"
+                    value={estoque}
+                    onChange={(e) => setEstoque(e.target.value.replace(",", "."))}
+                    placeholder="0"
+                  />
+                  <FieldError message={estoque !== "" ? erros["estoqueQuantidade"] : undefined} />
+                </div>
+                <div>
+                  <Label htmlFor="estoque-unidade">Unidade do estoque</Label>
+                  <Select
+                    value={estoqueUnidade || unidade}
+                    onValueChange={(v) => setEstoqueUnidade(v as Unidade)}
+                  >
+                    <SelectTrigger id="estoque-unidade">
+                      <SelectValue placeholder="Selecione a unidade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {UNIDADES.map((u) => (
+                        <SelectItem key={`estoque-${u}`} value={u}>
+                          {u}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FieldError message={tocado ? erros["estoqueUnidade"] : undefined} />
+                </div>
+              </div>
               <div className="flex gap-2">
                 <Button type="submit" disabled={salvar.isPending}>
                   {editando ? "Salvar alterações" : "Cadastrar"}
@@ -164,6 +206,7 @@ function IngredientesPage() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Unidade</TableHead>
                     <TableHead>Custo</TableHead>
+                    <TableHead>Estoque</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -173,6 +216,9 @@ function IngredientesPage() {
                       <TableCell className="font-semibold">{i.nome}</TableCell>
                       <TableCell className="text-muted-foreground">{i.unidade}</TableCell>
                       <TableCell>{brl(i.custoUnitario)}</TableCell>
+                      <TableCell>
+                        {i.estoqueQuantidade.toLocaleString("pt-BR")} {i.estoqueUnidade}
+                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           type="button"
@@ -184,6 +230,8 @@ function IngredientesPage() {
                             setNome(i.nome);
                             setUnidade(i.unidade);
                             setCusto(String(i.custoUnitario));
+                            setEstoque(String(i.estoqueQuantidade));
+                            setEstoqueUnidade(i.estoqueUnidade);
                             setTocado(false);
                           }}
                         >

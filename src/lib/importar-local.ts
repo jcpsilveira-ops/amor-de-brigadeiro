@@ -71,6 +71,8 @@ export async function importarDadosLocais(): Promise<ResumoImportacao> {
       nome: ing.nome,
       unidade: ing.unidade,
       custoUnitario: Number(ing.custoUnitario) || 0.01,
+      estoqueQuantidade: Number(ing.estoqueQuantidade) || 0,
+      estoqueUnidade: ing.estoqueUnidade ?? ing.unidade,
     });
     porNomeIng.set(norm(criado.nome), criado.id);
     mapaIngrediente.set(ing.id, criado.id);

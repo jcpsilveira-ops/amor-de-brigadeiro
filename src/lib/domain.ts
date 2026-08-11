@@ -11,7 +11,10 @@ export interface Ingrediente {
   nome: string;
   unidade: Unidade;
   custoUnitario: number;
+  estoqueQuantidade: number;
+  estoqueUnidade: Unidade;
 }
+
 
 export interface ItemReceita {
   ingredienteId: number;
@@ -52,8 +55,15 @@ export const ingredienteSchema = z.object({
     .number({ invalid_type_error: "Informe um número" })
     .positive("O custo deve ser maior que zero")
     .max(1_000_000),
+  estoqueQuantidade: z.coerce
+    .number({ invalid_type_error: "Informe um número" })
+    .nonnegative("O estoque não pode ser negativo")
+    .max(1_000_000)
+    .default(0),
+  estoqueUnidade: z.enum(UNIDADES),
 });
 export type IngredienteInput = z.infer<typeof ingredienteSchema>;
+
 
 export const itemReceitaSchema = z.object({
   ingredienteId: z.coerce.number().int().positive("Selecione um ingrediente"),
