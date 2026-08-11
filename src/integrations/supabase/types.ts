@@ -14,7 +14,148 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bolos: {
+        Row: {
+          criado_em: string
+          id: number
+          itens: Json
+          nome: string
+          preco_venda: number
+        }
+        Insert: {
+          criado_em?: string
+          id?: number
+          itens?: Json
+          nome: string
+          preco_venda?: number
+        }
+        Update: {
+          criado_em?: string
+          id?: number
+          itens?: Json
+          nome?: string
+          preco_venda?: number
+        }
+        Relationships: []
+      }
+      clientes: {
+        Row: {
+          criado_em: string
+          id: number
+          nome: string
+          whatsapp: string
+        }
+        Insert: {
+          criado_em?: string
+          id?: number
+          nome: string
+          whatsapp: string
+        }
+        Update: {
+          criado_em?: string
+          id?: number
+          nome?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
+      coberturas: {
+        Row: {
+          criado_em: string
+          id: number
+          itens: Json
+          nome: string
+          preco_venda: number
+        }
+        Insert: {
+          criado_em?: string
+          id?: number
+          itens?: Json
+          nome: string
+          preco_venda?: number
+        }
+        Update: {
+          criado_em?: string
+          id?: number
+          itens?: Json
+          nome?: string
+          preco_venda?: number
+        }
+        Relationships: []
+      }
+      ingredientes: {
+        Row: {
+          criado_em: string
+          custo_unitario: number
+          id: number
+          nome: string
+          unidade: string
+        }
+        Insert: {
+          criado_em?: string
+          custo_unitario?: number
+          id?: number
+          nome: string
+          unidade: string
+        }
+        Update: {
+          criado_em?: string
+          custo_unitario?: number
+          id?: number
+          nome?: string
+          unidade?: string
+        }
+        Relationships: []
+      }
+      pedidos: {
+        Row: {
+          bolo_id: number
+          cliente_id: number
+          cobertura_id: number | null
+          criado_em: string
+          data: string
+          id: number
+        }
+        Insert: {
+          bolo_id: number
+          cliente_id: number
+          cobertura_id?: number | null
+          criado_em?: string
+          data?: string
+          id?: number
+        }
+        Update: {
+          bolo_id?: number
+          cliente_id?: number
+          cobertura_id?: number | null
+          criado_em?: string
+          data?: string
+          id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_bolo_id_fkey"
+            columns: ["bolo_id"]
+            isOneToOne: false
+            referencedRelation: "bolos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_cobertura_id_fkey"
+            columns: ["cobertura_id"]
+            isOneToOne: false
+            referencedRelation: "coberturas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
