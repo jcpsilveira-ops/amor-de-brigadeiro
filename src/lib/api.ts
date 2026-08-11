@@ -126,7 +126,7 @@ export const ingredientesApi = {
     const rows = check(
       await supabase.from("ingredientes").select("*").order("nome", { ascending: true }),
     );
-    return (rows as IngredienteRow[]).map(toIngrediente);
+    return (rows as unknown as IngredienteRow[]).map(toIngrediente);
   },
   create: async (input: IngredienteInput): Promise<Ingrediente> => {
     if (apiBase()) {
@@ -143,7 +143,7 @@ export const ingredientesApi = {
         .select("*")
         .single(),
     );
-    return toIngrediente(row as IngredienteRow);
+    return toIngrediente(row as unknown as IngredienteRow);
   },
   update: async (id: number, input: IngredienteInput): Promise<Ingrediente> => {
     if (apiBase()) {
@@ -161,7 +161,7 @@ export const ingredientesApi = {
         .select("*")
         .single(),
     );
-    return toIngrediente(row as IngredienteRow);
+    return toIngrediente(row as unknown as IngredienteRow);
   },
   remove: async (id: number): Promise<void> => {
     if (apiBase()) return http(`/ingredientes/${id}`, { method: "DELETE" });
@@ -185,7 +185,7 @@ function receitasApi(tabela: "bolos" | "coberturas") {
       const rows = check(
         await supabase.from(tabela).select("*").order("nome", { ascending: true }),
       );
-      return (rows as ReceitaRow[]).map(toReceita);
+      return (rows as unknown as ReceitaRow[]).map(toReceita);
     },
     create: async (input: ReceitaInput): Promise<Bolo> => {
       if (apiBase()) return http(path, { method: "POST", body: JSON.stringify(input) });
@@ -201,7 +201,7 @@ function receitasApi(tabela: "bolos" | "coberturas") {
           .select("*")
           .single(),
       );
-      return toReceita(row as ReceitaRow);
+      return toReceita(row as unknown as ReceitaRow);
     },
     update: async (id: number, input: ReceitaInput): Promise<Bolo> => {
       if (apiBase()) {
@@ -220,7 +220,7 @@ function receitasApi(tabela: "bolos" | "coberturas") {
           .select("*")
           .single(),
       );
-      return toReceita(row as ReceitaRow);
+      return toReceita(row as unknown as ReceitaRow);
     },
     remove: async (id: number): Promise<void> => {
       if (apiBase()) return http(`${path}/${id}`, { method: "DELETE" });
@@ -246,12 +246,12 @@ export const clientesApi = {
     const rows = check(
       await supabase.from("clientes").select("*").order("nome", { ascending: true }),
     );
-    return (rows as ClienteRow[]).map(toCliente);
+    return (rows as unknown as ClienteRow[]).map(toCliente);
   },
   create: async (input: ClienteInput): Promise<Cliente> => {
     if (apiBase()) return http("/clientes", { method: "POST", body: JSON.stringify(input) });
     const row = check(await supabase.from("clientes").insert(input).select("*").single());
-    return toCliente(row as ClienteRow);
+    return toCliente(row as unknown as ClienteRow);
   },
   update: async (id: number, input: ClienteInput): Promise<Cliente> => {
     if (apiBase()) {
@@ -260,7 +260,7 @@ export const clientesApi = {
     const row = check(
       await supabase.from("clientes").update(input).eq("id", id).select("*").single(),
     );
-    return toCliente(row as ClienteRow);
+    return toCliente(row as unknown as ClienteRow);
   },
   remove: async (id: number): Promise<void> => {
     if (apiBase()) return http(`/clientes/${id}`, { method: "DELETE" });
@@ -290,14 +290,14 @@ export const pedidosApi = {
     const rows = check(
       await supabase.from("pedidos").select("*").order("data", { ascending: false }),
     );
-    return (rows as PedidoRow[]).map(toPedido);
+    return (rows as unknown as PedidoRow[]).map(toPedido);
   },
   create: async (input: PedidoInput): Promise<Pedido> => {
     if (apiBase()) return http("/pedidos", { method: "POST", body: JSON.stringify(input) });
     const row = check(
       await supabase.from("pedidos").insert(pedidoPayload(input)).select("*").single(),
     );
-    return toPedido(row as PedidoRow);
+    return toPedido(row as unknown as PedidoRow);
   },
   update: async (id: number, input: PedidoInput): Promise<Pedido> => {
     if (apiBase()) {
@@ -311,7 +311,7 @@ export const pedidosApi = {
         .select("*")
         .single(),
     );
-    return toPedido(row as PedidoRow);
+    return toPedido(row as unknown as PedidoRow);
   },
   remove: async (id: number): Promise<void> => {
     if (apiBase()) return http(`/pedidos/${id}`, { method: "DELETE" });
