@@ -402,6 +402,41 @@ function Relatorio() {
         </section>
 
         <section className="space-y-2">
+          <h3 className="font-display text-lg">Outras despesas — {nomeMes(mes)}</h3>
+          <div className="panel overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {despesas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                      Nenhuma despesa registrada em {nomeMes(mes)}.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  [...despesas]
+                    .sort((a, b) => a.data.localeCompare(b.data) || a.id - b.id)
+                    .map((d) => (
+                      <TableRow key={d.id}>
+                        <TableCell>{dataBR(d.data)}</TableCell>
+                        <TableCell className="font-semibold">{d.descricao}</TableCell>
+                        <TableCell className="text-right">{brl(d.valor)}</TableCell>
+                      </TableRow>
+                    ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+
+
+        <section className="space-y-2">
           <h3 className="font-display text-lg">Pedidos de {nomeMes(mes)}</h3>
           <div className="panel overflow-hidden">
             <Table>
