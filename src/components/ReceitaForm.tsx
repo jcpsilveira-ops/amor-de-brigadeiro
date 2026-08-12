@@ -40,7 +40,7 @@ export function ReceitaForm({
   submitting: boolean;
   onSubmit: (input: ReceitaInput) => void;
   onCancel?: () => void;
-  entidade: "bolo" | "cobertura";
+  entidade: "bolo" | "cobertura" | "curso";
 }) {
   const [nome, setNome] = useState(registro?.nome ?? "");
   const [precoVenda, setPrecoVenda] = useState(registro ? String(registro.precoVenda) : "");
@@ -100,12 +100,20 @@ export function ReceitaForm({
             id="nome"
             value={nome}
             onChange={(e) => setNome(e.target.value)}
-            placeholder={entidade === "bolo" ? "Bolo de chocolate" : "Brigadeiro cremoso"}
+            placeholder={
+              entidade === "bolo"
+                ? "Bolo de chocolate"
+                : entidade === "curso"
+                  ? "Curso de brigadeiro gourmet"
+                  : "Brigadeiro cremoso"
+            }
           />
           <FieldError message={(tocado || nome !== "") && erros["nome"] ? erros["nome"] : undefined} />
         </div>
         <div>
-          <Label htmlFor="preco">Preço de venda (R$)</Label>
+          <Label htmlFor="preco">
+            {entidade === "curso" ? "Valor da inscrição (R$)" : "Preço de venda (R$)"}
+          </Label>
           <Input
             id="preco"
             inputMode="decimal"

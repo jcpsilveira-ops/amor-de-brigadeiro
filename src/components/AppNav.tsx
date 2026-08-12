@@ -1,5 +1,15 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Cake, ClipboardList, FileText, Home, Layers, Users, Wallet, Wheat } from "lucide-react";
+import {
+  Cake,
+  ClipboardList,
+  FileText,
+  GraduationCap,
+  Home,
+  Layers,
+  Users,
+  Wallet,
+  Wheat,
+} from "lucide-react";
 import logoAsset from "@/assets/logo.jpg.asset.json";
 
 const links = [
@@ -7,6 +17,7 @@ const links = [
   { to: "/ingredientes", label: "Ingredientes", icon: Wheat },
   { to: "/bolos", label: "Bolos", icon: Cake },
   { to: "/coberturas", label: "Coberturas", icon: Layers },
+  { to: "/cursos", label: "Cursos", icon: GraduationCap },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/pedidos", label: "Pedidos", icon: ClipboardList },
   { to: "/despesas", label: "Despesas", icon: Wallet },

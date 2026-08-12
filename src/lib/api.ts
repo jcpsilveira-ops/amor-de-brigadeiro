@@ -15,6 +15,7 @@ import {
   type Bolo,
   type Cliente,
   type Cobertura,
+  type Curso,
   type Ingrediente,
   type IngredienteInput,
   type ClienteInput,
@@ -80,8 +81,9 @@ type ClienteRow = { id: number; nome: string; whatsapp: string };
 type PedidoRow = {
   id: number;
   cliente_id: number;
-  bolo_id: number;
+  bolo_id: number | null;
   cobertura_id: number | null;
+  curso_id?: number | null;
   data: string;
 };
 
@@ -111,8 +113,9 @@ const toCliente = (r: ClienteRow): Cliente => ({
 const toPedido = (r: PedidoRow): Pedido => ({
   id: r.id,
   clienteId: r.cliente_id,
-  boloId: r.bolo_id,
+  boloId: r.bolo_id ?? null,
   coberturaId: r.cobertura_id,
+  cursoId: r.curso_id ?? null,
   data: r.data,
 });
 
@@ -185,9 +188,9 @@ export const ingredientesApi = {
   },
 };
 
-/* --------------------------- bolos / coberturas --------------------------- */
+/* ----------------------- bolos / coberturas / cursos ---------------------- */
 
-function receitasApi(tabela: "bolos" | "coberturas") {
+function receitasApi(tabela: "bolos" | "coberturas" | "cursos") {
   const path = `/${tabela}`;
   return {
     list: async (): Promise<Bolo[]> => {
@@ -247,6 +250,12 @@ export const coberturasApi = receitasApi("coberturas") as {
   update: (id: number, input: ReceitaInput) => Promise<Cobertura>;
   remove: (id: number) => Promise<void>;
 };
+export const cursosApi = receitasApi("cursos") as {
+  list: () => Promise<Curso[]>;
+  create: (input: ReceitaInput) => Promise<Curso>;
+  update: (id: number, input: ReceitaInput) => Promise<Curso>;
+  remove: (id: number) => Promise<void>;
+};
 
 /* -------------------------------- clientes -------------------------------- */
 
@@ -291,6 +300,7 @@ const pedidoPayload = (input: PedidoInput) => ({
   cliente_id: input.clienteId,
   bolo_id: input.boloId,
   cobertura_id: input.coberturaId,
+  curso_id: input.cursoId,
   data: input.data,
 });
 

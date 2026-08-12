@@ -150,7 +150,7 @@ export async function importarDadosLocais(): Promise<ResumoImportacao> {
 
   for (const pedido of db.pedidos ?? []) {
     const clienteId = mapaCliente.get(pedido.clienteId);
-    const boloId = mapaBolo.get(pedido.boloId);
+    const boloId = pedido.boloId ? mapaBolo.get(pedido.boloId) ?? null : null;
     const coberturaId = pedido.coberturaId
       ? mapaCobertura.get(pedido.coberturaId) ?? null
       : null;
@@ -159,7 +159,7 @@ export async function importarDadosLocais(): Promise<ResumoImportacao> {
     const assinatura = `${clienteId}|${boloId}|${coberturaId ?? 0}|${pedido.data}`;
     if (assinaturas.has(assinatura)) continue;
 
-    await pedidosApi.create({ clienteId, boloId, coberturaId, data: pedido.data });
+    await pedidosApi.create({ clienteId, boloId, coberturaId, cursoId: null, data: pedido.data });
     assinaturas.add(assinatura);
     resumo.pedidos += 1;
   }

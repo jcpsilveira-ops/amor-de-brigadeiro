@@ -30,6 +30,7 @@ import {
   useBolos,
   useClientes,
   useCoberturas,
+  useCursos,
   useIngredientes,
   usePedidos,
 } from "@/lib/queries";
@@ -54,25 +55,30 @@ export const Route = createFileRoute("/pedidos")({
 });
 
 const SEM_COBERTURA = "sem";
+const SEM_BOLO = "sem-bolo";
+const SEM_CURSO = "sem-curso";
 
 function PedidosPage() {
   const { data: pedidos = [], isLoading } = usePedidos();
   const { data: clientes = [] } = useClientes();
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
+  const { data: cursos = [] } = useCursos();
   const { data: ingredientes = [] } = useIngredientes();
 
   const [editando, setEditando] = useState<Pedido | null>(null);
   const [clienteId, setClienteId] = useState("");
-  const [boloId, setBoloId] = useState("");
+  const [boloId, setBoloId] = useState(SEM_BOLO);
   const [coberturaId, setCoberturaId] = useState(SEM_COBERTURA);
+  const [cursoId, setCursoId] = useState(SEM_CURSO);
   const [data, setData] = useState(hojeISO());
   const [tocado, setTocado] = useState(false);
 
   const parsed = pedidoSchema.safeParse({
     clienteId,
-    boloId,
+    boloId: boloId === SEM_BOLO ? null : boloId,
     coberturaId: coberturaId === SEM_COBERTURA ? null : coberturaId,
+    cursoId: cursoId === SEM_CURSO ? null : cursoId,
     data,
   });
   const erros: Record<string, string> = {};
@@ -83,11 +89,13 @@ function PedidosPage() {
   function limpar() {
     setEditando(null);
     setClienteId("");
-    setBoloId("");
+    setBoloId(SEM_BOLO);
     setCoberturaId(SEM_COBERTURA);
+    setCursoId(SEM_CURSO);
     setData(hojeISO());
     setTocado(false);
   }
+
 
   const salvar = useAppMutation({
     mutationFn: async () => {
@@ -108,7 +116,7 @@ function PedidosPage() {
   });
 
   return (
-    <PageShell title="Pedidos" subtitle="Cliente + bolo + cobertura, com custo e preço somados na hora.">
+    <PageShell title="Pedidos" subtitle="Cliente + bolo, cobertura ou curso, com custo e preço somados na hora.">
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <Card>
           <CardHeader>
@@ -146,6 +154,7 @@ function PedidosPage() {
                     <SelectValue placeholder="Selecione o bolo" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value={SEM_BOLO}>Sem bolo</SelectItem>
                     {bolos.map((b) => (
                       <SelectItem key={b.id} value={String(b.id)}>
                         {b.nome} — {brl(b.precoVenda)}
@@ -164,6 +173,22 @@ function PedidosPage() {
                   <SelectContent>
                     <SelectItem value={SEM_COBERTURA}>Sem cobertura</SelectItem>
                     {coberturas.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.nome} — {brl(c.precoVenda)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Curso</Label>
+                <Select value={cursoId} onValueChange={setCursoId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o curso" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SEM_CURSO}>Sem curso</SelectItem>
+                    {cursos.map((c) => (
                       <SelectItem key={c.id} value={String(c.id)}>
                         {c.nome} — {brl(c.precoVenda)}
                       </SelectItem>
@@ -205,7 +230,7 @@ function PedidosPage() {
                   <TableRow>
                     <TableHead>#</TableHead>
                     <TableHead>Cliente</TableHead>
-                    <TableHead>Bolo / Cobertura</TableHead>
+                    <TableHead>Bolo / Cobertura / Curso</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Custo</TableHead>
                     <TableHead>Total</TableHead>
@@ -217,18 +242,24 @@ function PedidosPage() {
                     const cliente = clientes.find((c) => c.id === p.clienteId);
                     const bolo = bolos.find((b) => b.id === p.boloId);
                     const cobertura = coberturas.find((c) => c.id === p.coberturaId);
+                    const curso = cursos.find((c) => c.id === p.cursoId);
                     const custo =
                       (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
-                      (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0);
-                    const total = (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0);
+                      (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
+                      (curso ? calcularCusto(curso.itens, ingredientes) : 0);
+                    const total =
+                      (bolo?.precoVenda ?? 0) +
+                      (cobertura?.precoVenda ?? 0) +
+                      (curso?.precoVenda ?? 0);
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="text-muted-foreground">{p.id}</TableCell>
                         <TableCell className="font-semibold">{cliente?.nome ?? "—"}</TableCell>
                         <TableCell>
-                          <p>{bolo?.nome ?? "—"}</p>
+                          <p>{bolo?.nome ?? "Sem bolo"}</p>
                           <p className="text-xs text-muted-foreground">
                             {cobertura?.nome ?? "Sem cobertura"}
+                            {curso ? ` · Curso: ${curso.nome}` : ""}
                           </p>
                         </TableCell>
                         <TableCell>{dataBR(p.data)}</TableCell>
@@ -243,8 +274,9 @@ function PedidosPage() {
                             onClick={() => {
                               setEditando(p);
                               setClienteId(String(p.clienteId));
-                              setBoloId(String(p.boloId));
+                              setBoloId(p.boloId ? String(p.boloId) : SEM_BOLO);
                               setCoberturaId(p.coberturaId ? String(p.coberturaId) : SEM_COBERTURA);
+                              setCursoId(p.cursoId ? String(p.cursoId) : SEM_CURSO);
                               setData(p.data.slice(0, 10));
                               setTocado(false);
                             }}

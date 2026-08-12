@@ -11,12 +11,22 @@ import {
 import { Label } from "@/components/ui/label";
 import { ImportarDadosLocais } from "@/components/ImportarDadosLocais";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Cake, ClipboardList, Layers, Receipt, TrendingUp, Users, Wheat } from "lucide-react";
+import {
+  Cake,
+  ClipboardList,
+  GraduationCap,
+  Layers,
+  Receipt,
+  TrendingUp,
+  Users,
+  Wheat,
+} from "lucide-react";
 import { brl, calcularCusto, dataBR, margem } from "@/lib/domain";
 import {
   useBolos,
   useClientes,
   useCoberturas,
+  useCursos,
   useDespesas,
   useIngredientes,
   usePedidos,
@@ -46,6 +56,7 @@ const atalhos = [
   { to: "/ingredientes", label: "Ingredientes", icon: Wheat },
   { to: "/bolos", label: "Bolos", icon: Cake },
   { to: "/coberturas", label: "Coberturas", icon: Layers },
+  { to: "/cursos", label: "Cursos", icon: GraduationCap },
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/pedidos", label: "Pedidos", icon: ClipboardList },
 ] as const;
@@ -65,6 +76,7 @@ function Painel() {
   const { data: ingredientes = [] } = useIngredientes();
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
+  const { data: cursos = [] } = useCursos();
   const { data: clientes = [] } = useClientes();
   const { data: todosPedidos = [] } = usePedidos();
   const { data: todasDespesas = [] } = useDespesas();
@@ -92,11 +104,18 @@ function Painel() {
     [todasDespesas, mes],
   );
 
-  const receitaPrevista = pedidos.reduce((acc, p) => {
+  const receitaBolos = pedidos.reduce((acc, p) => {
     const bolo = bolos.find((b) => b.id === p.boloId);
     const cobertura = coberturas.find((c) => c.id === p.coberturaId);
     return acc + (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0);
   }, 0);
+
+  const receitaCursos = pedidos.reduce((acc, p) => {
+    const curso = cursos.find((c) => c.id === p.cursoId);
+    return acc + (curso?.precoVenda ?? 0);
+  }, 0);
+
+  const receitaPrevista = receitaBolos + receitaCursos;
 
   const custoBolos = pedidos.reduce((acc, p) => {
     const bolo = bolos.find((b) => b.id === p.boloId);
@@ -108,7 +127,12 @@ function Painel() {
     return acc + (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0);
   }, 0);
 
-  const custoPrevisto = custoBolos + custoCoberturas;
+  const custoCursos = pedidos.reduce((acc, p) => {
+    const curso = cursos.find((c) => c.id === p.cursoId);
+    return acc + (curso ? calcularCusto(curso.itens, ingredientes) : 0);
+  }, 0);
+
+  const custoPrevisto = custoBolos + custoCoberturas + custoCursos;
 
   const totalOutrasDespesas = despesas.reduce((acc, d) => acc + d.valor, 0);
 
@@ -145,9 +169,12 @@ function Painel() {
 
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Metrica rotulo="Faturamento em pedidos" valor={brl(receitaPrevista)} />
+        <Metrica rotulo="Faturamento em bolos e coberturas" valor={brl(receitaBolos)} />
+        <Metrica rotulo="Faturamento em cursos" valor={brl(receitaCursos)} />
+        <Metrica rotulo="Faturamento total" valor={brl(receitaPrevista)} />
         <Metrica rotulo="Custo de produção dos bolos" valor={brl(custoBolos)} />
         <Metrica rotulo="Custo de produção das coberturas" valor={brl(custoCoberturas)} />
+        <Metrica rotulo="Custo de realização dos cursos" valor={brl(custoCursos)} />
         <Metrica rotulo="Custo total da produção" valor={brl(custoPrevisto)} />
         <Metrica rotulo="Total de outras despesas" valor={brl(totalOutrasDespesas)} />
         <Metrica rotulo="Lucro líquido" valor={brl(lucroLiquido)} />
@@ -254,6 +281,7 @@ function Painel() {
                     const cliente = clientes.find((c) => c.id === p.clienteId);
                     const bolo = bolos.find((b) => b.id === p.boloId);
                     const cobertura = coberturas.find((c) => c.id === p.coberturaId);
+                    const curso = cursos.find((c) => c.id === p.cursoId);
                     return (
                       <div
                         key={p.id}
@@ -262,12 +290,16 @@ function Painel() {
                         <div>
                           <p className="font-semibold">{cliente?.nome ?? "Cliente removido"}</p>
                           <p className="text-xs text-muted-foreground">
-                            {bolo?.nome ?? "—"} · {cobertura?.nome ?? "Sem cobertura"} ·{" "}
-                            {dataBR(p.data)}
+                            {bolo?.nome ?? "Sem bolo"} · {cobertura?.nome ?? "Sem cobertura"}
+                            {curso ? ` · ${curso.nome}` : ""} · {dataBR(p.data)}
                           </p>
                         </div>
                         <p className="font-display text-lg text-primary">
-                          {brl((bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0))}
+                          {brl(
+                            (bolo?.precoVenda ?? 0) +
+                              (cobertura?.precoVenda ?? 0) +
+                              (curso?.precoVenda ?? 0),
+                          )}
                         </p>
                       </div>
                     );
@@ -286,6 +318,7 @@ function Painel() {
                   "/ingredientes": ingredientes.length,
                   "/bolos": bolos.length,
                   "/coberturas": coberturas.length,
+                  "/cursos": cursos.length,
                   "/clientes": clientes.length,
                   "/pedidos": pedidos.length,
                 };
