@@ -25,9 +25,11 @@ import {
   useClientes,
   useCoberturas,
   useCursos,
+  useDespesas,
   useIngredientes,
   usePedidos,
 } from "@/lib/queries";
+
 
 export const Route = createFileRoute("/relatorio")({
   head: () => ({
@@ -54,7 +56,10 @@ export const Route = createFileRoute("/relatorio")({
 const chaveMes = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
+const TODOS = "todos";
+
 const nomeMes = (chave: string) => {
+  if (chave === TODOS) return "Todos os meses";
   const [ano, mes] = chave.split("-");
   const rotulo = new Date(Number(ano), Number(mes) - 1, 1).toLocaleDateString("pt-BR", {
     month: "long",
@@ -72,19 +77,26 @@ function Relatorio() {
   const { data: cursos = [] } = useCursos();
   const { data: clientes = [] } = useClientes();
   const { data: todosPedidos = [] } = usePedidos();
+  const { data: todasDespesas = [] } = useDespesas();
 
   const [mes, setMes] = useState<string>(() => chaveMes(new Date()));
 
+  /** Mesma regra do painel: meses vindos de pedidos e de despesas. */
   const mesesDisponiveis = useMemo(() => {
-    const set = new Set(todosPedidos.map((p) => p.data.slice(0, 7)));
+    const set = new Set([
+      ...todosPedidos.map((p) => p.data.slice(0, 7)),
+      ...todasDespesas.map((d) => d.data.slice(0, 7)),
+    ]);
     set.add(chaveMes(new Date()));
     return Array.from(set).sort((a, b) => b.localeCompare(a));
-  }, [todosPedidos]);
+  }, [todosPedidos, todasDespesas]);
+
+  const noMes = (data: string) => mes === TODOS || data.startsWith(mes);
 
   const linhas = useMemo(
     () =>
       todosPedidos
-        .filter((p) => p.data.startsWith(mes))
+        .filter((p) => noMes(p.data))
         .sort((a, b) => a.data.localeCompare(b.data) || a.id - b.id)
         .map((p) => {
           const bolo = bolos.find((b) => b.id === p.boloId);
@@ -92,18 +104,22 @@ function Relatorio() {
           const curso = cursos.find((c) => c.id === p.cursoId);
           const receita =
             (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0) + (curso?.precoVenda ?? 0);
-          const custo =
-            (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
-            (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
-            (curso ? calcularCusto(curso.itens, ingredientes) : 0);
+          const custoBolo = bolo ? calcularCusto(bolo.itens, ingredientes) : 0;
+          const custoCobertura = cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0;
+          const custoCurso = curso ? calcularCusto(curso.itens, ingredientes) : 0;
+          const custo = custoBolo + custoCobertura + custoCurso;
           return {
             id: p.id,
             data: p.data,
             cliente: clientes.find((c) => c.id === p.clienteId)?.nome ?? "Cliente removido",
-            bolo: bolo?.nome ?? "—",
+            bolo: bolo?.nome ?? "Sem bolo",
             cobertura: cobertura?.nome ?? "Sem cobertura",
             curso: curso?.nome ?? "—",
+            receitaBolos: (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0),
             receitaCurso: curso?.precoVenda ?? 0,
+            custoBolo,
+            custoCobertura,
+            custoCurso,
             receita,
             custo,
             lucro: receita - custo,
@@ -112,15 +128,29 @@ function Relatorio() {
     [todosPedidos, mes, bolos, coberturas, cursos, clientes, ingredientes],
   );
 
-  const totalReceita = linhas.reduce((acc, l) => acc + l.receita, 0);
-  const totalCusto = linhas.reduce((acc, l) => acc + l.custo, 0);
-  const totalCursos = linhas.reduce((acc, l) => acc + l.receitaCurso, 0);
+  const despesas = useMemo(
+    () => todasDespesas.filter((d) => noMes(d.data)),
+    [todasDespesas, mes],
+  );
+
+  /** Mesmos cálculos do painel geral, para não haver divergência entre as telas. */
+  const receitaBolos = linhas.reduce((acc, l) => acc + l.receitaBolos, 0);
+  const receitaCursos = linhas.reduce((acc, l) => acc + l.receitaCurso, 0);
+  const totalReceita = receitaBolos + receitaCursos;
+  const custoBolos = linhas.reduce((acc, l) => acc + l.custoBolo, 0);
+  const custoCoberturas = linhas.reduce((acc, l) => acc + l.custoCobertura, 0);
+  const custoCursos = linhas.reduce((acc, l) => acc + l.custoCurso, 0);
+  const totalCusto = custoBolos + custoCoberturas + custoCursos;
+  const totalOutrasDespesas = despesas.reduce((acc, d) => acc + d.valor, 0);
+  const lucroLiquido = totalReceita - (totalCusto + totalOutrasDespesas);
   const { percentual } = margem(totalReceita, totalCusto);
   const ticket = linhas.length ? totalReceita / linhas.length : 0;
 
-  /** Faturamento por curso no mês escolhido. */
+
+
+  /** Faturamento por curso no período escolhido. */
   const porCurso = useMemo(() => {
-    const pedidosMes = todosPedidos.filter((p) => p.data.startsWith(mes) && p.cursoId);
+    const pedidosMes = todosPedidos.filter((p) => noMes(p.data) && p.cursoId);
     return cursos
       .map((curso) => {
         const inscricoes = pedidosMes.filter((p) => p.cursoId === curso.id).length;
@@ -133,10 +163,10 @@ function Relatorio() {
       .sort((a, b) => b.receita - a.receita);
   }, [todosPedidos, mes, cursos, ingredientes]);
 
-  /** Ingredientes consumidos no mês (bolos + coberturas + cursos). */
+  /** Ingredientes consumidos no período (bolos + coberturas + cursos). */
   const porIngrediente = useMemo(() => {
     const mapa = new Map<number, number>();
-    for (const p of todosPedidos.filter((x) => x.data.startsWith(mes))) {
+    for (const p of todosPedidos.filter((x) => noMes(x.data))) {
       const receitas = [
         bolos.find((b) => b.id === p.boloId),
         coberturas.find((c) => c.id === p.coberturaId),
@@ -165,15 +195,24 @@ function Relatorio() {
       .sort((a, b) => b.custo - a.custo);
   }, [todosPedidos, mes, bolos, coberturas, cursos, ingredientes]);
 
-  /** Evolução mês a mês para acompanhar o desempenho ao longo do tempo. */
+  /** Evolução mês a mês, com outras despesas e lucro líquido (igual ao painel). */
   const evolucao = useMemo(() => {
-    const mapa = new Map<
-      string,
-      { pedidos: number; cursos: number; receita: number; custo: number }
-    >();
+    type Linha = {
+      pedidos: number;
+      cursos: number;
+      receita: number;
+      custo: number;
+      despesas: number;
+    };
+    const mapa = new Map<string, Linha>();
+    const obter = (chave: string) => {
+      const atual =
+        mapa.get(chave) ?? { pedidos: 0, cursos: 0, receita: 0, custo: 0, despesas: 0 };
+      mapa.set(chave, atual);
+      return atual;
+    };
     for (const p of todosPedidos) {
-      const chave = p.data.slice(0, 7);
-      const atual = mapa.get(chave) ?? { pedidos: 0, cursos: 0, receita: 0, custo: 0 };
+      const atual = obter(p.data.slice(0, 7));
       const bolo = bolos.find((b) => b.id === p.boloId);
       const cobertura = coberturas.find((c) => c.id === p.coberturaId);
       const curso = cursos.find((c) => c.id === p.cursoId);
@@ -185,12 +224,15 @@ function Relatorio() {
         (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
         (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
         (curso ? calcularCusto(curso.itens, ingredientes) : 0);
-      mapa.set(chave, atual);
+    }
+    for (const d of todasDespesas) {
+      obter(d.data.slice(0, 7)).despesas += d.valor;
     }
     return Array.from(mapa.entries())
-      .map(([chave, v]) => ({ chave, ...v, lucro: v.receita - v.custo }))
+      .map(([chave, v]) => ({ chave, ...v, lucro: v.receita - v.custo - v.despesas }))
       .sort((a, b) => b.chave.localeCompare(a.chave));
-  }, [todosPedidos, bolos, coberturas, cursos, ingredientes]);
+  }, [todosPedidos, todasDespesas, bolos, coberturas, cursos, ingredientes]);
+
 
   return (
     <PageShell
@@ -207,12 +249,14 @@ function Relatorio() {
               <SelectValue placeholder="Escolha o mês" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={TODOS}>Todos os meses</SelectItem>
               {mesesDisponiveis.map((m) => (
                 <SelectItem key={m} value={m}>
                   {nomeMes(m)}
                 </SelectItem>
               ))}
             </SelectContent>
+
           </Select>
         </div>
         <Button onClick={() => window.print()} className="gap-2">
@@ -227,14 +271,20 @@ function Relatorio() {
           <p className="text-sm text-muted-foreground">{nomeMes(mes)}</p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Metrica rotulo="Faturamento em bolos e coberturas" valor={brl(receitaBolos)} />
+          <Metrica rotulo="Faturamento em cursos" valor={brl(receitaCursos)} />
+          <Metrica rotulo="Faturamento total" valor={brl(totalReceita)} />
+          <Metrica rotulo="Custo de produção dos bolos" valor={brl(custoBolos)} />
+          <Metrica rotulo="Custo de produção das coberturas" valor={brl(custoCoberturas)} />
+          <Metrica rotulo="Custo de realização dos cursos" valor={brl(custoCursos)} />
+          <Metrica rotulo="Custo total da produção" valor={brl(totalCusto)} />
+          <Metrica rotulo="Total de outras despesas" valor={brl(totalOutrasDespesas)} />
+          <Metrica rotulo="Lucro líquido" valor={brl(lucroLiquido)} />
+          <Metrica rotulo="Margem média" valor={`${percentual.toFixed(1)}%`} />
           <Metrica rotulo="Pedidos" valor={String(linhas.length)} />
-          <Metrica rotulo="Faturamento" valor={brl(totalReceita)} />
-          <Metrica rotulo="Faturamento em cursos" valor={brl(totalCursos)} />
-          <Metrica rotulo="Custo de produção" valor={brl(totalCusto)} />
-          <Metrica rotulo="Lucro" valor={brl(totalReceita - totalCusto)} />
-          <Metrica rotulo="Margem" valor={`${percentual.toFixed(1)}%`} />
         </div>
+
 
         <section className="space-y-2">
           <h3 className="font-display text-lg">Faturamento por curso — {nomeMes(mes)}</h3>
@@ -320,14 +370,15 @@ function Relatorio() {
                   <TableHead className="text-right">Pedidos</TableHead>
                   <TableHead className="text-right">Faturamento</TableHead>
                   <TableHead className="text-right">Cursos</TableHead>
-                  <TableHead className="text-right">Custo</TableHead>
-                  <TableHead className="text-right">Lucro</TableHead>
+                  <TableHead className="text-right">Custo produção</TableHead>
+                  <TableHead className="text-right">Outras despesas</TableHead>
+                  <TableHead className="text-right">Lucro líquido</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {evolucao.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       Sem histórico de pedidos ainda.
                     </TableCell>
                   </TableRow>
@@ -339,14 +390,51 @@ function Relatorio() {
                       <TableCell className="text-right">{brl(m.receita)}</TableCell>
                       <TableCell className="text-right">{brl(m.cursos)}</TableCell>
                       <TableCell className="text-right">{brl(m.custo)}</TableCell>
+                      <TableCell className="text-right">{brl(m.despesas)}</TableCell>
                       <TableCell className="text-right">{brl(m.lucro)}</TableCell>
                     </TableRow>
                   ))
+                )}
+
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="font-display text-lg">Outras despesas — {nomeMes(mes)}</h3>
+          <div className="panel overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {despesas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                      Nenhuma despesa registrada em {nomeMes(mes)}.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  [...despesas]
+                    .sort((a, b) => a.data.localeCompare(b.data) || a.id - b.id)
+                    .map((d) => (
+                      <TableRow key={d.id}>
+                        <TableCell>{dataBR(d.data)}</TableCell>
+                        <TableCell className="font-semibold">{d.descricao}</TableCell>
+                        <TableCell className="text-right">{brl(d.valor)}</TableCell>
+                      </TableRow>
+                    ))
                 )}
               </TableBody>
             </Table>
           </div>
         </section>
+
 
         <section className="space-y-2">
           <h3 className="font-display text-lg">Pedidos de {nomeMes(mes)}</h3>
