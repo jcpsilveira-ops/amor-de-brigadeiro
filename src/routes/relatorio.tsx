@@ -370,14 +370,15 @@ function Relatorio() {
                   <TableHead className="text-right">Pedidos</TableHead>
                   <TableHead className="text-right">Faturamento</TableHead>
                   <TableHead className="text-right">Cursos</TableHead>
-                  <TableHead className="text-right">Custo</TableHead>
-                  <TableHead className="text-right">Lucro</TableHead>
+                  <TableHead className="text-right">Custo produção</TableHead>
+                  <TableHead className="text-right">Outras despesas</TableHead>
+                  <TableHead className="text-right">Lucro líquido</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {evolucao.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground">
                       Sem histórico de pedidos ainda.
                     </TableCell>
                   </TableRow>
@@ -389,10 +390,12 @@ function Relatorio() {
                       <TableCell className="text-right">{brl(m.receita)}</TableCell>
                       <TableCell className="text-right">{brl(m.cursos)}</TableCell>
                       <TableCell className="text-right">{brl(m.custo)}</TableCell>
+                      <TableCell className="text-right">{brl(m.despesas)}</TableCell>
                       <TableCell className="text-right">{brl(m.lucro)}</TableCell>
                     </TableRow>
                   ))
                 )}
+
               </TableBody>
             </Table>
           </div>
