@@ -116,7 +116,7 @@ function PedidosPage() {
   });
 
   return (
-    <PageShell title="Pedidos" subtitle="Cliente + bolo + cobertura, com custo e preço somados na hora.">
+    <PageShell title="Pedidos" subtitle="Cliente + bolo, cobertura ou curso, com custo e preço somados na hora.">
       <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
         <Card>
           <CardHeader>
