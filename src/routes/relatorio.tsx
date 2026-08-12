@@ -257,14 +257,20 @@ function Relatorio() {
           <p className="text-sm text-muted-foreground">{nomeMes(mes)}</p>
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <Metrica rotulo="Faturamento em bolos e coberturas" valor={brl(receitaBolos)} />
+          <Metrica rotulo="Faturamento em cursos" valor={brl(receitaCursos)} />
+          <Metrica rotulo="Faturamento total" valor={brl(totalReceita)} />
+          <Metrica rotulo="Custo de produção dos bolos" valor={brl(custoBolos)} />
+          <Metrica rotulo="Custo de produção das coberturas" valor={brl(custoCoberturas)} />
+          <Metrica rotulo="Custo de realização dos cursos" valor={brl(custoCursos)} />
+          <Metrica rotulo="Custo total da produção" valor={brl(totalCusto)} />
+          <Metrica rotulo="Total de outras despesas" valor={brl(totalOutrasDespesas)} />
+          <Metrica rotulo="Lucro líquido" valor={brl(lucroLiquido)} />
+          <Metrica rotulo="Margem média" valor={`${percentual.toFixed(1)}%`} />
           <Metrica rotulo="Pedidos" valor={String(linhas.length)} />
-          <Metrica rotulo="Faturamento" valor={brl(totalReceita)} />
-          <Metrica rotulo="Faturamento em cursos" valor={brl(totalCursos)} />
-          <Metrica rotulo="Custo de produção" valor={brl(totalCusto)} />
-          <Metrica rotulo="Lucro" valor={brl(totalReceita - totalCusto)} />
-          <Metrica rotulo="Margem" valor={`${percentual.toFixed(1)}%`} />
         </div>
+
 
         <section className="space-y-2">
           <h3 className="font-display text-lg">Faturamento por curso — {nomeMes(mes)}</h3>
