@@ -31,6 +31,7 @@ export interface Receita {
 
 export type Bolo = Receita;
 export type Cobertura = Receita;
+export type Curso = Receita;
 
 export interface Cliente {
   id: number;
@@ -48,8 +49,9 @@ export interface Despesa {
 export interface Pedido {
   id: number;
   clienteId: number;
-  boloId: number;
+  boloId: number | null;
   coberturaId: number | null;
+  cursoId: number | null;
   data: string;
 }
 
@@ -107,12 +109,18 @@ export const clienteSchema = z.object({
 });
 export type ClienteInput = z.infer<typeof clienteSchema>;
 
-export const pedidoSchema = z.object({
-  clienteId: z.coerce.number().int().positive("Selecione um cliente"),
-  boloId: z.coerce.number().int().positive("Selecione um bolo"),
-  coberturaId: z.coerce.number().int().positive().nullable(),
-  data: z.string().min(4, "Informe a data do pedido"),
-});
+export const pedidoSchema = z
+  .object({
+    clienteId: z.coerce.number().int().positive("Selecione um cliente"),
+    boloId: z.coerce.number().int().positive().nullable(),
+    coberturaId: z.coerce.number().int().positive().nullable(),
+    cursoId: z.coerce.number().int().positive().nullable(),
+    data: z.string().min(4, "Informe a data do pedido"),
+  })
+  .refine((p) => p.boloId !== null || p.cursoId !== null, {
+    message: "Selecione um bolo ou um curso",
+    path: ["boloId"],
+  });
 export type PedidoInput = z.infer<typeof pedidoSchema>;
 
 export const despesaSchema = z.object({

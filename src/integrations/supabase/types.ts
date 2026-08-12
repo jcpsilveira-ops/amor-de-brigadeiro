@@ -83,6 +83,30 @@ export type Database = {
         }
         Relationships: []
       }
+      cursos: {
+        Row: {
+          criado_em: string
+          id: number
+          itens: Json
+          nome: string
+          preco_venda: number
+        }
+        Insert: {
+          criado_em?: string
+          id?: number
+          itens?: Json
+          nome: string
+          preco_venda?: number
+        }
+        Update: {
+          criado_em?: string
+          id?: number
+          itens?: Json
+          nome?: string
+          preco_venda?: number
+        }
+        Relationships: []
+      }
       ingredientes: {
         Row: {
           criado_em: string
@@ -139,26 +163,29 @@ export type Database = {
       }
       pedidos: {
         Row: {
-          bolo_id: number
+          bolo_id: number | null
           cliente_id: number
           cobertura_id: number | null
           criado_em: string
+          curso_id: number | null
           data: string
           id: number
         }
         Insert: {
-          bolo_id: number
+          bolo_id?: number | null
           cliente_id: number
           cobertura_id?: number | null
           criado_em?: string
+          curso_id?: number | null
           data?: string
           id?: number
         }
         Update: {
-          bolo_id?: number
+          bolo_id?: number | null
           cliente_id?: number
           cobertura_id?: number | null
           criado_em?: string
+          curso_id?: number | null
           data?: string
           id?: number
         }
@@ -182,6 +209,13 @@ export type Database = {
             columns: ["cobertura_id"]
             isOneToOne: false
             referencedRelation: "coberturas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pedidos_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "cursos"
             referencedColumns: ["id"]
           },
         ]
