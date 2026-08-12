@@ -148,9 +148,9 @@ function Relatorio() {
 
 
 
-  /** Faturamento por curso no mês escolhido. */
+  /** Faturamento por curso no período escolhido. */
   const porCurso = useMemo(() => {
-    const pedidosMes = todosPedidos.filter((p) => p.data.startsWith(mes) && p.cursoId);
+    const pedidosMes = todosPedidos.filter((p) => noMes(p.data) && p.cursoId);
     return cursos
       .map((curso) => {
         const inscricoes = pedidosMes.filter((p) => p.cursoId === curso.id).length;
@@ -163,10 +163,10 @@ function Relatorio() {
       .sort((a, b) => b.receita - a.receita);
   }, [todosPedidos, mes, cursos, ingredientes]);
 
-  /** Ingredientes consumidos no mês (bolos + coberturas + cursos). */
+  /** Ingredientes consumidos no período (bolos + coberturas + cursos). */
   const porIngrediente = useMemo(() => {
     const mapa = new Map<number, number>();
-    for (const p of todosPedidos.filter((x) => x.data.startsWith(mes))) {
+    for (const p of todosPedidos.filter((x) => noMes(x.data))) {
       const receitas = [
         bolos.find((b) => b.id === p.boloId),
         coberturas.find((c) => c.id === p.coberturaId),
@@ -195,15 +195,24 @@ function Relatorio() {
       .sort((a, b) => b.custo - a.custo);
   }, [todosPedidos, mes, bolos, coberturas, cursos, ingredientes]);
 
-  /** Evolução mês a mês para acompanhar o desempenho ao longo do tempo. */
+  /** Evolução mês a mês, com outras despesas e lucro líquido (igual ao painel). */
   const evolucao = useMemo(() => {
-    const mapa = new Map<
-      string,
-      { pedidos: number; cursos: number; receita: number; custo: number }
-    >();
+    type Linha = {
+      pedidos: number;
+      cursos: number;
+      receita: number;
+      custo: number;
+      despesas: number;
+    };
+    const mapa = new Map<string, Linha>();
+    const obter = (chave: string) => {
+      const atual =
+        mapa.get(chave) ?? { pedidos: 0, cursos: 0, receita: 0, custo: 0, despesas: 0 };
+      mapa.set(chave, atual);
+      return atual;
+    };
     for (const p of todosPedidos) {
-      const chave = p.data.slice(0, 7);
-      const atual = mapa.get(chave) ?? { pedidos: 0, cursos: 0, receita: 0, custo: 0 };
+      const atual = obter(p.data.slice(0, 7));
       const bolo = bolos.find((b) => b.id === p.boloId);
       const cobertura = coberturas.find((c) => c.id === p.coberturaId);
       const curso = cursos.find((c) => c.id === p.cursoId);
@@ -215,12 +224,15 @@ function Relatorio() {
         (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
         (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
         (curso ? calcularCusto(curso.itens, ingredientes) : 0);
-      mapa.set(chave, atual);
+    }
+    for (const d of todasDespesas) {
+      obter(d.data.slice(0, 7)).despesas += d.valor;
     }
     return Array.from(mapa.entries())
-      .map(([chave, v]) => ({ chave, ...v, lucro: v.receita - v.custo }))
+      .map(([chave, v]) => ({ chave, ...v, lucro: v.receita - v.custo - v.despesas }))
       .sort((a, b) => b.chave.localeCompare(a.chave));
-  }, [todosPedidos, bolos, coberturas, cursos, ingredientes]);
+  }, [todosPedidos, todasDespesas, bolos, coberturas, cursos, ingredientes]);
+
 
   return (
     <PageShell
