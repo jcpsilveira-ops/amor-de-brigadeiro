@@ -56,7 +56,10 @@ export const Route = createFileRoute("/relatorio")({
 const chaveMes = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
+const TODOS = "todos";
+
 const nomeMes = (chave: string) => {
+  if (chave === TODOS) return "Todos os meses";
   const [ano, mes] = chave.split("-");
   const rotulo = new Date(Number(ano), Number(mes) - 1, 1).toLocaleDateString("pt-BR", {
     month: "long",
@@ -74,19 +77,26 @@ function Relatorio() {
   const { data: cursos = [] } = useCursos();
   const { data: clientes = [] } = useClientes();
   const { data: todosPedidos = [] } = usePedidos();
+  const { data: todasDespesas = [] } = useDespesas();
 
   const [mes, setMes] = useState<string>(() => chaveMes(new Date()));
 
+  /** Mesma regra do painel: meses vindos de pedidos e de despesas. */
   const mesesDisponiveis = useMemo(() => {
-    const set = new Set(todosPedidos.map((p) => p.data.slice(0, 7)));
+    const set = new Set([
+      ...todosPedidos.map((p) => p.data.slice(0, 7)),
+      ...todasDespesas.map((d) => d.data.slice(0, 7)),
+    ]);
     set.add(chaveMes(new Date()));
     return Array.from(set).sort((a, b) => b.localeCompare(a));
-  }, [todosPedidos]);
+  }, [todosPedidos, todasDespesas]);
+
+  const noMes = (data: string) => mes === TODOS || data.startsWith(mes);
 
   const linhas = useMemo(
     () =>
       todosPedidos
-        .filter((p) => p.data.startsWith(mes))
+        .filter((p) => noMes(p.data))
         .sort((a, b) => a.data.localeCompare(b.data) || a.id - b.id)
         .map((p) => {
           const bolo = bolos.find((b) => b.id === p.boloId);
@@ -94,18 +104,22 @@ function Relatorio() {
           const curso = cursos.find((c) => c.id === p.cursoId);
           const receita =
             (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0) + (curso?.precoVenda ?? 0);
-          const custo =
-            (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
-            (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
-            (curso ? calcularCusto(curso.itens, ingredientes) : 0);
+          const custoBolo = bolo ? calcularCusto(bolo.itens, ingredientes) : 0;
+          const custoCobertura = cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0;
+          const custoCurso = curso ? calcularCusto(curso.itens, ingredientes) : 0;
+          const custo = custoBolo + custoCobertura + custoCurso;
           return {
             id: p.id,
             data: p.data,
             cliente: clientes.find((c) => c.id === p.clienteId)?.nome ?? "Cliente removido",
-            bolo: bolo?.nome ?? "—",
+            bolo: bolo?.nome ?? "Sem bolo",
             cobertura: cobertura?.nome ?? "Sem cobertura",
             curso: curso?.nome ?? "—",
+            receitaBolos: (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0),
             receitaCurso: curso?.precoVenda ?? 0,
+            custoBolo,
+            custoCobertura,
+            custoCurso,
             receita,
             custo,
             lucro: receita - custo,
@@ -114,11 +128,25 @@ function Relatorio() {
     [todosPedidos, mes, bolos, coberturas, cursos, clientes, ingredientes],
   );
 
-  const totalReceita = linhas.reduce((acc, l) => acc + l.receita, 0);
-  const totalCusto = linhas.reduce((acc, l) => acc + l.custo, 0);
-  const totalCursos = linhas.reduce((acc, l) => acc + l.receitaCurso, 0);
+  const despesas = useMemo(
+    () => todasDespesas.filter((d) => noMes(d.data)),
+    [todasDespesas, mes],
+  );
+
+  /** Mesmos cálculos do painel geral, para não haver divergência entre as telas. */
+  const receitaBolos = linhas.reduce((acc, l) => acc + l.receitaBolos, 0);
+  const receitaCursos = linhas.reduce((acc, l) => acc + l.receitaCurso, 0);
+  const totalReceita = receitaBolos + receitaCursos;
+  const custoBolos = linhas.reduce((acc, l) => acc + l.custoBolo, 0);
+  const custoCoberturas = linhas.reduce((acc, l) => acc + l.custoCobertura, 0);
+  const custoCursos = linhas.reduce((acc, l) => acc + l.custoCurso, 0);
+  const totalCusto = custoBolos + custoCoberturas + custoCursos;
+  const totalOutrasDespesas = despesas.reduce((acc, d) => acc + d.valor, 0);
+  const lucroLiquido = totalReceita - (totalCusto + totalOutrasDespesas);
   const { percentual } = margem(totalReceita, totalCusto);
   const ticket = linhas.length ? totalReceita / linhas.length : 0;
+
+
 
   /** Faturamento por curso no mês escolhido. */
   const porCurso = useMemo(() => {
