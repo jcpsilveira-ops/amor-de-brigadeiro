@@ -25,9 +25,11 @@ import {
   useClientes,
   useCoberturas,
   useCursos,
+  useDespesas,
   useIngredientes,
   usePedidos,
 } from "@/lib/queries";
+
 
 export const Route = createFileRoute("/relatorio")({
   head: () => ({
