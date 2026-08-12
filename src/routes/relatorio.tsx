@@ -237,12 +237,14 @@ function Relatorio() {
               <SelectValue placeholder="Escolha o mês" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={TODOS}>Todos os meses</SelectItem>
               {mesesDisponiveis.map((m) => (
                 <SelectItem key={m} value={m}>
                   {nomeMes(m)}
                 </SelectItem>
               ))}
             </SelectContent>
+
           </Select>
         </div>
         <Button onClick={() => window.print()} className="gap-2">
