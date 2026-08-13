@@ -184,47 +184,10 @@ function IngredientesPage() {
                 />
                 <FieldError message={(tocado || custo !== "") ? erros["custoUnitario"] : undefined} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="estoque">Estoque disponível</Label>
-                  <Input
-                    id="estoque"
-                    inputMode="decimal"
-                    value={estoque}
-                    onChange={(e) => setEstoque(e.target.value.replace(",", "."))}
-                    placeholder="0"
-                  />
-                  <FieldError message={estoque !== "" ? erros["estoqueQuantidade"] : undefined} />
-                </div>
-                <div>
-                  <Label htmlFor="estoque-unidade">Unidade do estoque</Label>
-                  <Select
-                    value={estoqueUnidade || unidade}
-                    onValueChange={(v) => setEstoqueUnidade(v as Unidade)}
-                  >
-                    <SelectTrigger id="estoque-unidade">
-                      <SelectValue placeholder="Selecione a unidade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {UNIDADES.map((u) => (
-                        <SelectItem key={`estoque-${u}`} value={u}>
-                          {u}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError message={tocado ? erros["estoqueUnidade"] : undefined} />
-                </div>
-              </div>
-              {avisoForm ? (
-                <p
-                  role="alert"
-                  className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive"
-                >
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>{avisoForm}</span>
-                </p>
-              ) : null}
+              <p className="text-xs text-muted-foreground">
+                As quantidades em estoque são gerenciadas na tela Estoque.
+              </p>
+
               <div className="flex gap-2">
                 <Button type="submit" disabled={salvar.isPending}>
                   {editando ? "Salvar alterações" : "Cadastrar"}
