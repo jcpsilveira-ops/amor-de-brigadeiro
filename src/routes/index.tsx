@@ -22,6 +22,7 @@ import {
   Wheat,
 } from "lucide-react";
 import { brl, calcularCusto, dataBR, margem } from "@/lib/domain";
+import { converterQuantidade } from "@/lib/estoque";
 import {
   useBolos,
   useClientes,
@@ -137,6 +138,15 @@ function Painel() {
   const totalOutrasDespesas = despesas.reduce((acc, d) => acc + d.valor, 0);
 
   const lucroLiquido = receitaPrevista - (custoPrevisto + totalOutrasDespesas);
+
+  const valorEstoque = ingredientes.reduce((acc, ing) => {
+    const qtdNaUnidadeDeCompra = converterQuantidade(
+      ing.estoqueQuantidade,
+      ing.estoqueUnidade ?? ing.unidade,
+      ing.unidade,
+    );
+    return acc + (qtdNaUnidadeDeCompra ?? 0) * ing.custoUnitario;
+  }, 0);
 
   const { percentual } = margem(receitaPrevista, custoPrevisto);
 
