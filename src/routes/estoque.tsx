@@ -76,22 +76,23 @@ function EstoquePage() {
       ing: Ingrediente;
       quantidade: number;
       unidade: Unidade;
-    }) =>
-      ingredientesApi.update(ing.id, {
+    }) => {
+      const salvo = await ingredientesApi.update(ing.id, {
         nome: ing.nome,
         unidade: ing.unidade,
         custoUnitario: ing.custoUnitario,
         estoqueQuantidade: quantidade,
         estoqueUnidade: unidade,
-      }),
-    invalidate: [keys.ingredientes],
-    successMessage: "Estoque atualizado!",
-    onSuccess: (_data, vars) =>
+      });
       setRascunhos((prev) => {
         const proximo = { ...prev };
-        delete proximo[vars.ing.id];
+        delete proximo[ing.id];
         return proximo;
-      }),
+      });
+      return salvo;
+    },
+    invalidate: [keys.ingredientes],
+    successMessage: "Estoque atualizado!",
   });
 
   const valorDe = (ing: Ingrediente) =>
