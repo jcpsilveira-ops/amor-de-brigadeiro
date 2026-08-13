@@ -261,8 +261,8 @@ function IngredientesPage() {
                             setNome(i.nome);
                             setUnidade(i.unidade);
                             setCusto(String(i.custoUnitario));
-                            setEstoque(String(i.estoqueQuantidade));
-                            setEstoqueUnidade(i.estoqueUnidade);
+                            setTocado(false);
+
                             setTocado(false);
                           }}
                         >
