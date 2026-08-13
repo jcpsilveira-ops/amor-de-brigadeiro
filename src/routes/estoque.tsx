@@ -158,7 +158,7 @@ function EstoquePage() {
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Carregando estoque…</p>
           ) : ingredientes.length === 0 ? (
-            <EmptyState mensagem="Nenhum ingrediente cadastrado ainda." />
+            <EmptyState message="Nenhum ingrediente cadastrado ainda." />
           ) : (
             <div className="overflow-x-auto">
               <Table>
