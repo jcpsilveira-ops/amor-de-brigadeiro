@@ -15,6 +15,7 @@ import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CoberturasRouteImport } from './routes/coberturas'
 import { Route as CursosRouteImport } from './routes/cursos'
 import { Route as DespesasRouteImport } from './routes/despesas'
+import { Route as EstoqueRouteImport } from './routes/estoque'
 import { Route as IngredientesRouteImport } from './routes/ingredientes'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as PedidosRouteImport } from './routes/pedidos'
@@ -51,6 +52,11 @@ const CursosRoute = CursosRouteImport.update({
 const DespesasRoute = DespesasRouteImport.update({
   id: '/despesas',
   path: '/despesas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EstoqueRoute = EstoqueRouteImport.update({
+  id: '/estoque',
+  path: '/estoque',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IngredientesRoute = IngredientesRouteImport.update({
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/coberturas': typeof CoberturasRoute
   '/cursos': typeof CursosRoute
   '/despesas': typeof DespesasRoute
+  '/estoque': typeof EstoqueRoute
   '/ingredientes': typeof IngredientesRoute
   '/mcp': typeof McpRoute
   '/pedidos': typeof PedidosRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/coberturas': typeof CoberturasRoute
   '/cursos': typeof CursosRoute
   '/despesas': typeof DespesasRoute
+  '/estoque': typeof EstoqueRoute
   '/ingredientes': typeof IngredientesRoute
   '/mcp': typeof McpRoute
   '/pedidos': typeof PedidosRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/coberturas': typeof CoberturasRoute
   '/cursos': typeof CursosRoute
   '/despesas': typeof DespesasRoute
+  '/estoque': typeof EstoqueRoute
   '/ingredientes': typeof IngredientesRoute
   '/mcp': typeof McpRoute
   '/pedidos': typeof PedidosRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/coberturas'
     | '/cursos'
     | '/despesas'
+    | '/estoque'
     | '/ingredientes'
     | '/mcp'
     | '/pedidos'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/coberturas'
     | '/cursos'
     | '/despesas'
+    | '/estoque'
     | '/ingredientes'
     | '/mcp'
     | '/pedidos'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/coberturas'
     | '/cursos'
     | '/despesas'
+    | '/estoque'
     | '/ingredientes'
     | '/mcp'
     | '/pedidos'
@@ -193,6 +205,7 @@ export interface RootRouteChildren {
   CoberturasRoute: typeof CoberturasRoute
   CursosRoute: typeof CursosRoute
   DespesasRoute: typeof DespesasRoute
+  EstoqueRoute: typeof EstoqueRoute
   IngredientesRoute: typeof IngredientesRoute
   McpRoute: typeof McpRoute
   PedidosRoute: typeof PedidosRoute
@@ -244,6 +257,13 @@ declare module '@tanstack/react-router' {
       path: '/despesas'
       fullPath: '/despesas'
       preLoaderRoute: typeof DespesasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/estoque': {
+      id: '/estoque'
+      path: '/estoque'
+      fullPath: '/estoque'
+      preLoaderRoute: typeof EstoqueRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ingredientes': {
@@ -305,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   CoberturasRoute: CoberturasRoute,
   CursosRoute: CursosRoute,
   DespesasRoute: DespesasRoute,
+  EstoqueRoute: EstoqueRoute,
   IngredientesRoute: IngredientesRoute,
   McpRoute: McpRoute,
   PedidosRoute: PedidosRoute,
