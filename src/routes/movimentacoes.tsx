@@ -120,6 +120,46 @@ function MovimentacoesPage() {
     return [...mapa.entries()].sort((a, b) => b[1].reposicao - a[1].reposicao);
   }, [lista]);
 
+  const pedidoDoDetalhe = useMemo(() => {
+    const id = Number(detalhe?.observacao?.match(/#(\d+)/)?.[1]);
+    return Number.isFinite(id) ? pedidos.find((p) => p.id === id) ?? null : null;
+  }, [detalhe, pedidos]);
+
+  const boloDoDetalhe = pedidoDoDetalhe
+    ? bolos.find((b) => b.id === pedidoDoDetalhe.boloId) ?? null
+    : null;
+  const coberturaDoDetalhe = pedidoDoDetalhe
+    ? coberturas.find((c) => c.id === pedidoDoDetalhe.coberturaId) ?? null
+    : null;
+
+  const itensDoDetalhe = useMemo(() => {
+    const porId = new Map(ingredientes.map((i) => [i.id, i]));
+    const linhas: {
+      ingredienteId: number;
+      nome: string;
+      receita: string;
+      quantidade: number;
+      unidade: string;
+      custo: number;
+    }[] = [];
+    for (const receita of [boloDoDetalhe, coberturaDoDetalhe]) {
+      for (const item of receita?.itens ?? []) {
+        const ing = porId.get(item.ingredienteId);
+        linhas.push({
+          ingredienteId: item.ingredienteId,
+          nome: ing?.nome ?? `#${item.ingredienteId}`,
+          receita: receita?.nome ?? "—",
+          quantidade: item.quantidade,
+          unidade: ing?.unidade ?? "",
+          custo: Math.round((ing?.custoUnitario ?? 0) * item.quantidade * 100) / 100,
+        });
+      }
+    }
+    return linhas;
+  }, [boloDoDetalhe, coberturaDoDetalhe, ingredientes]);
+
+  const totalDoDetalhe = itensDoDetalhe.reduce((a, i) => a + i.custo, 0);
+
   return (
     <PageShell
       title="Movimentações de estoque"
