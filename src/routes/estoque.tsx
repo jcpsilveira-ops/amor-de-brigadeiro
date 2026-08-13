@@ -20,9 +20,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Minus, PackageCheck, Plus, Save } from "lucide-react";
-import { brl, UNIDADES, type Ingrediente, type Unidade } from "@/lib/domain";
+import { brl, hojeISO, UNIDADES, type Ingrediente, type Unidade } from "@/lib/domain";
 import { converterQuantidade, qtd } from "@/lib/estoque";
-import { ingredientesApi, keys, useAppMutation, useIngredientes } from "@/lib/queries";
+import {
+  ingredientesApi,
+  keys,
+  movimentacoesApi,
+  useAppMutation,
+  useIngredientes,
+} from "@/lib/queries";
 
 export const Route = createFileRoute("/estoque")({
   head: () => ({
