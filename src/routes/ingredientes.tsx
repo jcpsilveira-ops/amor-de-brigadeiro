@@ -228,28 +228,6 @@ function IngredientesPage() {
                       <TableCell className="font-semibold">{i.nome}</TableCell>
                       <TableCell className="text-muted-foreground">{i.unidade}</TableCell>
                       <TableCell>{brl(i.custoUnitario)}</TableCell>
-                      <TableCell>
-                        <span
-                          className={
-                            analise.porIngrediente.get(i.id)?.insuficiente
-                              ? "font-semibold text-destructive"
-                              : undefined
-                          }
-                        >
-                          {i.estoqueQuantidade.toLocaleString("pt-BR")} {i.estoqueUnidade}
-                        </span>
-                        {analise.porIngrediente.get(i.id)?.insuficiente ? (
-                          <span
-                            className="mt-1 flex items-center gap-1 text-xs font-medium text-destructive"
-                            title={`Faltam ${qtd(
-                              analise.porIngrediente.get(i.id)!.faltando,
-                            )} ${i.unidade} para o próximo pedido`}
-                          >
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                            Faltam {qtd(analise.porIngrediente.get(i.id)!.faltando)} {i.unidade}
-                          </span>
-                        ) : null}
-                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           type="button"
@@ -262,6 +240,7 @@ function IngredientesPage() {
                             setUnidade(i.unidade);
                             setCusto(String(i.custoUnitario));
                             setTocado(false);
+
 
                             setTocado(false);
                           }}
