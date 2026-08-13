@@ -218,8 +218,8 @@ function IngredientesPage() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Unidade</TableHead>
                     <TableHead>Custo</TableHead>
-                    <TableHead>Estoque</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
+
                   </TableRow>
                 </TableHeader>
                 <TableBody>
