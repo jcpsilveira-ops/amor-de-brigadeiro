@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pencil } from "lucide-react";
+import { registrarConsumoDoPedido } from "@/lib/consumo-pedido";
+
 import {
   brl,
   calcularCusto,
