@@ -62,16 +62,15 @@ function IngredientesPage() {
   const [nome, setNome] = useState("");
   const [unidade, setUnidade] = useState<Unidade | "">("");
   const [custo, setCusto] = useState("");
-  const [estoque, setEstoque] = useState("");
-  const [estoqueUnidade, setEstoqueUnidade] = useState<Unidade | "">("");
   const [tocado, setTocado] = useState(false);
 
   const parsed = ingredienteSchema.safeParse({
     nome,
     unidade,
     custoUnitario: custo,
-    estoqueQuantidade: estoque === "" ? 0 : estoque,
-    estoqueUnidade: estoqueUnidade === "" ? unidade : estoqueUnidade,
+    // Estoque é gerenciado na tela de Estoque; aqui apenas preservamos o valor atual.
+    estoqueQuantidade: editando?.estoqueQuantidade ?? 0,
+    estoqueUnidade: editando?.estoqueUnidade ?? (unidade || undefined),
   });
   const erros: Record<string, string> = {};
   if (!parsed.success) {
@@ -80,34 +79,14 @@ function IngredientesPage() {
 
   const analise = analisarEstoqueProximoPedido(ingredientes, pedidos, bolos, coberturas);
 
-  // Aviso ao editar: o estoque informado no formulário cobre o próximo pedido?
-  const necessidadeEditando = editando ? analise.porIngrediente.get(editando.id) : undefined;
-  const unidadeCompra = (unidade || editando?.unidade) as typeof UNIDADES[number] | undefined;
-  const estoqueDigitado = estoque === "" ? 0 : Number(estoque);
-  const disponivelForm =
-    unidadeCompra && (estoqueUnidade || unidadeCompra)
-      ? converterQuantidade(
-          Number.isFinite(estoqueDigitado) ? estoqueDigitado : 0,
-          (estoqueUnidade || unidadeCompra) as typeof UNIDADES[number],
-          unidadeCompra,
-        )
-      : null;
-  const avisoForm =
-    necessidadeEditando && disponivelForm !== null && disponivelForm < necessidadeEditando.necessario
-      ? `Estoque abaixo do necessário para o próximo pedido: precisa de ${qtd(
-          necessidadeEditando.necessario,
-        )} ${unidadeCompra} e faltam ${qtd(necessidadeEditando.necessario - disponivelForm)} ${unidadeCompra}.`
-      : null;
-
   function limpar() {
     setEditando(null);
     setNome("");
     setUnidade("");
     setCusto("");
-    setEstoque("");
-    setEstoqueUnidade("");
     setTocado(false);
   }
+
 
   const salvar = useAppMutation({
     mutationFn: async () => {
