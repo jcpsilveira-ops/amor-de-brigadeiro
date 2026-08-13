@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pencil } from "lucide-react";
+import { registrarConsumoDoPedido } from "@/lib/consumo-pedido";
+
 import {
   brl,
   calcularCusto,
@@ -100,14 +102,26 @@ function PedidosPage() {
   const salvar = useAppMutation({
     mutationFn: async () => {
       if (!parsed.success) return;
-      return editando
-        ? pedidosApi.update(editando.id, parsed.data)
-        : pedidosApi.create(parsed.data);
+      if (editando) return pedidosApi.update(editando.id, parsed.data);
+      const criado = await pedidosApi.create(parsed.data);
+      const bolo = bolos.find((b) => b.id === criado.boloId);
+      const cobertura = coberturas.find((c) => c.id === criado.coberturaId);
+      const partes = [bolo?.nome, cobertura?.nome].filter(Boolean).join(" + ");
+      await registrarConsumoDoPedido({
+        data: criado.data,
+        descricao: `Produção do pedido #${criado.id}${partes ? ` — ${partes}` : ""}`,
+        ingredientes,
+        receitas: [bolo, cobertura],
+      });
+      return criado;
     },
-    invalidate: [keys.pedidos],
-    successMessage: editando ? "Pedido atualizado!" : "Pedido registrado!",
+    invalidate: [keys.pedidos, keys.ingredientes, keys.movimentacoes],
+    successMessage: editando
+      ? "Pedido atualizado!"
+      : "Pedido registrado e estoque baixado!",
     onSuccess: limpar,
   });
+
 
   const excluir = useAppMutation({
     mutationFn: (id: number) => pedidosApi.remove(id),
