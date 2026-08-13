@@ -62,16 +62,15 @@ function IngredientesPage() {
   const [nome, setNome] = useState("");
   const [unidade, setUnidade] = useState<Unidade | "">("");
   const [custo, setCusto] = useState("");
-  const [estoque, setEstoque] = useState("");
-  const [estoqueUnidade, setEstoqueUnidade] = useState<Unidade | "">("");
   const [tocado, setTocado] = useState(false);
 
   const parsed = ingredienteSchema.safeParse({
     nome,
     unidade,
     custoUnitario: custo,
-    estoqueQuantidade: estoque === "" ? 0 : estoque,
-    estoqueUnidade: estoqueUnidade === "" ? unidade : estoqueUnidade,
+    // Estoque é gerenciado na tela de Estoque; aqui apenas preservamos o valor atual.
+    estoqueQuantidade: editando?.estoqueQuantidade ?? 0,
+    estoqueUnidade: editando?.estoqueUnidade ?? (unidade || undefined),
   });
   const erros: Record<string, string> = {};
   if (!parsed.success) {
@@ -80,34 +79,14 @@ function IngredientesPage() {
 
   const analise = analisarEstoqueProximoPedido(ingredientes, pedidos, bolos, coberturas);
 
-  // Aviso ao editar: o estoque informado no formulário cobre o próximo pedido?
-  const necessidadeEditando = editando ? analise.porIngrediente.get(editando.id) : undefined;
-  const unidadeCompra = (unidade || editando?.unidade) as typeof UNIDADES[number] | undefined;
-  const estoqueDigitado = estoque === "" ? 0 : Number(estoque);
-  const disponivelForm =
-    unidadeCompra && (estoqueUnidade || unidadeCompra)
-      ? converterQuantidade(
-          Number.isFinite(estoqueDigitado) ? estoqueDigitado : 0,
-          (estoqueUnidade || unidadeCompra) as typeof UNIDADES[number],
-          unidadeCompra,
-        )
-      : null;
-  const avisoForm =
-    necessidadeEditando && disponivelForm !== null && disponivelForm < necessidadeEditando.necessario
-      ? `Estoque abaixo do necessário para o próximo pedido: precisa de ${qtd(
-          necessidadeEditando.necessario,
-        )} ${unidadeCompra} e faltam ${qtd(necessidadeEditando.necessario - disponivelForm)} ${unidadeCompra}.`
-      : null;
-
   function limpar() {
     setEditando(null);
     setNome("");
     setUnidade("");
     setCusto("");
-    setEstoque("");
-    setEstoqueUnidade("");
     setTocado(false);
   }
+
 
   const salvar = useAppMutation({
     mutationFn: async () => {
@@ -205,47 +184,10 @@ function IngredientesPage() {
                 />
                 <FieldError message={(tocado || custo !== "") ? erros["custoUnitario"] : undefined} />
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label htmlFor="estoque">Estoque disponível</Label>
-                  <Input
-                    id="estoque"
-                    inputMode="decimal"
-                    value={estoque}
-                    onChange={(e) => setEstoque(e.target.value.replace(",", "."))}
-                    placeholder="0"
-                  />
-                  <FieldError message={estoque !== "" ? erros["estoqueQuantidade"] : undefined} />
-                </div>
-                <div>
-                  <Label htmlFor="estoque-unidade">Unidade do estoque</Label>
-                  <Select
-                    value={estoqueUnidade || unidade}
-                    onValueChange={(v) => setEstoqueUnidade(v as Unidade)}
-                  >
-                    <SelectTrigger id="estoque-unidade">
-                      <SelectValue placeholder="Selecione a unidade" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {UNIDADES.map((u) => (
-                        <SelectItem key={`estoque-${u}`} value={u}>
-                          {u}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FieldError message={tocado ? erros["estoqueUnidade"] : undefined} />
-                </div>
-              </div>
-              {avisoForm ? (
-                <p
-                  role="alert"
-                  className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/10 p-2 text-sm text-destructive"
-                >
-                  <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
-                  <span>{avisoForm}</span>
-                </p>
-              ) : null}
+              <p className="text-xs text-muted-foreground">
+                As quantidades em estoque são gerenciadas na tela Estoque.
+              </p>
+
               <div className="flex gap-2">
                 <Button type="submit" disabled={salvar.isPending}>
                   {editando ? "Salvar alterações" : "Cadastrar"}
@@ -276,9 +218,9 @@ function IngredientesPage() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Unidade</TableHead>
                     <TableHead>Custo</TableHead>
-                    <TableHead>Estoque</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
+
                 </TableHeader>
                 <TableBody>
                   {ingredientes.map((i) => (
@@ -286,28 +228,6 @@ function IngredientesPage() {
                       <TableCell className="font-semibold">{i.nome}</TableCell>
                       <TableCell className="text-muted-foreground">{i.unidade}</TableCell>
                       <TableCell>{brl(i.custoUnitario)}</TableCell>
-                      <TableCell>
-                        <span
-                          className={
-                            analise.porIngrediente.get(i.id)?.insuficiente
-                              ? "font-semibold text-destructive"
-                              : undefined
-                          }
-                        >
-                          {i.estoqueQuantidade.toLocaleString("pt-BR")} {i.estoqueUnidade}
-                        </span>
-                        {analise.porIngrediente.get(i.id)?.insuficiente ? (
-                          <span
-                            className="mt-1 flex items-center gap-1 text-xs font-medium text-destructive"
-                            title={`Faltam ${qtd(
-                              analise.porIngrediente.get(i.id)!.faltando,
-                            )} ${i.unidade} para o próximo pedido`}
-                          >
-                            <AlertTriangle className="h-3.5 w-3.5" />
-                            Faltam {qtd(analise.porIngrediente.get(i.id)!.faltando)} {i.unidade}
-                          </span>
-                        ) : null}
-                      </TableCell>
                       <TableCell className="text-right">
                         <Button
                           type="button"
@@ -319,8 +239,9 @@ function IngredientesPage() {
                             setNome(i.nome);
                             setUnidade(i.unidade);
                             setCusto(String(i.custoUnitario));
-                            setEstoque(String(i.estoqueQuantidade));
-                            setEstoqueUnidade(i.estoqueUnidade);
+                            setTocado(false);
+
+
                             setTocado(false);
                           }}
                         >
