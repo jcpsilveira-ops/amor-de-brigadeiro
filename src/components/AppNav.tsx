@@ -6,6 +6,7 @@ import {
   GraduationCap,
   Home,
   Layers,
+  PackageCheck,
   Users,
   Wallet,
   Wheat,
@@ -15,6 +16,7 @@ import logoAsset from "@/assets/logo.jpg.asset.json";
 const links = [
   { to: "/", label: "Painel", icon: Home },
   { to: "/ingredientes", label: "Ingredientes", icon: Wheat },
+  { to: "/estoque", label: "Estoque", icon: PackageCheck },
   { to: "/bolos", label: "Bolos", icon: Cake },
   { to: "/coberturas", label: "Coberturas", icon: Layers },
   { to: "/cursos", label: "Cursos", icon: GraduationCap },
