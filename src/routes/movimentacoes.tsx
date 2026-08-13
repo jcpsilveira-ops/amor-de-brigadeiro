@@ -18,10 +18,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ArrowDownRight, ArrowLeftRight, ArrowUpRight, Printer } from "lucide-react";
-import { brl, dataBR } from "@/lib/domain";
+import { brl, dataBR, type MovimentacaoEstoque } from "@/lib/domain";
 import { qtd } from "@/lib/estoque";
-import { useIngredientes, useMovimentacoes } from "@/lib/queries";
+import {
+  useBolos,
+  useClientes,
+  useCoberturas,
+  useCursos,
+  useIngredientes,
+  useMovimentacoes,
+  usePedidos,
+} from "@/lib/queries";
 
 export const Route = createFileRoute("/movimentacoes")({
   head: () => ({
@@ -54,7 +69,13 @@ const mesLabel = (mes: string) => {
 function MovimentacoesPage() {
   const { data: movimentacoes = [], isLoading } = useMovimentacoes();
   const { data: ingredientes = [] } = useIngredientes();
+  const { data: pedidos = [] } = usePedidos();
+  const { data: clientes = [] } = useClientes();
+  const { data: bolos = [] } = useBolos();
+  const { data: coberturas = [] } = useCoberturas();
+  const { data: cursos = [] } = useCursos();
   const [mes, setMes] = useState("todos");
+  const [detalhe, setDetalhe] = useState<MovimentacaoEstoque | null>(null);
 
   const nomePorId = useMemo(
     () => new Map(ingredientes.map((i) => [i.id, i.nome])),
@@ -98,6 +119,46 @@ function MovimentacoesPage() {
     }
     return [...mapa.entries()].sort((a, b) => b[1].reposicao - a[1].reposicao);
   }, [lista]);
+
+  const pedidoDoDetalhe = useMemo(() => {
+    const id = Number(detalhe?.observacao?.match(/#(\d+)/)?.[1]);
+    return Number.isFinite(id) ? pedidos.find((p) => p.id === id) ?? null : null;
+  }, [detalhe, pedidos]);
+
+  const boloDoDetalhe = pedidoDoDetalhe
+    ? bolos.find((b) => b.id === pedidoDoDetalhe.boloId) ?? null
+    : null;
+  const coberturaDoDetalhe = pedidoDoDetalhe
+    ? coberturas.find((c) => c.id === pedidoDoDetalhe.coberturaId) ?? null
+    : null;
+
+  const itensDoDetalhe = useMemo(() => {
+    const porId = new Map(ingredientes.map((i) => [i.id, i]));
+    const linhas: {
+      ingredienteId: number;
+      nome: string;
+      receita: string;
+      quantidade: number;
+      unidade: string;
+      custo: number;
+    }[] = [];
+    for (const receita of [boloDoDetalhe, coberturaDoDetalhe]) {
+      for (const item of receita?.itens ?? []) {
+        const ing = porId.get(item.ingredienteId);
+        linhas.push({
+          ingredienteId: item.ingredienteId,
+          nome: ing?.nome ?? `#${item.ingredienteId}`,
+          receita: receita?.nome ?? "—",
+          quantidade: item.quantidade,
+          unidade: ing?.unidade ?? "",
+          custo: Math.round((ing?.custoUnitario ?? 0) * item.quantidade * 100) / 100,
+        });
+      }
+    }
+    return linhas;
+  }, [boloDoDetalhe, coberturaDoDetalhe, ingredientes]);
+
+  const totalDoDetalhe = itensDoDetalhe.reduce((a, i) => a + i.custo, 0);
 
   return (
     <PageShell
@@ -206,7 +267,17 @@ function MovimentacoesPage() {
                       </TableCell>
                       <TableCell className="text-right">{brl(m.valor)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {m.observacao ?? "Ajuste manual"}
+                        {m.observacao ? (
+                          <button
+                            type="button"
+                            className="text-left font-medium text-primary underline decoration-dotted underline-offset-4 hover:text-accent print:no-underline print:text-inherit"
+                            onClick={() => setDetalhe(m)}
+                          >
+                            {m.observacao}
+                          </button>
+                        ) : (
+                          "Ajuste manual"
+                        )}
                       </TableCell>
                       <TableCell className="text-right font-display text-base text-primary">
                         {m.custoReposicao > 0 ? brl(m.custoReposicao) : "—"}
@@ -259,6 +330,96 @@ function MovimentacoesPage() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!detalhe} onOpenChange={(aberto) => !aberto && setDetalhe(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {pedidoDoDetalhe ? `Pedido #${pedidoDoDetalhe.id}` : "Detalhe da movimentação"}
+            </DialogTitle>
+            <DialogDescription>
+              {detalhe ? `${detalhe.observacao ?? ""} • ${dataBR(detalhe.data)}` : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          {pedidoDoDetalhe ? (
+            <div className="space-y-4">
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <div className="panel p-4">
+                  <dt className="label-caps">Cliente</dt>
+                  <dd className="mt-1 font-semibold">
+                    {clientes.find((c) => c.id === pedidoDoDetalhe.clienteId)?.nome ?? "—"}
+                  </dd>
+                </div>
+                <div className="panel p-4">
+                  <dt className="label-caps">Data do pedido</dt>
+                  <dd className="mt-1 font-semibold">{dataBR(pedidoDoDetalhe.data)}</dd>
+                </div>
+                <div className="panel p-4">
+                  <dt className="label-caps">Bolo</dt>
+                  <dd className="mt-1 font-semibold">{boloDoDetalhe?.nome ?? "Sem bolo"}</dd>
+                </div>
+                <div className="panel p-4">
+                  <dt className="label-caps">Cobertura</dt>
+                  <dd className="mt-1 font-semibold">
+                    {coberturaDoDetalhe?.nome ?? "Sem cobertura"}
+                  </dd>
+                </div>
+                {pedidoDoDetalhe.cursoId && (
+                  <div className="panel p-4 sm:col-span-2">
+                    <dt className="label-caps">Curso</dt>
+                    <dd className="mt-1 font-semibold">
+                      {cursos.find((c) => c.id === pedidoDoDetalhe.cursoId)?.nome ?? "—"}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+
+              <div>
+                <p className="label-caps mb-2">Ingredientes consumidos na produção</p>
+                {itensDoDetalhe.length === 0 ? (
+                  <EmptyState message="Este pedido não tem receita com ingredientes." />
+                ) : (
+                  <div className="max-h-[40vh] overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Ingrediente</TableHead>
+                          <TableHead>Origem</TableHead>
+                          <TableHead className="text-right">Quantidade</TableHead>
+                          <TableHead className="text-right">Custo</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {itensDoDetalhe.map((item) => (
+                          <TableRow key={`${item.receita}-${item.ingredienteId}`}>
+                            <TableCell className="font-semibold">{item.nome}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {item.receita}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              {qtd(item.quantidade)} {item.unidade}
+                            </TableCell>
+                            <TableCell className="text-right">{brl(item.custo)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+                <p className="mt-3 text-right font-display text-lg text-primary">
+                  Custo total: {brl(totalDoDetalhe)}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Esta movimentação é um ajuste manual de estoque, sem pedido vinculado.
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
     </PageShell>
   );
 }
+
