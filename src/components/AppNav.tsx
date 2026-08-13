@@ -1,5 +1,6 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
+  ArrowLeftRight,
   Cake,
   ClipboardList,
   FileText,
@@ -23,6 +24,7 @@ const links = [
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/pedidos", label: "Pedidos", icon: ClipboardList },
   { to: "/despesas", label: "Despesas", icon: Wallet },
+  { to: "/movimentacoes", label: "Movimentações", icon: ArrowLeftRight },
   { to: "/relatorio", label: "Relatório", icon: FileText },
 ] as const;
 

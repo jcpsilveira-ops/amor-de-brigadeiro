@@ -137,6 +137,62 @@ export type Database = {
         }
         Relationships: []
       }
+      movimentacoes_estoque: {
+        Row: {
+          criado_em: string
+          custo_reposicao: number
+          custo_unitario: number
+          data: string
+          id: number
+          ingrediente_id: number
+          observacao: string | null
+          quantidade: number
+          quantidade_anterior: number
+          quantidade_nova: number
+          tipo: string
+          unidade: string
+          valor: number
+        }
+        Insert: {
+          criado_em?: string
+          custo_reposicao?: number
+          custo_unitario?: number
+          data?: string
+          id?: number
+          ingrediente_id: number
+          observacao?: string | null
+          quantidade?: number
+          quantidade_anterior?: number
+          quantidade_nova?: number
+          tipo?: string
+          unidade: string
+          valor?: number
+        }
+        Update: {
+          criado_em?: string
+          custo_reposicao?: number
+          custo_unitario?: number
+          data?: string
+          id?: number
+          ingrediente_id?: number
+          observacao?: string | null
+          quantidade?: number
+          quantidade_anterior?: number
+          quantidade_nova?: number
+          tipo?: string
+          unidade?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "movimentacoes_estoque_ingrediente_id_fkey"
+            columns: ["ingrediente_id"]
+            isOneToOne: false
+            referencedRelation: "ingredientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       outras_despesas: {
         Row: {
           criado_em: string

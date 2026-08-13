@@ -23,6 +23,8 @@ import {
   type PedidoInput,
   type Despesa,
   type DespesaInput,
+  type MovimentacaoEstoque,
+  type MovimentacaoInput,
   type ReceitaInput,
   type Unidade,
 } from "./domain";
@@ -390,6 +392,82 @@ export const despesasApi = {
   remove: async (id: number): Promise<void> => {
     if (apiBase()) return http(`/despesas/${id}`, { method: "DELETE" });
     const { error } = await supabase.from("outras_despesas").delete().eq("id", id);
+    if (error) throw new ApiError(error.message);
+  },
+};
+
+/* ----------------------- movimentações de estoque ------------------------- */
+
+interface MovimentacaoRow {
+  id: number;
+  ingrediente_id: number;
+  data: string;
+  tipo: string;
+  quantidade: number | string;
+  unidade: string;
+  quantidade_anterior: number | string;
+  quantidade_nova: number | string;
+  custo_unitario: number | string;
+  valor: number | string;
+  custo_reposicao: number | string;
+  observacao: string | null;
+}
+
+const toMovimentacao = (r: MovimentacaoRow): MovimentacaoEstoque => ({
+  id: r.id,
+  ingredienteId: r.ingrediente_id,
+  data: String(r.data).slice(0, 10),
+  tipo: r.tipo as MovimentacaoEstoque["tipo"],
+  quantidade: Number(r.quantidade),
+  unidade: r.unidade as Unidade,
+  quantidadeAnterior: Number(r.quantidade_anterior),
+  quantidadeNova: Number(r.quantidade_nova),
+  custoUnitario: Number(r.custo_unitario),
+  valor: Number(r.valor),
+  custoReposicao: Number(r.custo_reposicao),
+  observacao: r.observacao ?? null,
+});
+
+export const movimentacoesApi = {
+  list: async (): Promise<MovimentacaoEstoque[]> => {
+    if (apiBase()) return http("/movimentacoes");
+    const rows = check(
+      await supabase
+        .from("movimentacoes_estoque")
+        .select("*")
+        .order("data", { ascending: false })
+        .order("id", { ascending: false }),
+    );
+    return (rows as unknown as MovimentacaoRow[]).map(toMovimentacao);
+  },
+  create: async (input: MovimentacaoInput): Promise<MovimentacaoEstoque> => {
+    if (apiBase()) {
+      return http("/movimentacoes", { method: "POST", body: JSON.stringify(input) });
+    }
+    const row = check(
+      await supabase
+        .from("movimentacoes_estoque")
+        .insert({
+          ingrediente_id: input.ingredienteId,
+          data: input.data,
+          tipo: input.tipo,
+          quantidade: input.quantidade,
+          unidade: input.unidade,
+          quantidade_anterior: input.quantidadeAnterior,
+          quantidade_nova: input.quantidadeNova,
+          custo_unitario: input.custoUnitario,
+          valor: input.valor,
+          custo_reposicao: input.custoReposicao,
+          observacao: input.observacao ?? null,
+        })
+        .select("*")
+        .single(),
+    );
+    return toMovimentacao(row as unknown as MovimentacaoRow);
+  },
+  remove: async (id: number): Promise<void> => {
+    if (apiBase()) return http(`/movimentacoes/${id}`, { method: "DELETE" });
+    const { error } = await supabase.from("movimentacoes_estoque").delete().eq("id", id);
     if (error) throw new ApiError(error.message);
   },
 };

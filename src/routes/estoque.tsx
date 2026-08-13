@@ -20,9 +20,15 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Minus, PackageCheck, Plus, Save } from "lucide-react";
-import { brl, UNIDADES, type Ingrediente, type Unidade } from "@/lib/domain";
+import { brl, hojeISO, UNIDADES, type Ingrediente, type Unidade } from "@/lib/domain";
 import { converterQuantidade, qtd } from "@/lib/estoque";
-import { ingredientesApi, keys, useAppMutation, useIngredientes } from "@/lib/queries";
+import {
+  ingredientesApi,
+  keys,
+  movimentacoesApi,
+  useAppMutation,
+  useIngredientes,
+} from "@/lib/queries";
 
 export const Route = createFileRoute("/estoque")({
   head: () => ({
@@ -77,6 +83,11 @@ function EstoquePage() {
       quantidade: number;
       unidade: Unidade;
     }) => {
+      const unidadeAnterior = ing.estoqueUnidade ?? ing.unidade;
+      const anteriorNaUnidade =
+        converterQuantidade(ing.estoqueQuantidade, unidadeAnterior, unidade) ??
+        ing.estoqueQuantidade;
+      const delta = Math.round((quantidade - anteriorNaUnidade) * 1000) / 1000;
       const salvo = await ingredientesApi.update(ing.id, {
         nome: ing.nome,
         unidade: ing.unidade,
@@ -84,6 +95,24 @@ function EstoquePage() {
         estoqueQuantidade: quantidade,
         estoqueUnidade: unidade,
       });
+      if (delta !== 0) {
+        const deltaNaCompra =
+          converterQuantidade(Math.abs(delta), unidade, ing.unidade) ?? Math.abs(delta);
+        const valor = Math.round(deltaNaCompra * ing.custoUnitario * 100) / 100;
+        await movimentacoesApi.create({
+          ingredienteId: ing.id,
+          data: hojeISO(),
+          tipo: delta > 0 ? "entrada" : "saida",
+          quantidade: Math.abs(delta),
+          unidade,
+          quantidadeAnterior: Math.round(anteriorNaUnidade * 1000) / 1000,
+          quantidadeNova: quantidade,
+          custoUnitario: ing.custoUnitario,
+          valor,
+          custoReposicao: delta < 0 ? valor : 0,
+          observacao: null,
+        });
+      }
       setRascunhos((prev) => {
         const proximo = { ...prev };
         delete proximo[ing.id];
@@ -91,9 +120,10 @@ function EstoquePage() {
       });
       return salvo;
     },
-    invalidate: [keys.ingredientes],
+    invalidate: [keys.ingredientes, keys.movimentacoes],
     successMessage: "Estoque atualizado!",
   });
+
 
   const valorDe = (ing: Ingrediente) =>
     rascunhos[ing.id]?.quantidade ?? String(ing.estoqueQuantidade);

@@ -160,3 +160,39 @@ export const dataBR = (iso: string) => {
 };
 
 export const hojeISO = () => new Date().toISOString().slice(0, 10);
+
+/* --------------------------- movimentações de estoque --------------------------- */
+
+export type TipoMovimentacao = "entrada" | "saida" | "ajuste";
+
+export interface MovimentacaoEstoque {
+  id: number;
+  ingredienteId: number;
+  data: string;
+  tipo: TipoMovimentacao;
+  /** Variação em módulo, na unidade registrada. */
+  quantidade: number;
+  unidade: Unidade;
+  quantidadeAnterior: number;
+  quantidadeNova: number;
+  custoUnitario: number;
+  /** Valor financeiro da variação (quantidade × custo unitário). */
+  valor: number;
+  /** Quanto custaria repor o estoque ao nível anterior (só em diminuição). */
+  custoReposicao: number;
+  observacao: string | null;
+}
+
+export interface MovimentacaoInput {
+  ingredienteId: number;
+  data: string;
+  tipo: TipoMovimentacao;
+  quantidade: number;
+  unidade: Unidade;
+  quantidadeAnterior: number;
+  quantidadeNova: number;
+  custoUnitario: number;
+  valor: number;
+  custoReposicao: number;
+  observacao?: string | null;
+}
