@@ -18,10 +18,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ArrowDownRight, ArrowLeftRight, ArrowUpRight, Printer } from "lucide-react";
-import { brl, dataBR } from "@/lib/domain";
+import { brl, dataBR, type MovimentacaoEstoque } from "@/lib/domain";
 import { qtd } from "@/lib/estoque";
-import { useIngredientes, useMovimentacoes } from "@/lib/queries";
+import {
+  useBolos,
+  useClientes,
+  useCoberturas,
+  useCursos,
+  useIngredientes,
+  useMovimentacoes,
+  usePedidos,
+} from "@/lib/queries";
 
 export const Route = createFileRoute("/movimentacoes")({
   head: () => ({
@@ -54,7 +69,13 @@ const mesLabel = (mes: string) => {
 function MovimentacoesPage() {
   const { data: movimentacoes = [], isLoading } = useMovimentacoes();
   const { data: ingredientes = [] } = useIngredientes();
+  const { data: pedidos = [] } = usePedidos();
+  const { data: clientes = [] } = useClientes();
+  const { data: bolos = [] } = useBolos();
+  const { data: coberturas = [] } = useCoberturas();
+  const { data: cursos = [] } = useCursos();
   const [mes, setMes] = useState("todos");
+  const [detalhe, setDetalhe] = useState<MovimentacaoEstoque | null>(null);
 
   const nomePorId = useMemo(
     () => new Map(ingredientes.map((i) => [i.id, i.nome])),
@@ -206,7 +227,17 @@ function MovimentacoesPage() {
                       </TableCell>
                       <TableCell className="text-right">{brl(m.valor)}</TableCell>
                       <TableCell className="text-sm text-muted-foreground">
-                        {m.observacao ?? "Ajuste manual"}
+                        {m.observacao ? (
+                          <button
+                            type="button"
+                            className="text-left font-medium text-primary underline decoration-dotted underline-offset-4 hover:text-accent print:no-underline print:text-inherit"
+                            onClick={() => setDetalhe(m)}
+                          >
+                            {m.observacao}
+                          </button>
+                        ) : (
+                          "Ajuste manual"
+                        )}
                       </TableCell>
                       <TableCell className="text-right font-display text-base text-primary">
                         {m.custoReposicao > 0 ? brl(m.custoReposicao) : "—"}
