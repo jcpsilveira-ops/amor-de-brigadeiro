@@ -219,8 +219,8 @@ function IngredientesPage() {
                     <TableHead>Unidade</TableHead>
                     <TableHead>Custo</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
-
                   </TableRow>
+
                 </TableHeader>
                 <TableBody>
                   {ingredientes.map((i) => (
