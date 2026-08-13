@@ -157,7 +157,7 @@ function MovimentacoesPage() {
           {isLoading ? (
             <p className="text-sm text-muted-foreground">Carregando movimentações…</p>
           ) : lista.length === 0 ? (
-            <EmptyState message="Nenhuma movimentação registrada neste período. Ajuste o estoque na tela Estoque para gerar registros." />
+            <EmptyState message="Nenhuma movimentação registrada neste período. Ajuste o estoque na tela Estoque ou registre um pedido para gerar registros." />
           ) : (
             <div className="overflow-x-auto">
               <Table>
@@ -169,6 +169,7 @@ function MovimentacoesPage() {
                     <TableHead>Variação</TableHead>
                     <TableHead>Antes → depois</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
+                    <TableHead>Origem</TableHead>
                     <TableHead className="text-right">Custo de reposição</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -204,6 +205,9 @@ function MovimentacoesPage() {
                         {qtd(m.quantidadeAnterior)} → {qtd(m.quantidadeNova)} {m.unidade}
                       </TableCell>
                       <TableCell className="text-right">{brl(m.valor)}</TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {m.observacao ?? "Ajuste manual"}
+                      </TableCell>
                       <TableCell className="text-right font-display text-base text-primary">
                         {m.custoReposicao > 0 ? brl(m.custoReposicao) : "—"}
                       </TableCell>
