@@ -187,6 +187,7 @@ function Painel() {
         <Metrica rotulo="Custo de realização dos cursos" valor={brl(custoCursos)} />
         <Metrica rotulo="Custo total da produção" valor={brl(custoPrevisto)} />
         <Metrica rotulo="Total de outras despesas" valor={brl(totalOutrasDespesas)} />
+        <Metrica rotulo="Valor dos produtos estocados" valor={brl(valorEstoque)} />
         <Metrica rotulo="Lucro líquido" valor={brl(lucroLiquido)} />
         <Metrica rotulo="Margem média" valor={`${percentual.toFixed(1)}%`} />
         <Metrica rotulo="Pedidos" valor={String(pedidos.length)} />
