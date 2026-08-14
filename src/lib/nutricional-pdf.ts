@@ -123,6 +123,9 @@ export function gerarPdfNutricional(params: {
         ]);
       }
 
+      // Mantém a tabela inteira na mesma página (3 linhas de cabeçalho + valores + observações).
+      espaco((3 + body.length) * 6.6 + 8);
+
       // O nome da receita entra como cabeçalho da própria tabela: nunca fica órfão numa página.
       autoTable(doc, {
         startY: y,
