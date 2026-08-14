@@ -250,6 +250,8 @@ export type Database = {
           curso_id: number | null
           data: string
           id: number
+          outros_itens: Json
+          outros_preco: number
         }
         Insert: {
           bolo_id?: number | null
@@ -259,6 +261,8 @@ export type Database = {
           curso_id?: number | null
           data?: string
           id?: number
+          outros_itens?: Json
+          outros_preco?: number
         }
         Update: {
           bolo_id?: number | null
@@ -268,6 +272,8 @@ export type Database = {
           curso_id?: number | null
           data?: string
           id?: number
+          outros_itens?: Json
+          outros_preco?: number
         }
         Relationships: [
           {
