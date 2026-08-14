@@ -111,13 +111,9 @@ function Painel() {
   const receitaBolos = pedidos.reduce((acc, p) => {
     const bolo = bolos.find((b) => b.id === p.boloId);
     const cobertura = coberturas.find((c) => c.id === p.coberturaId);
-    return acc + (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0);
+    return acc + (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0) + (p.outrosPreco ?? 0);
   }, 0);
 
-  const receitaCursos = pedidos.reduce((acc, p) => {
-    const curso = cursos.find((c) => c.id === p.cursoId);
-    return acc + (curso?.precoVenda ?? 0);
-  }, 0);
 
   const receitasAvulsas = useMemo(
     () =>
