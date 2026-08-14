@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Pencil } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { registrarConsumoDoPedido } from "@/lib/consumo-pedido";
 
 import {
@@ -74,7 +74,13 @@ function PedidosPage() {
   const [coberturaId, setCoberturaId] = useState(SEM_COBERTURA);
   const [cursoId, setCursoId] = useState(SEM_CURSO);
   const [data, setData] = useState(hojeISO());
+  const [outrosItens, setOutrosItens] = useState<{ ingredienteId: string; quantidade: string }[]>(
+    [],
+  );
+  const [outrosPreco, setOutrosPreco] = useState("0");
   const [tocado, setTocado] = useState(false);
+
+  const outrosLimpos = outrosItens.filter((i) => i.ingredienteId !== "");
 
   const parsed = pedidoSchema.safeParse({
     clienteId,
@@ -82,6 +88,8 @@ function PedidosPage() {
     coberturaId: coberturaId === SEM_COBERTURA ? null : coberturaId,
     cursoId: cursoId === SEM_CURSO ? null : cursoId,
     data,
+    outrosItens: outrosLimpos,
+    outrosPreco,
   });
   const erros: Record<string, string> = {};
   if (!parsed.success) {
@@ -95,8 +103,11 @@ function PedidosPage() {
     setCoberturaId(SEM_COBERTURA);
     setCursoId(SEM_CURSO);
     setData(hojeISO());
+    setOutrosItens([]);
+    setOutrosPreco("0");
     setTocado(false);
   }
+
 
 
   const salvar = useAppMutation({
@@ -106,13 +117,20 @@ function PedidosPage() {
       const criado = await pedidosApi.create(parsed.data);
       const bolo = bolos.find((b) => b.id === criado.boloId);
       const cobertura = coberturas.find((c) => c.id === criado.coberturaId);
-      const partes = [bolo?.nome, cobertura?.nome].filter(Boolean).join(" + ");
+      const extras =
+        criado.outrosItens.length > 0
+          ? ({ id: 0, nome: "Outros itens", precoVenda: 0, criadoEm: "", itens: criado.outrosItens } as const)
+          : undefined;
+      const partes = [bolo?.nome, cobertura?.nome, extras ? "outros itens" : null]
+        .filter(Boolean)
+        .join(" + ");
       await registrarConsumoDoPedido({
         data: criado.data,
         descricao: `Produção do pedido #${criado.id}${partes ? ` — ${partes}` : ""}`,
         ingredientes,
-        receitas: [bolo, cobertura],
+        receitas: [bolo, cobertura, extras],
       });
+
       return criado;
     },
     invalidate: [keys.pedidos, keys.ingredientes, keys.movimentacoes],
@@ -210,7 +228,102 @@ function PedidosPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2 rounded-md border border-border/60 p-3">
+                <div className="flex items-center justify-between">
+                  <Label>Outros itens (estoque)</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setOutrosItens((atual) => [...atual, { ingredienteId: "", quantidade: "1" }])
+                    }
+                  >
+                    <Plus className="mr-1 h-4 w-4" /> Adicionar
+                  </Button>
+                </div>
+                {outrosItens.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum item extra. Use para vender itens direto do estoque.
+                  </p>
+                ) : (
+                  outrosItens.map((item, indice) => {
+                    const ing = ingredientes.find((i) => String(i.id) === item.ingredienteId);
+                    return (
+                      <div key={indice} className="flex items-end gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={item.ingredienteId}
+                            onValueChange={(valor) =>
+                              setOutrosItens((atual) =>
+                                atual.map((linha, i) =>
+                                  i === indice ? { ...linha, ingredienteId: valor } : linha,
+                                ),
+                              )
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o item" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ingredientes.map((i) => (
+                                <SelectItem key={i.id} value={String(i.id)}>
+                                  {i.nome} ({i.estoqueQuantidade} {i.estoqueUnidade ?? i.unidade})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="w-24">
+                          <Input
+                            type="number"
+                            step="0.001"
+                            min="0"
+                            aria-label="Quantidade"
+                            value={item.quantidade}
+                            onChange={(e) =>
+                              setOutrosItens((atual) =>
+                                atual.map((linha, i) =>
+                                  i === indice ? { ...linha, quantidade: e.target.value } : linha,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                        <span className="pb-2 text-xs text-muted-foreground">
+                          {ing?.unidade ?? ""}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Remover item"
+                          onClick={() =>
+                            setOutrosItens((atual) => atual.filter((_, i) => i !== indice))
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })
+                )}
+                <FieldError message={tocado ? erros["outrosItens"] : undefined} />
+                <div>
+                  <Label htmlFor="outrosPreco">Preço de venda dos outros itens</Label>
+                  <Input
+                    id="outrosPreco"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={outrosPreco}
+                    onChange={(e) => setOutrosPreco(e.target.value)}
+                  />
+                  <FieldError message={tocado ? erros["outrosPreco"] : undefined} />
+                </div>
+              </div>
               <div>
+
                 <Label htmlFor="data">Data do pedido</Label>
                 <Input id="data" type="date" value={data} onChange={(e) => setData(e.target.value)} />
                 <FieldError message={tocado ? erros["data"] : undefined} />
@@ -244,7 +357,7 @@ function PedidosPage() {
                   <TableRow>
                     <TableHead>#</TableHead>
                     <TableHead>Cliente</TableHead>
-                    <TableHead>Bolo / Cobertura / Curso</TableHead>
+                    <TableHead>Bolo / Cobertura / Curso / Outros</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Custo</TableHead>
                     <TableHead>Total</TableHead>
@@ -260,11 +373,19 @@ function PedidosPage() {
                     const custo =
                       (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
                       (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
-                      (curso ? calcularCusto(curso.itens, ingredientes) : 0);
+                      (curso ? calcularCusto(curso.itens, ingredientes) : 0) +
+                      calcularCusto(p.outrosItens ?? [], ingredientes);
                     const total =
                       (bolo?.precoVenda ?? 0) +
                       (cobertura?.precoVenda ?? 0) +
-                      (curso?.precoVenda ?? 0);
+                      (curso?.precoVenda ?? 0) +
+                      (p.outrosPreco ?? 0);
+                    const extras = (p.outrosItens ?? [])
+                      .map((item) => {
+                        const ing = ingredientes.find((i) => i.id === item.ingredienteId);
+                        return `${ing?.nome ?? "Item removido"} ${item.quantidade}${ing?.unidade ?? ""}`;
+                      })
+                      .join(", ");
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="text-muted-foreground">{p.id}</TableCell>
@@ -275,7 +396,11 @@ function PedidosPage() {
                             {cobertura?.nome ?? "Sem cobertura"}
                             {curso ? ` · Curso: ${curso.nome}` : ""}
                           </p>
+                          {extras ? (
+                            <p className="text-xs text-muted-foreground">Outros: {extras}</p>
+                          ) : null}
                         </TableCell>
+
                         <TableCell>{dataBR(p.data)}</TableCell>
                         <TableCell>{brl(custo)}</TableCell>
                         <TableCell className="font-semibold">{brl(total)}</TableCell>
@@ -292,7 +417,15 @@ function PedidosPage() {
                               setCoberturaId(p.coberturaId ? String(p.coberturaId) : SEM_COBERTURA);
                               setCursoId(p.cursoId ? String(p.cursoId) : SEM_CURSO);
                               setData(p.data.slice(0, 10));
+                              setOutrosItens(
+                                (p.outrosItens ?? []).map((item) => ({
+                                  ingredienteId: String(item.ingredienteId),
+                                  quantidade: String(item.quantidade),
+                                })),
+                              );
+                              setOutrosPreco(String(p.outrosPreco ?? 0));
                               setTocado(false);
+
                             }}
                           >
                             <Pencil className="h-4 w-4" />

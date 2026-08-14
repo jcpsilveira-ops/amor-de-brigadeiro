@@ -111,13 +111,14 @@ function Painel() {
   const receitaBolos = pedidos.reduce((acc, p) => {
     const bolo = bolos.find((b) => b.id === p.boloId);
     const cobertura = coberturas.find((c) => c.id === p.coberturaId);
-    return acc + (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0);
+    return acc + (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0) + (p.outrosPreco ?? 0);
   }, 0);
 
   const receitaCursos = pedidos.reduce((acc, p) => {
     const curso = cursos.find((c) => c.id === p.cursoId);
     return acc + (curso?.precoVenda ?? 0);
   }, 0);
+
 
   const receitasAvulsas = useMemo(
     () =>
@@ -146,7 +147,13 @@ function Painel() {
     return acc + (curso ? calcularCusto(curso.itens, ingredientes) : 0);
   }, 0);
 
-  const custoPrevisto = custoBolos + custoCoberturas + custoCursos;
+  const custoOutrosItens = pedidos.reduce(
+    (acc, p) => acc + calcularCusto(p.outrosItens ?? [], ingredientes),
+    0,
+  );
+
+  const custoPrevisto = custoBolos + custoCoberturas + custoCursos + custoOutrosItens;
+
 
   const totalOutrasDespesas = despesas.reduce((acc, d) => acc + d.valor, 0);
 

@@ -159,7 +159,16 @@ export async function importarDadosLocais(): Promise<ResumoImportacao> {
     const assinatura = `${clienteId}|${boloId}|${coberturaId ?? 0}|${pedido.data}`;
     if (assinaturas.has(assinatura)) continue;
 
-    await pedidosApi.create({ clienteId, boloId, coberturaId, cursoId: null, data: pedido.data });
+    await pedidosApi.create({
+      clienteId,
+      boloId,
+      coberturaId,
+      cursoId: null,
+      data: pedido.data,
+      outrosItens: [],
+      outrosPreco: 0,
+    });
+
     assinaturas.add(assinatura);
     resumo.pedidos += 1;
   }

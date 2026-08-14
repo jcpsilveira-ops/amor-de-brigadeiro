@@ -78,6 +78,13 @@ export function analisarEstoqueProximoPedido(
       );
     }
   }
+  for (const item of pedido.outrosItens ?? []) {
+    necessidades.set(
+      item.ingredienteId,
+      (necessidades.get(item.ingredienteId) ?? 0) + item.quantidade,
+    );
+  }
+
 
   for (const ing of ingredientes) {
     const necessario = necessidades.get(ing.id);

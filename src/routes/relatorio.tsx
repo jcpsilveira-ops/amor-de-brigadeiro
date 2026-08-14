@@ -106,12 +106,17 @@ function Relatorio() {
           const bolo = bolos.find((b) => b.id === p.boloId);
           const cobertura = coberturas.find((c) => c.id === p.coberturaId);
           const curso = cursos.find((c) => c.id === p.cursoId);
+          const custoOutros = calcularCusto(p.outrosItens ?? [], ingredientes);
+          const receitaOutros = p.outrosPreco ?? 0;
           const receita =
-            (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0) + (curso?.precoVenda ?? 0);
+            (bolo?.precoVenda ?? 0) +
+            (cobertura?.precoVenda ?? 0) +
+            (curso?.precoVenda ?? 0) +
+            receitaOutros;
           const custoBolo = bolo ? calcularCusto(bolo.itens, ingredientes) : 0;
           const custoCobertura = cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0;
           const custoCurso = curso ? calcularCusto(curso.itens, ingredientes) : 0;
-          const custo = custoBolo + custoCobertura + custoCurso;
+          const custo = custoBolo + custoCobertura + custoCurso + custoOutros;
           return {
             id: p.id,
             data: p.data,
@@ -119,8 +124,9 @@ function Relatorio() {
             bolo: bolo?.nome ?? "Sem bolo",
             cobertura: cobertura?.nome ?? "Sem cobertura",
             curso: curso?.nome ?? "—",
-            receitaBolos: (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0),
+            receitaBolos: (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0) + receitaOutros,
             receitaCurso: curso?.precoVenda ?? 0,
+
             custoBolo,
             custoCobertura,
             custoCurso,
@@ -188,7 +194,11 @@ function Relatorio() {
           mapa.set(item.ingredienteId, (mapa.get(item.ingredienteId) ?? 0) + item.quantidade);
         }
       }
+      for (const item of p.outrosItens ?? []) {
+        mapa.set(item.ingredienteId, (mapa.get(item.ingredienteId) ?? 0) + item.quantidade);
+      }
     }
+
     return Array.from(mapa.entries())
       .map(([id, quantidade]) => {
         const ing = ingredientes.find((i) => i.id === id);
@@ -237,11 +247,16 @@ function Relatorio() {
       atual.pedidos += 1;
       atual.cursos += curso?.precoVenda ?? 0;
       atual.receita +=
-        (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0) + (curso?.precoVenda ?? 0);
+        (bolo?.precoVenda ?? 0) +
+        (cobertura?.precoVenda ?? 0) +
+        (curso?.precoVenda ?? 0) +
+        (p.outrosPreco ?? 0);
       atual.custo +=
         (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
         (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
-        (curso ? calcularCusto(curso.itens, ingredientes) : 0);
+        (curso ? calcularCusto(curso.itens, ingredientes) : 0) +
+        calcularCusto(p.outrosItens ?? [], ingredientes);
+
     }
     for (const d of todasDespesas) {
       obter(d.data.slice(0, 7)).despesas += d.valor;
