@@ -417,7 +417,15 @@ function PedidosPage() {
                               setCoberturaId(p.coberturaId ? String(p.coberturaId) : SEM_COBERTURA);
                               setCursoId(p.cursoId ? String(p.cursoId) : SEM_CURSO);
                               setData(p.data.slice(0, 10));
+                              setOutrosItens(
+                                (p.outrosItens ?? []).map((item) => ({
+                                  ingredienteId: String(item.ingredienteId),
+                                  quantidade: String(item.quantidade),
+                                })),
+                              );
+                              setOutrosPreco(String(p.outrosPreco ?? 0));
                               setTocado(false);
+
                             }}
                           >
                             <Pencil className="h-4 w-4" />
