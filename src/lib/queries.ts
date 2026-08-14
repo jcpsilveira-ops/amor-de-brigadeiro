@@ -14,6 +14,7 @@ import {
   ingredientesApi,
   movimentacoesApi,
   pedidosApi,
+  receitasAvulsasApi,
 } from "./api";
 
 export const keys = {
@@ -24,6 +25,7 @@ export const keys = {
   clientes: ["clientes"] as QueryKey,
   pedidos: ["pedidos"] as QueryKey,
   despesas: ["outras_despesas"] as QueryKey,
+  receitasAvulsas: ["outras_receitas"] as QueryKey,
   movimentacoes: ["movimentacoes_estoque"] as QueryKey,
 };
 
@@ -41,6 +43,8 @@ export const useMovimentacoes = () =>
   useQuery({ queryKey: keys.movimentacoes, queryFn: movimentacoesApi.list });
 export const useDespesas = () =>
   useQuery({ queryKey: keys.despesas, queryFn: despesasApi.list });
+export const useReceitasAvulsas = () =>
+  useQuery({ queryKey: keys.receitasAvulsas, queryFn: receitasAvulsasApi.list });
 
 /** Mutação com feedback visual padronizado (sucesso/erro) e invalidação. */
 export function useAppMutation<TInput>(options: {
@@ -72,4 +76,5 @@ export {
   ingredientesApi,
   movimentacoesApi,
   pedidosApi,
+  receitasAvulsasApi,
 };
