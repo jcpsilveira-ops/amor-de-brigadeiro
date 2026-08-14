@@ -310,7 +310,10 @@ const pedidoPayload = (input: PedidoInput) => ({
   cobertura_id: input.coberturaId,
   curso_id: input.cursoId,
   data: input.data,
+  outros_itens: input.outrosItens ?? [],
+  outros_preco: input.outrosPreco ?? 0,
 });
+
 
 export const pedidosApi = {
   list: async (): Promise<Pedido[]> => {
