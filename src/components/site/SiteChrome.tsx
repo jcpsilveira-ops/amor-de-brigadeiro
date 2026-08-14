@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { MessageCircle, ArrowUpRight } from "lucide-react";
+import { MessageCircle, ArrowUpRight, Instagram } from "lucide-react";
 
 export const WHATSAPP = "5531975894545";
 
