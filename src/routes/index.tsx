@@ -31,6 +31,7 @@ import {
   useDespesas,
   useIngredientes,
   usePedidos,
+  useReceitasAvulsas,
 } from "@/lib/queries";
 
 export const Route = createFileRoute("/")({
@@ -81,6 +82,7 @@ function Painel() {
   const { data: clientes = [] } = useClientes();
   const { data: todosPedidos = [] } = usePedidos();
   const { data: todasDespesas = [] } = useDespesas();
+  const { data: todasReceitasAvulsas = [] } = useReceitasAvulsas();
 
   const [mes, setMes] = useState<string>(TODOS);
 
@@ -90,9 +92,10 @@ function Painel() {
         new Set([
           ...todosPedidos.map((p) => p.data.slice(0, 7)),
           ...todasDespesas.map((d) => d.data.slice(0, 7)),
+          ...todasReceitasAvulsas.map((r) => r.data.slice(0, 7)),
         ]),
       ).sort((a, b) => b.localeCompare(a)),
-    [todosPedidos, todasDespesas],
+    [todosPedidos, todasDespesas, todasReceitasAvulsas],
   );
 
   const pedidos = useMemo(
@@ -116,7 +119,17 @@ function Painel() {
     return acc + (curso?.precoVenda ?? 0);
   }, 0);
 
-  const receitaPrevista = receitaBolos + receitaCursos;
+  const receitasAvulsas = useMemo(
+    () =>
+      mes === TODOS
+        ? todasReceitasAvulsas
+        : todasReceitasAvulsas.filter((r) => r.data.startsWith(mes)),
+    [todasReceitasAvulsas, mes],
+  );
+
+  const totalOutrasReceitas = receitasAvulsas.reduce((acc, r) => acc + r.valor, 0);
+
+  const receitaPrevista = receitaBolos + receitaCursos + totalOutrasReceitas;
 
   const custoBolos = pedidos.reduce((acc, p) => {
     const bolo = bolos.find((b) => b.id === p.boloId);
@@ -181,6 +194,7 @@ function Painel() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Metrica rotulo="Faturamento em bolos e coberturas" valor={brl(receitaBolos)} />
         <Metrica rotulo="Faturamento em cursos" valor={brl(receitaCursos)} />
+        <Metrica rotulo="Total de outras receitas" valor={brl(totalOutrasReceitas)} />
         <Metrica rotulo="Faturamento total" valor={brl(receitaPrevista)} />
         <Metrica rotulo="Custo de produção dos bolos" valor={brl(custoBolos)} />
         <Metrica rotulo="Custo de produção das coberturas" valor={brl(custoCoberturas)} />
