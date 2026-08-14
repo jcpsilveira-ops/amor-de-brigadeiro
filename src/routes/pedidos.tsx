@@ -117,13 +117,20 @@ function PedidosPage() {
       const criado = await pedidosApi.create(parsed.data);
       const bolo = bolos.find((b) => b.id === criado.boloId);
       const cobertura = coberturas.find((c) => c.id === criado.coberturaId);
-      const partes = [bolo?.nome, cobertura?.nome].filter(Boolean).join(" + ");
+      const extras =
+        criado.outrosItens.length > 0
+          ? ({ id: 0, nome: "Outros itens", precoVenda: 0, criadoEm: "", itens: criado.outrosItens } as const)
+          : undefined;
+      const partes = [bolo?.nome, cobertura?.nome, extras ? "outros itens" : null]
+        .filter(Boolean)
+        .join(" + ");
       await registrarConsumoDoPedido({
         data: criado.data,
         descricao: `Produção do pedido #${criado.id}${partes ? ` — ${partes}` : ""}`,
         ingredientes,
-        receitas: [bolo, cobertura],
+        receitas: [bolo, cobertura, extras],
       });
+
       return criado;
     },
     invalidate: [keys.pedidos, keys.ingredientes, keys.movimentacoes],
