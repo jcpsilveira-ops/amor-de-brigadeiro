@@ -101,17 +101,7 @@ export function gerarPdfNutricional(params: {
       if (r.semReferencia.length)
         observacoes.push(`Sem referência nutricional cadastrada: ${r.semReferencia.join(", ")}.`);
 
-      // Altura real do bloco: título + 2 linhas de cabeçalho + linhas de valores + observações.
-      const alturaEstimada = 9 + 6.4 * (LINHAS.length + 3) + observacoes.length * 5 + 4;
-      console.log('DBG', r.nome, 'y=', y, 'est=', alturaEstimada, 'limite=', doc.internal.pageSize.getHeight() - 18);
-      espaco(alturaEstimada);
-
-      doc.setFont("times", "bold");
-      doc.setFontSize(12);
-      doc.text(`${r.nome} (${r.tipo})`, margem, y);
-      y += 3;
-
-      const body: string[][] = [
+      const body: Array<Array<string | Record<string, unknown>>> = [
         [
           "Valor energético",
           `${num(r.por100g.kcal, 0)} kcal / ${num(r.por100g.kcal * 4.184, 0)} kJ`,
@@ -123,14 +113,30 @@ export function gerarPdfNutricional(params: {
           `${num(r.total[l.campo], l.casas)} ${l.unidade}`,
         ]),
       ];
+      if (observacoes.length) {
+        body.push([
+          {
+            content: observacoes.join(" "),
+            colSpan: 3,
+            styles: { fontSize: 7.5, fontStyle: "italic", halign: "left", fillColor: false },
+          },
+        ]);
+      }
 
+      // O nome da receita entra como cabeçalho da própria tabela: nunca fica órfão numa página.
       autoTable(doc, {
         startY: y,
-        margin: { left: margem, right: margem, top: 18, bottom: 18 },
+        margin: { left: margem, right: margem, top: 20, bottom: 18 },
+        rowPageBreak: "avoid",
         head: [
           [
-            { content: "Informação Nutricional", colSpan: 3, styles: { halign: "center" } },
+            {
+              content: `${r.nome} (${r.tipo})`,
+              colSpan: 3,
+              styles: { halign: "left", fontSize: 11, fillColor: false },
+            },
           ],
+          [{ content: "Informação Nutricional", colSpan: 3, styles: { halign: "center" } }],
           ["Porção", "Por 100 g", `Por receita (${num(r.pesoTotal, 0)} g)`],
         ],
         body,
@@ -152,19 +158,7 @@ export function gerarPdfNutricional(params: {
         },
       });
 
-      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 4;
-
-      if (observacoes.length) {
-        doc.setFont("times", "italic");
-        doc.setFontSize(8);
-        for (const obs of observacoes) {
-          const linhas = doc.splitTextToSize(obs, largura - margem * 2);
-          espaco(linhas.length * 4);
-          doc.text(linhas, margem, y);
-          y += linhas.length * 4 + 1;
-        }
-      }
-      y += 4;
+      y = (doc as unknown as { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 6;
     }
   }
 
