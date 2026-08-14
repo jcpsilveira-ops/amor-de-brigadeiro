@@ -357,7 +357,7 @@ function PedidosPage() {
                   <TableRow>
                     <TableHead>#</TableHead>
                     <TableHead>Cliente</TableHead>
-                    <TableHead>Bolo / Cobertura / Curso</TableHead>
+                    <TableHead>Bolo / Cobertura / Curso / Outros</TableHead>
                     <TableHead>Data</TableHead>
                     <TableHead>Custo</TableHead>
                     <TableHead>Total</TableHead>
