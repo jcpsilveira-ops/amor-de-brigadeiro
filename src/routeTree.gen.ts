@@ -25,6 +25,7 @@ import { Route as RelatorioRouteImport } from './routes/relatorio'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as SiteIndexRouteImport } from './routes/site.index'
+import { Route as SiteCursosRouteImport } from './routes/site.cursos'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 
 const IndexRoute = IndexRouteImport.update({
@@ -109,6 +110,11 @@ const SiteIndexRoute = SiteIndexRouteImport.update({
   path: '/site/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SiteCursosRoute = SiteCursosRouteImport.update({
+  id: '/site/cursos',
+  path: '/site/cursos',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -132,6 +138,7 @@ export interface FileRoutesByFullPath {
   '/relatorio': typeof RelatorioRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/site/cursos': typeof SiteCursosRoute
   '/site/': typeof SiteIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
@@ -151,6 +158,7 @@ export interface FileRoutesByTo {
   '/relatorio': typeof RelatorioRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/site/cursos': typeof SiteCursosRoute
   '/site': typeof SiteIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
@@ -171,6 +179,7 @@ export interface FileRoutesById {
   '/relatorio': typeof RelatorioRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/site/cursos': typeof SiteCursosRoute
   '/site/': typeof SiteIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
@@ -192,6 +201,7 @@ export interface FileRouteTypes {
     | '/relatorio'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/site/cursos'
     | '/site/'
     | '/.mcp/invoke-tool/$tool'
   fileRoutesByTo: FileRoutesByTo
@@ -211,6 +221,7 @@ export interface FileRouteTypes {
     | '/relatorio'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/site/cursos'
     | '/site'
     | '/.mcp/invoke-tool/$tool'
   id:
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/relatorio'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/site/cursos'
     | '/site/'
     | '/.mcp/invoke-tool/$tool'
   fileRoutesById: FileRoutesById
@@ -250,6 +262,7 @@ export interface RootRouteChildren {
   RelatorioRoute: typeof RelatorioRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  SiteCursosRoute: typeof SiteCursosRoute
   SiteIndexRoute: typeof SiteIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
@@ -368,6 +381,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SiteIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/site/cursos': {
+      id: '/site/cursos'
+      path: '/site/cursos'
+      fullPath: '/site/cursos'
+      preLoaderRoute: typeof SiteCursosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/.mcp/invoke-tool/$tool': {
       id: '/.mcp/invoke-tool/$tool'
       path: '/.mcp/invoke-tool/$tool'
@@ -395,6 +415,7 @@ const rootRouteChildren: RootRouteChildren = {
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  SiteCursosRoute: SiteCursosRoute,
   SiteIndexRoute: SiteIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
