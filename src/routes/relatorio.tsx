@@ -29,6 +29,7 @@ import {
   useDespesas,
   useIngredientes,
   usePedidos,
+  useReceitasAvulsas,
 } from "@/lib/queries";
 
 
@@ -79,6 +80,7 @@ function Relatorio() {
   const { data: clientes = [] } = useClientes();
   const { data: todosPedidos = [] } = usePedidos();
   const { data: todasDespesas = [] } = useDespesas();
+  const { data: todasReceitasAvulsas = [] } = useReceitasAvulsas();
 
   const [mes, setMes] = useState<string>(() => chaveMes(new Date()));
 
@@ -87,10 +89,11 @@ function Relatorio() {
     const set = new Set([
       ...todosPedidos.map((p) => p.data.slice(0, 7)),
       ...todasDespesas.map((d) => d.data.slice(0, 7)),
+      ...todasReceitasAvulsas.map((r) => r.data.slice(0, 7)),
     ]);
     set.add(chaveMes(new Date()));
     return Array.from(set).sort((a, b) => b.localeCompare(a));
-  }, [todosPedidos, todasDespesas]);
+  }, [todosPedidos, todasDespesas, todasReceitasAvulsas]);
 
   const noMes = (data: string) => mes === TODOS || data.startsWith(mes);
 
@@ -134,10 +137,16 @@ function Relatorio() {
     [todasDespesas, mes],
   );
 
+  const receitasAvulsas = useMemo(
+    () => todasReceitasAvulsas.filter((r) => noMes(r.data)),
+    [todasReceitasAvulsas, mes],
+  );
+
   /** Mesmos cálculos do painel geral, para não haver divergência entre as telas. */
   const receitaBolos = linhas.reduce((acc, l) => acc + l.receitaBolos, 0);
   const receitaCursos = linhas.reduce((acc, l) => acc + l.receitaCurso, 0);
-  const totalReceita = receitaBolos + receitaCursos;
+  const totalOutrasReceitas = receitasAvulsas.reduce((acc, r) => acc + r.valor, 0);
+  const totalReceita = receitaBolos + receitaCursos + totalOutrasReceitas;
   const custoBolos = linhas.reduce((acc, l) => acc + l.custoBolo, 0);
   const custoCoberturas = linhas.reduce((acc, l) => acc + l.custoCobertura, 0);
   const custoCursos = linhas.reduce((acc, l) => acc + l.custoCurso, 0);
@@ -204,11 +213,19 @@ function Relatorio() {
       receita: number;
       custo: number;
       despesas: number;
+      outrasReceitas: number;
     };
     const mapa = new Map<string, Linha>();
     const obter = (chave: string) => {
       const atual =
-        mapa.get(chave) ?? { pedidos: 0, cursos: 0, receita: 0, custo: 0, despesas: 0 };
+        mapa.get(chave) ?? {
+          pedidos: 0,
+          cursos: 0,
+          receita: 0,
+          custo: 0,
+          despesas: 0,
+          outrasReceitas: 0,
+        };
       mapa.set(chave, atual);
       return atual;
     };
@@ -229,10 +246,15 @@ function Relatorio() {
     for (const d of todasDespesas) {
       obter(d.data.slice(0, 7)).despesas += d.valor;
     }
+    for (const r of todasReceitasAvulsas) {
+      const atual = obter(r.data.slice(0, 7));
+      atual.outrasReceitas += r.valor;
+      atual.receita += r.valor;
+    }
     return Array.from(mapa.entries())
       .map(([chave, v]) => ({ chave, ...v, lucro: v.receita - v.custo - v.despesas }))
       .sort((a, b) => b.chave.localeCompare(a.chave));
-  }, [todosPedidos, todasDespesas, bolos, coberturas, cursos, ingredientes]);
+  }, [todosPedidos, todasDespesas, todasReceitasAvulsas, bolos, coberturas, cursos, ingredientes]);
 
 
   return (
@@ -301,6 +323,7 @@ function Relatorio() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Metrica rotulo="Faturamento em bolos e coberturas" valor={brl(receitaBolos)} />
           <Metrica rotulo="Faturamento em cursos" valor={brl(receitaCursos)} />
+          <Metrica rotulo="Total de outras receitas" valor={brl(totalOutrasReceitas)} />
           <Metrica rotulo="Faturamento total" valor={brl(totalReceita)} />
           <Metrica rotulo="Custo de produção dos bolos" valor={brl(custoBolos)} />
           <Metrica rotulo="Custo de produção das coberturas" valor={brl(custoCoberturas)} />
