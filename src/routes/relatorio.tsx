@@ -263,6 +263,15 @@ function Relatorio() {
           <FileDown className="h-4 w-4" />
           Exportar PDF
         </Button>
+        <Button asChild variant="outline" className="gap-2">
+          <a
+            href="/informacao-nutricional-amor-de-brigadeiro.pdf"
+            download="informacao-nutricional-amor-de-brigadeiro.pdf"
+          >
+            <FileDown className="h-4 w-4" />
+            Baixar informação nutricional
+          </a>
+        </Button>
       </div>
 
       <div id="relatorio-print" className="space-y-6">
