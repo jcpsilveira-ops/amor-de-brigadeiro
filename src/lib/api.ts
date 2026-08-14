@@ -122,7 +122,10 @@ const toPedido = (r: PedidoRow): Pedido => ({
   coberturaId: r.cobertura_id,
   cursoId: r.curso_id ?? null,
   data: r.data,
+  outrosItens: (Array.isArray(r.outros_itens) ? r.outros_itens : []) as Pedido["outrosItens"],
+  outrosPreco: Number(r.outros_preco ?? 0),
 });
+
 
 function assertReceita(input: ReceitaInput) {
   if (input.itens.length > MAX_INGREDIENTES) {
