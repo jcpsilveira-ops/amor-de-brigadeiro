@@ -20,6 +20,7 @@ import { Route as IngredientesRouteImport } from './routes/ingredientes'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MovimentacoesRouteImport } from './routes/movimentacoes'
 import { Route as PedidosRouteImport } from './routes/pedidos'
+import { Route as ReceitasRouteImport } from './routes/receitas'
 import { Route as RelatorioRouteImport } from './routes/relatorio'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
@@ -80,6 +81,11 @@ const PedidosRoute = PedidosRouteImport.update({
   path: '/pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReceitasRoute = ReceitasRouteImport.update({
+  id: '/receitas',
+  path: '/receitas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RelatorioRoute = RelatorioRouteImport.update({
   id: '/relatorio',
   path: '/relatorio',
@@ -116,6 +122,7 @@ export interface FileRoutesByFullPath {
   '/mcp': typeof McpRoute
   '/movimentacoes': typeof MovimentacoesRoute
   '/pedidos': typeof PedidosRoute
+  '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -133,6 +140,7 @@ export interface FileRoutesByTo {
   '/mcp': typeof McpRoute
   '/movimentacoes': typeof MovimentacoesRoute
   '/pedidos': typeof PedidosRoute
+  '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -151,6 +159,7 @@ export interface FileRoutesById {
   '/mcp': typeof McpRoute
   '/movimentacoes': typeof MovimentacoesRoute
   '/pedidos': typeof PedidosRoute
+  '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/movimentacoes'
     | '/pedidos'
+    | '/receitas'
     | '/relatorio'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/movimentacoes'
     | '/pedidos'
+    | '/receitas'
     | '/relatorio'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -204,6 +215,7 @@ export interface FileRouteTypes {
     | '/mcp'
     | '/movimentacoes'
     | '/pedidos'
+    | '/receitas'
     | '/relatorio'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
@@ -222,6 +234,7 @@ export interface RootRouteChildren {
   McpRoute: typeof McpRoute
   MovimentacoesRoute: typeof MovimentacoesRoute
   PedidosRoute: typeof PedidosRoute
+  ReceitasRoute: typeof ReceitasRoute
   RelatorioRoute: typeof RelatorioRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
@@ -307,6 +320,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/receitas': {
+      id: '/receitas'
+      path: '/receitas'
+      fullPath: '/receitas'
+      preLoaderRoute: typeof ReceitasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/relatorio': {
       id: '/relatorio'
       path: '/relatorio'
@@ -350,6 +370,7 @@ const rootRouteChildren: RootRouteChildren = {
   McpRoute: McpRoute,
   MovimentacoesRoute: MovimentacoesRoute,
   PedidosRoute: PedidosRoute,
+  ReceitasRoute: ReceitasRoute,
   RelatorioRoute: RelatorioRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
