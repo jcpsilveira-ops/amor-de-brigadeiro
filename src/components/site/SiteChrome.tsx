@@ -111,16 +111,20 @@ export function SiteChrome({ children }: { children: ReactNode }) {
           </Link>
 
           <nav className="hidden items-center gap-7 lg:flex">
-            {navItems.map((item) => (
-              <Link
-                key={item.label}
-                to={item.to}
-                hash={item.hash}
-                className="text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-accent"
-              >
-                {item.label}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const cls =
+                "text-[0.68rem] font-bold uppercase tracking-[0.16em] text-foreground/80 transition-colors hover:text-accent";
+              return item.hash ? (
+                <Link key={item.label} to="/site" hash={item.hash} className={cls}>
+                  {item.label}
+                </Link>
+              ) : (
+                <Link key={item.label} to="/site/cursos" className={cls}>
+                  {item.label}
+                </Link>
+              );
+            })}
+
             <a
               href={waLink(MSG_ENCOMENDA)}
               target="_blank"
