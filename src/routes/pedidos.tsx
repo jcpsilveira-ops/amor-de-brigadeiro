@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { registrarConsumoDoPedido } from "@/lib/consumo-pedido";
+import { estornarConsumoDoPedido, registrarConsumoDoPedido } from "@/lib/consumo-pedido";
 
 import {
   brl,
