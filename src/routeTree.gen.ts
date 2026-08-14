@@ -22,9 +22,9 @@ import { Route as MovimentacoesRouteImport } from './routes/movimentacoes'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as ReceitasRouteImport } from './routes/receitas'
 import { Route as RelatorioRouteImport } from './routes/relatorio'
-import { Route as SiteRouteImport } from './routes/site'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as SiteIndexRouteImport } from './routes/site.index'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 
 const IndexRoute = IndexRouteImport.update({
@@ -92,11 +92,6 @@ const RelatorioRoute = RelatorioRouteImport.update({
   path: '/relatorio',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SiteRoute = SiteRouteImport.update({
-  id: '/site',
-  path: '/site',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const Char91DotmcpChar93ListToolsRoute =
   Char91DotmcpChar93ListToolsRouteImport.update({
     id: '/.mcp/list-tools',
@@ -109,6 +104,11 @@ const Char91DotwellKnownChar93OauthProtectedResourceRoute =
     path: '/.well-known/oauth-protected-resource',
     getParentRoute: () => rootRouteImport,
   } as any)
+const SiteIndexRoute = SiteIndexRouteImport.update({
+  id: '/site/',
+  path: '/site/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
     id: '/.mcp/invoke-tool/$tool',
@@ -130,9 +130,9 @@ export interface FileRoutesByFullPath {
   '/pedidos': typeof PedidosRoute
   '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
-  '/site': typeof SiteRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/site/': typeof SiteIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesByTo {
@@ -149,9 +149,9 @@ export interface FileRoutesByTo {
   '/pedidos': typeof PedidosRoute
   '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
-  '/site': typeof SiteRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/site': typeof SiteIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRoutesById {
@@ -169,9 +169,9 @@ export interface FileRoutesById {
   '/pedidos': typeof PedidosRoute
   '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
-  '/site': typeof SiteRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/site/': typeof SiteIndexRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 export interface FileRouteTypes {
@@ -190,9 +190,9 @@ export interface FileRouteTypes {
     | '/pedidos'
     | '/receitas'
     | '/relatorio'
-    | '/site'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/site/'
     | '/.mcp/invoke-tool/$tool'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -209,9 +209,9 @@ export interface FileRouteTypes {
     | '/pedidos'
     | '/receitas'
     | '/relatorio'
-    | '/site'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/site'
     | '/.mcp/invoke-tool/$tool'
   id:
     | '__root__'
@@ -228,9 +228,9 @@ export interface FileRouteTypes {
     | '/pedidos'
     | '/receitas'
     | '/relatorio'
-    | '/site'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/site/'
     | '/.mcp/invoke-tool/$tool'
   fileRoutesById: FileRoutesById
 }
@@ -248,9 +248,9 @@ export interface RootRouteChildren {
   PedidosRoute: typeof PedidosRoute
   ReceitasRoute: typeof ReceitasRoute
   RelatorioRoute: typeof RelatorioRoute
-  SiteRoute: typeof SiteRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  SiteIndexRoute: typeof SiteIndexRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
 }
 
@@ -347,13 +347,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RelatorioRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/site': {
-      id: '/site'
-      path: '/site'
-      fullPath: '/site'
-      preLoaderRoute: typeof SiteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/.mcp/list-tools': {
       id: '/.mcp/list-tools'
       path: '/.mcp/list-tools'
@@ -366,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/.well-known/oauth-protected-resource'
       fullPath: '/.well-known/oauth-protected-resource'
       preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/site/': {
+      id: '/site/'
+      path: '/site'
+      fullPath: '/site/'
+      preLoaderRoute: typeof SiteIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/invoke-tool/$tool': {
@@ -392,10 +392,10 @@ const rootRouteChildren: RootRouteChildren = {
   PedidosRoute: PedidosRoute,
   ReceitasRoute: ReceitasRoute,
   RelatorioRoute: RelatorioRoute,
-  SiteRoute: SiteRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  SiteIndexRoute: SiteIndexRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
 }
 export const routeTree = rootRouteImport

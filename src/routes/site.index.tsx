@@ -10,7 +10,7 @@ import {
   waLink,
 } from "../components/site/SiteChrome";
 
-export const Route = createFileRoute("/site")({
+export const Route = createFileRoute("/site/")({
   head: () => ({
     meta: [
       { title: "Amor de Brigadeiro | Bolos com cobertura em Uberlândia–MG" },
