@@ -87,7 +87,10 @@ type PedidoRow = {
   cobertura_id: number | null;
   curso_id?: number | null;
   data: string;
+  outros_itens?: unknown;
+  outros_preco?: number | string | null;
 };
+
 
 const toIngrediente = (r: IngredienteRow): Ingrediente => ({
   id: r.id,
