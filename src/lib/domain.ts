@@ -53,7 +53,12 @@ export interface Pedido {
   coberturaId: number | null;
   cursoId: number | null;
   data: string;
+  /** Itens extras escolhidos direto do estoque (ingredientes + quantidade). */
+  outrosItens: ItemReceita[];
+  /** Preço de venda informado para os itens extras. */
+  outrosPreco: number;
 }
+
 
 /* ------------------------------- validação ------------------------------- */
 
