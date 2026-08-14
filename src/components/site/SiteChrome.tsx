@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-import { MessageCircle, ArrowUpRight } from "lucide-react";
+import { MessageCircle, ArrowUpRight, Instagram } from "lucide-react";
 
 export const WHATSAPP = "5531975894545";
 
@@ -140,7 +140,7 @@ export function SiteChrome({ children }: { children: ReactNode }) {
       <main>{children}</main>
 
       <footer className="mt-24 border-t border-border/70 bg-primary text-primary-foreground">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-5 py-10 md:flex-row md:items-center md:justify-between">
+        <div className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-10 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="site-display text-2xl">Amor de Brigadeiro</p>
             <p className="mt-1 text-xs uppercase tracking-[0.18em] opacity-80">
@@ -150,6 +150,14 @@ export function SiteChrome({ children }: { children: ReactNode }) {
           <div className="flex flex-col gap-2 text-xs uppercase tracking-[0.16em] opacity-90">
             <a href={waLink(MSG_ENCOMENDA)} target="_blank" rel="noreferrer" className="hover:underline">
               WhatsApp (31) 97589-4545
+            </a>
+            <a
+              href="https://www.instagram.com/amordebrigadeirooficial"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 hover:underline"
+            >
+              <Instagram className="h-4 w-4" /> Siga @amordebrigadeirooficial
             </a>
             <Link to="/" className="hover:underline">
               área de gestão
