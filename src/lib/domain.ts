@@ -121,11 +121,25 @@ export const pedidoSchema = z
     coberturaId: z.coerce.number().int().positive().nullable(),
     cursoId: z.coerce.number().int().positive().nullable(),
     data: z.string().min(4, "Informe a data do pedido"),
+    outrosItens: z
+      .array(itemReceitaSchema)
+      .max(MAX_INGREDIENTES, `Máximo de ${MAX_INGREDIENTES} itens`)
+      .refine(
+        (itens) => new Set(itens.map((i) => i.ingredienteId)).size === itens.length,
+        "Não repita o mesmo item",
+      )
+      .default([]),
+    outrosPreco: z.coerce
+      .number({ invalid_type_error: "Informe um número" })
+      .nonnegative("O preço não pode ser negativo")
+      .max(1_000_000)
+      .default(0),
   })
-  .refine((p) => p.boloId !== null || p.cursoId !== null, {
-    message: "Selecione um bolo ou um curso",
+  .refine((p) => p.boloId !== null || p.cursoId !== null || p.outrosItens.length > 0, {
+    message: "Selecione um bolo, um curso ou outros itens",
     path: ["boloId"],
   });
+
 export type PedidoInput = z.infer<typeof pedidoSchema>;
 
 export const despesaSchema = z.object({
