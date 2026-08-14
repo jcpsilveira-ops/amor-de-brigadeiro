@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileDown } from "lucide-react";
+import { toast } from "sonner";
 import { PageShell } from "@/components/PageShell";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -263,13 +264,30 @@ function Relatorio() {
           <FileDown className="h-4 w-4" />
           Exportar PDF
         </Button>
-        <Button asChild variant="outline" className="gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2"
+          onClick={async () => {
+            try {
+              const { gerarPdfNutricional } = await import("@/lib/nutricional-pdf");
+              gerarPdfNutricional({ ingredientes, bolos, coberturas });
+              toast.success("Informação nutricional gerada com os dados atuais.");
+            } catch {
+              toast.error("Não foi possível gerar o PDF da informação nutricional.");
+            }
+          }}
+        >
+          <FileDown className="h-4 w-4" />
+          Gerar informação nutricional
+        </Button>
+        <Button asChild variant="ghost" className="gap-2">
           <a
             href="/informacao-nutricional-amor-de-brigadeiro.pdf"
             download="informacao-nutricional-amor-de-brigadeiro.pdf"
           >
             <FileDown className="h-4 w-4" />
-            Baixar informação nutricional
+            Baixar versão anterior
           </a>
         </Button>
       </div>
