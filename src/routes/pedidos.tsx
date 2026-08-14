@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { registrarConsumoDoPedido } from "@/lib/consumo-pedido";
+import { estornarConsumoDoPedido, registrarConsumoDoPedido } from "@/lib/consumo-pedido";
 
 import {
   brl,
@@ -109,42 +109,79 @@ function PedidosPage() {
   }
 
 
+  /** Receitas que consomem estoque em um pedido: bolo, cobertura e itens extras. */
+  const receitasDoPedido = (p: Pedido) => {
+    const bolo = bolos.find((b) => b.id === p.boloId);
+    const cobertura = coberturas.find((c) => c.id === p.coberturaId);
+    const extras =
+      (p.outrosItens ?? []).length > 0
+        ? ({
+            id: 0,
+            nome: "Outros itens",
+            precoVenda: 0,
+            criadoEm: "",
+            itens: p.outrosItens ?? [],
+          } as const)
+        : undefined;
+    const partes = [bolo?.nome, cobertura?.nome, extras ? "outros itens" : null]
+      .filter(Boolean)
+      .join(" + ");
+    return { receitas: [bolo, cobertura, extras], partes };
+  };
 
   const salvar = useAppMutation({
     mutationFn: async () => {
       if (!parsed.success) return;
-      if (editando) return pedidosApi.update(editando.id, parsed.data);
+      if (editando) {
+        // Devolve ao estoque o que o pedido antigo havia consumido antes de aplicar o novo.
+        const antigo = receitasDoPedido(editando);
+        await estornarConsumoDoPedido({
+          data,
+          descricao: `Estorno da edição do pedido #${editando.id}${antigo.partes ? ` — ${antigo.partes}` : ""}`,
+          receitas: antigo.receitas,
+        });
+        const atualizado = await pedidosApi.update(editando.id, parsed.data);
+        const novo = receitasDoPedido(atualizado);
+        await registrarConsumoDoPedido({
+          data: atualizado.data,
+          descricao: `Produção do pedido #${atualizado.id}${novo.partes ? ` — ${novo.partes}` : ""}`,
+          receitas: novo.receitas,
+        });
+        return atualizado;
+      }
       const criado = await pedidosApi.create(parsed.data);
-      const bolo = bolos.find((b) => b.id === criado.boloId);
-      const cobertura = coberturas.find((c) => c.id === criado.coberturaId);
-      const extras =
-        criado.outrosItens.length > 0
-          ? ({ id: 0, nome: "Outros itens", precoVenda: 0, criadoEm: "", itens: criado.outrosItens } as const)
-          : undefined;
-      const partes = [bolo?.nome, cobertura?.nome, extras ? "outros itens" : null]
-        .filter(Boolean)
-        .join(" + ");
+      const { receitas, partes } = receitasDoPedido(criado);
       await registrarConsumoDoPedido({
         data: criado.data,
         descricao: `Produção do pedido #${criado.id}${partes ? ` — ${partes}` : ""}`,
-        ingredientes,
-        receitas: [bolo, cobertura, extras],
+        receitas,
       });
 
       return criado;
     },
     invalidate: [keys.pedidos, keys.ingredientes, keys.movimentacoes],
     successMessage: editando
-      ? "Pedido atualizado!"
+      ? "Pedido atualizado e estoque recalculado!"
       : "Pedido registrado e estoque baixado!",
     onSuccess: limpar,
   });
 
 
   const excluir = useAppMutation({
-    mutationFn: (id: number) => pedidosApi.remove(id),
-    invalidate: [keys.pedidos],
-    successMessage: "Pedido excluído.",
+    mutationFn: async (id: number) => {
+      const pedido = pedidos.find((p) => p.id === id);
+      await pedidosApi.remove(id);
+      if (pedido) {
+        const { receitas, partes } = receitasDoPedido(pedido);
+        await estornarConsumoDoPedido({
+          data: pedido.data,
+          descricao: `Estorno do pedido excluído #${pedido.id}${partes ? ` — ${partes}` : ""}`,
+          receitas,
+        });
+      }
+    },
+    invalidate: [keys.pedidos, keys.ingredientes, keys.movimentacoes],
+    successMessage: "Pedido excluído e estoque devolvido.",
   });
 
   return (
