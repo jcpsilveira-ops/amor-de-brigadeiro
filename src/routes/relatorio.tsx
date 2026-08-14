@@ -421,6 +421,7 @@ function Relatorio() {
                   <TableHead className="text-right">Faturamento</TableHead>
                   <TableHead className="text-right">Cursos</TableHead>
                   <TableHead className="text-right">Custo produção</TableHead>
+                  <TableHead className="text-right">Outras receitas</TableHead>
                   <TableHead className="text-right">Outras despesas</TableHead>
                   <TableHead className="text-right">Lucro líquido</TableHead>
                 </TableRow>
@@ -428,7 +429,7 @@ function Relatorio() {
               <TableBody>
                 {evolucao.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground">
                       Sem histórico de pedidos ainda.
                     </TableCell>
                   </TableRow>
@@ -440,12 +441,55 @@ function Relatorio() {
                       <TableCell className="text-right">{brl(m.receita)}</TableCell>
                       <TableCell className="text-right">{brl(m.cursos)}</TableCell>
                       <TableCell className="text-right">{brl(m.custo)}</TableCell>
+                      <TableCell className="text-right">{brl(m.outrasReceitas)}</TableCell>
                       <TableCell className="text-right">{brl(m.despesas)}</TableCell>
                       <TableCell className="text-right">{brl(m.lucro)}</TableCell>
                     </TableRow>
                   ))
                 )}
 
+              </TableBody>
+            </Table>
+          </div>
+        </section>
+
+        <section className="space-y-2">
+          <h3 className="font-display text-lg">Outras receitas — {nomeMes(mes)}</h3>
+          <div className="panel overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {receitasAvulsas.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-muted-foreground">
+                      Nenhuma outra receita registrada em {nomeMes(mes)}.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  receitasAvulsas.map((r) => (
+                    <TableRow key={r.id}>
+                      <TableCell>{dataBR(r.data)}</TableCell>
+                      <TableCell className="font-semibold">{r.descricao}</TableCell>
+                      <TableCell className="text-right">{brl(r.valor)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+                {receitasAvulsas.length > 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="font-semibold">
+                      Total
+                    </TableCell>
+                    <TableCell className="text-right font-semibold">
+                      {brl(totalOutrasReceitas)}
+                    </TableCell>
+                  </TableRow>
+                ) : null}
               </TableBody>
             </Table>
           </div>
