@@ -6,9 +6,9 @@ import {
   useRouter,
   HeadContent,
   Scripts,
-  useRouterState,
 } from "@tanstack/react-router";
 import { useEffect, type ReactNode } from "react";
+
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
@@ -98,8 +98,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700&family=Playfair+Display:ital,wght@0,500;0,700;1,500;1,700&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700&family=Nunito:wght@400;600;700&display=swap",
       },
+
       { rel: "icon", href: "/favicon.png", type: "image/png" },
     ],
   }),
@@ -125,16 +126,15 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
-  const isSite = pathname.startsWith("/site");
 
   return (
     <QueryClientProvider client={queryClient}>
       <RealtimeSync />
-      {!isSite && <AppNav />}
+      <AppNav />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
 }
+
