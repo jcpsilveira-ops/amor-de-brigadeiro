@@ -74,7 +74,13 @@ function PedidosPage() {
   const [coberturaId, setCoberturaId] = useState(SEM_COBERTURA);
   const [cursoId, setCursoId] = useState(SEM_CURSO);
   const [data, setData] = useState(hojeISO());
+  const [outrosItens, setOutrosItens] = useState<{ ingredienteId: string; quantidade: string }[]>(
+    [],
+  );
+  const [outrosPreco, setOutrosPreco] = useState("0");
   const [tocado, setTocado] = useState(false);
+
+  const outrosLimpos = outrosItens.filter((i) => i.ingredienteId !== "");
 
   const parsed = pedidoSchema.safeParse({
     clienteId,
@@ -82,6 +88,8 @@ function PedidosPage() {
     coberturaId: coberturaId === SEM_COBERTURA ? null : coberturaId,
     cursoId: cursoId === SEM_CURSO ? null : cursoId,
     data,
+    outrosItens: outrosLimpos,
+    outrosPreco,
   });
   const erros: Record<string, string> = {};
   if (!parsed.success) {
@@ -95,8 +103,11 @@ function PedidosPage() {
     setCoberturaId(SEM_COBERTURA);
     setCursoId(SEM_CURSO);
     setData(hojeISO());
+    setOutrosItens([]);
+    setOutrosPreco("0");
     setTocado(false);
   }
+
 
 
   const salvar = useAppMutation({
