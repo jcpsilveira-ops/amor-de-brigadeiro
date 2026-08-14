@@ -61,7 +61,17 @@ function seed(): LocalDB {
     { id: 1, nome: "Marina Souza", whatsapp: "(11) 98888-1234" },
   ];
   const pedidos: Pedido[] = [
-    { id: 1, clienteId: 1, boloId: 1, coberturaId: 1, cursoId: null, data: hojeISO() },
+    {
+      id: 1,
+      clienteId: 1,
+      boloId: 1,
+      coberturaId: 1,
+      cursoId: null,
+      data: hojeISO(),
+      outrosItens: [],
+      outrosPreco: 0,
+    },
+
   ];
   return {
     ingredientes,
