@@ -396,6 +396,43 @@ export const despesasApi = {
   },
 };
 
+/* ---------------------------- outras receitas ----------------------------- */
+
+export const receitasAvulsasApi = {
+  list: async (): Promise<Despesa[]> => {
+    if (apiBase()) return http("/outras-receitas");
+    const rows = check(
+      await supabase
+        .from("outras_receitas")
+        .select("*")
+        .order("data", { ascending: false })
+        .order("id", { ascending: false }),
+    );
+    return (rows as unknown as DespesaRow[]).map(toDespesa);
+  },
+  create: async (input: DespesaInput): Promise<Despesa> => {
+    if (apiBase()) return http("/outras-receitas", { method: "POST", body: JSON.stringify(input) });
+    const row = check(
+      await supabase.from("outras_receitas").insert(input).select("*").single(),
+    );
+    return toDespesa(row as unknown as DespesaRow);
+  },
+  update: async (id: number, input: DespesaInput): Promise<Despesa> => {
+    if (apiBase()) {
+      return http(`/outras-receitas/${id}`, { method: "PUT", body: JSON.stringify(input) });
+    }
+    const row = check(
+      await supabase.from("outras_receitas").update(input).eq("id", id).select("*").single(),
+    );
+    return toDespesa(row as unknown as DespesaRow);
+  },
+  remove: async (id: number): Promise<void> => {
+    if (apiBase()) return http(`/outras-receitas/${id}`, { method: "DELETE" });
+    const { error } = await supabase.from("outras_receitas").delete().eq("id", id);
+    if (error) throw new ApiError(error.message);
+  },
+};
+
 /* ----------------------- movimentações de estoque ------------------------- */
 
 interface MovimentacaoRow {
