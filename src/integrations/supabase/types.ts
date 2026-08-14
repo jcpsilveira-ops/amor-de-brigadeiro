@@ -217,6 +217,30 @@ export type Database = {
         }
         Relationships: []
       }
+      outras_receitas: {
+        Row: {
+          criado_em: string
+          data: string
+          descricao: string
+          id: number
+          valor: number
+        }
+        Insert: {
+          criado_em?: string
+          data?: string
+          descricao: string
+          id?: number
+          valor?: number
+        }
+        Update: {
+          criado_em?: string
+          data?: string
+          descricao?: string
+          id?: number
+          valor?: number
+        }
+        Relationships: []
+      }
       pedidos: {
         Row: {
           bolo_id: number | null
