@@ -250,32 +250,46 @@ function PedidosPage() {
                   outrosItens.map((item, indice) => {
                     const ing = ingredientes.find((i) => String(i.id) === item.ingredienteId);
                     return (
-                      <div key={indice} className="flex items-end gap-2">
-                        <div className="flex-1">
-                          <Select
-                            value={item.ingredienteId}
-                            onValueChange={(valor) =>
-                              setOutrosItens((atual) =>
-                                atual.map((linha, i) =>
-                                  i === indice ? { ...linha, ingredienteId: valor } : linha,
-                                ),
-                              )
+                      <div key={indice} className="space-y-2 rounded-md bg-muted/40 p-2">
+                        <div className="flex items-center gap-2">
+                          <div className="min-w-0 flex-1">
+                            <Select
+                              value={item.ingredienteId}
+                              onValueChange={(valor) =>
+                                setOutrosItens((atual) =>
+                                  atual.map((linha, i) =>
+                                    i === indice ? { ...linha, ingredienteId: valor } : linha,
+                                  ),
+                                )
+                              }
+                            >
+                              <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Selecione o item" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {ingredientes.map((i) => (
+                                  <SelectItem key={i.id} value={String(i.id)}>
+                                    {i.nome} ({i.estoqueQuantidade} {i.estoqueUnidade ?? i.unidade})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            aria-label="Remover item"
+                            onClick={() =>
+                              setOutrosItens((atual) => atual.filter((_, i) => i !== indice))
                             }
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Selecione o item" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {ingredientes.map((i) => (
-                                <SelectItem key={i.id} value={String(i.id)}>
-                                  {i.nome} ({i.estoqueQuantidade} {i.estoqueUnidade ?? i.unidade})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <div className="w-24">
+                        <div className="flex items-center gap-2">
                           <Input
+                            className="w-28"
                             type="number"
                             step="0.001"
                             min="0"
@@ -289,21 +303,10 @@ function PedidosPage() {
                               )
                             }
                           />
+                          <span className="text-xs text-muted-foreground">
+                            {ing ? `${ing.estoqueUnidade ?? ing.unidade} · disponível: ${ing.estoqueQuantidade} ${ing.estoqueUnidade ?? ing.unidade}` : "Selecione o item para ver a unidade"}
+                          </span>
                         </div>
-                        <span className="pb-2 text-xs text-muted-foreground">
-                          {ing?.unidade ?? ""}
-                        </span>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          aria-label="Remover item"
-                          onClick={() =>
-                            setOutrosItens((atual) => atual.filter((_, i) => i !== indice))
-                          }
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     );
                   })
