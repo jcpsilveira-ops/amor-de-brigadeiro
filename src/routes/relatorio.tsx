@@ -194,7 +194,11 @@ function Relatorio() {
           mapa.set(item.ingredienteId, (mapa.get(item.ingredienteId) ?? 0) + item.quantidade);
         }
       }
+      for (const item of p.outrosItens ?? []) {
+        mapa.set(item.ingredienteId, (mapa.get(item.ingredienteId) ?? 0) + item.quantidade);
+      }
     }
+
     return Array.from(mapa.entries())
       .map(([id, quantidade]) => {
         const ing = ingredientes.find((i) => i.id === id);
