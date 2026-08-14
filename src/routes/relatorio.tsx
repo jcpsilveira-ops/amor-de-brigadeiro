@@ -247,11 +247,16 @@ function Relatorio() {
       atual.pedidos += 1;
       atual.cursos += curso?.precoVenda ?? 0;
       atual.receita +=
-        (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0) + (curso?.precoVenda ?? 0);
+        (bolo?.precoVenda ?? 0) +
+        (cobertura?.precoVenda ?? 0) +
+        (curso?.precoVenda ?? 0) +
+        (p.outrosPreco ?? 0);
       atual.custo +=
         (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
         (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
-        (curso ? calcularCusto(curso.itens, ingredientes) : 0);
+        (curso ? calcularCusto(curso.itens, ingredientes) : 0) +
+        calcularCusto(p.outrosItens ?? [], ingredientes);
+
     }
     for (const d of todasDespesas) {
       obter(d.data.slice(0, 7)).despesas += d.valor;
