@@ -373,11 +373,19 @@ function PedidosPage() {
                     const custo =
                       (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
                       (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
-                      (curso ? calcularCusto(curso.itens, ingredientes) : 0);
+                      (curso ? calcularCusto(curso.itens, ingredientes) : 0) +
+                      calcularCusto(p.outrosItens ?? [], ingredientes);
                     const total =
                       (bolo?.precoVenda ?? 0) +
                       (cobertura?.precoVenda ?? 0) +
-                      (curso?.precoVenda ?? 0);
+                      (curso?.precoVenda ?? 0) +
+                      (p.outrosPreco ?? 0);
+                    const extras = (p.outrosItens ?? [])
+                      .map((item) => {
+                        const ing = ingredientes.find((i) => i.id === item.ingredienteId);
+                        return `${ing?.nome ?? "Item removido"} ${item.quantidade}${ing?.unidade ?? ""}`;
+                      })
+                      .join(", ");
                     return (
                       <TableRow key={p.id}>
                         <TableCell className="text-muted-foreground">{p.id}</TableCell>
@@ -388,7 +396,11 @@ function PedidosPage() {
                             {cobertura?.nome ?? "Sem cobertura"}
                             {curso ? ` · Curso: ${curso.nome}` : ""}
                           </p>
+                          {extras ? (
+                            <p className="text-xs text-muted-foreground">Outros: {extras}</p>
+                          ) : null}
                         </TableCell>
+
                         <TableCell>{dataBR(p.data)}</TableCell>
                         <TableCell>{brl(custo)}</TableCell>
                         <TableCell className="font-semibold">{brl(total)}</TableCell>
