@@ -147,7 +147,13 @@ function Painel() {
     return acc + (curso ? calcularCusto(curso.itens, ingredientes) : 0);
   }, 0);
 
-  const custoPrevisto = custoBolos + custoCoberturas + custoCursos;
+  const custoOutrosItens = pedidos.reduce(
+    (acc, p) => acc + calcularCusto(p.outrosItens ?? [], ingredientes),
+    0,
+  );
+
+  const custoPrevisto = custoBolos + custoCoberturas + custoCursos + custoOutrosItens;
+
 
   const totalOutrasDespesas = despesas.reduce((acc, d) => acc + d.valor, 0);
 
