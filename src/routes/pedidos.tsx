@@ -228,7 +228,102 @@ function PedidosPage() {
                   </SelectContent>
                 </Select>
               </div>
+              <div className="space-y-2 rounded-md border border-border/60 p-3">
+                <div className="flex items-center justify-between">
+                  <Label>Outros itens (estoque)</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() =>
+                      setOutrosItens((atual) => [...atual, { ingredienteId: "", quantidade: "1" }])
+                    }
+                  >
+                    <Plus className="mr-1 h-4 w-4" /> Adicionar
+                  </Button>
+                </div>
+                {outrosItens.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Nenhum item extra. Use para vender itens direto do estoque.
+                  </p>
+                ) : (
+                  outrosItens.map((item, indice) => {
+                    const ing = ingredientes.find((i) => String(i.id) === item.ingredienteId);
+                    return (
+                      <div key={indice} className="flex items-end gap-2">
+                        <div className="flex-1">
+                          <Select
+                            value={item.ingredienteId}
+                            onValueChange={(valor) =>
+                              setOutrosItens((atual) =>
+                                atual.map((linha, i) =>
+                                  i === indice ? { ...linha, ingredienteId: valor } : linha,
+                                ),
+                              )
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o item" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {ingredientes.map((i) => (
+                                <SelectItem key={i.id} value={String(i.id)}>
+                                  {i.nome} ({i.estoqueQuantidade} {i.estoqueUnidade ?? i.unidade})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="w-24">
+                          <Input
+                            type="number"
+                            step="0.001"
+                            min="0"
+                            aria-label="Quantidade"
+                            value={item.quantidade}
+                            onChange={(e) =>
+                              setOutrosItens((atual) =>
+                                atual.map((linha, i) =>
+                                  i === indice ? { ...linha, quantidade: e.target.value } : linha,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                        <span className="pb-2 text-xs text-muted-foreground">
+                          {ing?.unidade ?? ""}
+                        </span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          aria-label="Remover item"
+                          onClick={() =>
+                            setOutrosItens((atual) => atual.filter((_, i) => i !== indice))
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })
+                )}
+                <FieldError message={tocado ? erros["outrosItens"] : undefined} />
+                <div>
+                  <Label htmlFor="outrosPreco">Preço de venda dos outros itens</Label>
+                  <Input
+                    id="outrosPreco"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={outrosPreco}
+                    onChange={(e) => setOutrosPreco(e.target.value)}
+                  />
+                  <FieldError message={tocado ? erros["outrosPreco"] : undefined} />
+                </div>
+              </div>
               <div>
+
                 <Label htmlFor="data">Data do pedido</Label>
                 <Input id="data" type="date" value={data} onChange={(e) => setData(e.target.value)} />
                 <FieldError message={tocado ? erros["data"] : undefined} />
