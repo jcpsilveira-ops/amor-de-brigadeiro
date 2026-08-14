@@ -114,6 +114,11 @@ function Painel() {
     return acc + (bolo?.precoVenda ?? 0) + (cobertura?.precoVenda ?? 0) + (p.outrosPreco ?? 0);
   }, 0);
 
+  const receitaCursos = pedidos.reduce((acc, p) => {
+    const curso = cursos.find((c) => c.id === p.cursoId);
+    return acc + (curso?.precoVenda ?? 0);
+  }, 0);
+
 
   const receitasAvulsas = useMemo(
     () =>
