@@ -25,7 +25,7 @@ const links = [
   { to: "/clientes", label: "Clientes", icon: Users },
   { to: "/pedidos", label: "Pedidos", icon: ClipboardList },
   { to: "/receitas", label: "Outras receitas", icon: PiggyBank },
-  { to: "/despesas", label: "Despesas", icon: Wallet },
+  { to: "/despesas", label: "Outras Despesas", icon: Wallet },
   { to: "/movimentacoes", label: "Movimentações", icon: ArrowLeftRight },
   { to: "/relatorio", label: "Relatório", icon: FileText },
 ] as const;
