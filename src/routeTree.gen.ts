@@ -19,6 +19,7 @@ import { Route as EstoqueRouteImport } from './routes/estoque'
 import { Route as IngredientesRouteImport } from './routes/ingredientes'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MovimentacoesRouteImport } from './routes/movimentacoes'
+import { Route as PainelEstoqueRouteImport } from './routes/painel-estoque'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as ReceitasRouteImport } from './routes/receitas'
 import { Route as RelatorioRouteImport } from './routes/relatorio'
@@ -76,6 +77,11 @@ const MovimentacoesRoute = MovimentacoesRouteImport.update({
   path: '/movimentacoes',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PainelEstoqueRoute = PainelEstoqueRouteImport.update({
+  id: '/painel-estoque',
+  path: '/painel-estoque',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PedidosRoute = PedidosRouteImport.update({
   id: '/pedidos',
   path: '/pedidos',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/ingredientes': typeof IngredientesRoute
   '/mcp': typeof McpRoute
   '/movimentacoes': typeof MovimentacoesRoute
+  '/painel-estoque': typeof PainelEstoqueRoute
   '/pedidos': typeof PedidosRoute
   '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/ingredientes': typeof IngredientesRoute
   '/mcp': typeof McpRoute
   '/movimentacoes': typeof MovimentacoesRoute
+  '/painel-estoque': typeof PainelEstoqueRoute
   '/pedidos': typeof PedidosRoute
   '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/ingredientes': typeof IngredientesRoute
   '/mcp': typeof McpRoute
   '/movimentacoes': typeof MovimentacoesRoute
+  '/painel-estoque': typeof PainelEstoqueRoute
   '/pedidos': typeof PedidosRoute
   '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/ingredientes'
     | '/mcp'
     | '/movimentacoes'
+    | '/painel-estoque'
     | '/pedidos'
     | '/receitas'
     | '/relatorio'
@@ -196,6 +206,7 @@ export interface FileRouteTypes {
     | '/ingredientes'
     | '/mcp'
     | '/movimentacoes'
+    | '/painel-estoque'
     | '/pedidos'
     | '/receitas'
     | '/relatorio'
@@ -214,6 +225,7 @@ export interface FileRouteTypes {
     | '/ingredientes'
     | '/mcp'
     | '/movimentacoes'
+    | '/painel-estoque'
     | '/pedidos'
     | '/receitas'
     | '/relatorio'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   IngredientesRoute: typeof IngredientesRoute
   McpRoute: typeof McpRoute
   MovimentacoesRoute: typeof MovimentacoesRoute
+  PainelEstoqueRoute: typeof PainelEstoqueRoute
   PedidosRoute: typeof PedidosRoute
   ReceitasRoute: typeof ReceitasRoute
   RelatorioRoute: typeof RelatorioRoute
@@ -313,6 +326,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MovimentacoesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/painel-estoque': {
+      id: '/painel-estoque'
+      path: '/painel-estoque'
+      fullPath: '/painel-estoque'
+      preLoaderRoute: typeof PainelEstoqueRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pedidos': {
       id: '/pedidos'
       path: '/pedidos'
@@ -369,6 +389,7 @@ const rootRouteChildren: RootRouteChildren = {
   IngredientesRoute: IngredientesRoute,
   McpRoute: McpRoute,
   MovimentacoesRoute: MovimentacoesRoute,
+  PainelEstoqueRoute: PainelEstoqueRoute,
   PedidosRoute: PedidosRoute,
   ReceitasRoute: ReceitasRoute,
   RelatorioRoute: RelatorioRoute,
