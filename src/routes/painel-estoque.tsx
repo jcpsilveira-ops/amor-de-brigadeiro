@@ -80,10 +80,9 @@ function PainelEstoque() {
 
   const entradas = lista.filter((m) => m.tipo === "entrada");
   const saidas = lista.filter((m) => m.tipo === "saida");
-  const valorEntradas = entradas.reduce((a, m) => a + m.valor, 0);
+  const valorEntradasMov = entradas.reduce((a, m) => a + m.valor, 0);
   const valorSaidas = saidas.reduce((a, m) => a + m.valor, 0);
   const custoReposicao = lista.reduce((a, m) => a + m.custoReposicao, 0);
-  const saldoFinanceiro = valorEntradas - valorSaidas;
 
   const ingredientePorId = useMemo(
     () => new Map(ingredientes.map((i) => [i.id, i])),
@@ -99,6 +98,11 @@ function PainelEstoque() {
     );
     return acc + (convertido ?? 0) * ing.custoUnitario;
   }, 0);
+
+  /** O estoque existente é contado como entrada. */
+  const valorEntradas = valorEntradasMov + valorEstoque;
+  const saldoFinanceiro = valorEntradas - valorSaidas;
+
 
   const porIngrediente = useMemo(() => {
     const mapa = new Map<
@@ -217,7 +221,11 @@ function PainelEstoque() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Metrica rotulo="Movimentações no período" valor={String(lista.length)} />
-            <Metrica rotulo="Entradas (valor)" valor={brl(valorEntradas)} />
+            <Metrica
+              rotulo="Entradas (valor) — inclui estoque existente"
+              valor={brl(valorEntradas)}
+            />
+            <Metrica rotulo="Entradas registradas no período" valor={brl(valorEntradasMov)} />
             <Metrica rotulo="Saídas (valor)" valor={brl(valorSaidas)} />
             <Metrica rotulo="Saldo financeiro do período" valor={brl(saldoFinanceiro)} />
             <Metrica rotulo="Custo de reposição das baixas" valor={brl(custoReposicao)} />

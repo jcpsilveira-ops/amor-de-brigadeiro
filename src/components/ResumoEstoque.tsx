@@ -24,7 +24,7 @@ export function ResumoEstoque({ mes }: { mes: string }) {
     [ingredientes],
   );
 
-  const valorEntradas = lista
+  const valorEntradasMov = lista
     .filter((m) => m.tipo === "entrada")
     .reduce((a, m) => a + m.valor, 0);
   const valorSaidas = lista.filter((m) => m.tipo === "saida").reduce((a, m) => a + m.valor, 0);
@@ -38,6 +38,10 @@ export function ResumoEstoque({ mes }: { mes: string }) {
     );
     return acc + (convertido ?? 0) * ing.custoUnitario;
   }, 0);
+
+  /** O estoque existente é contado como entrada. */
+  const valorEntradas = valorEntradasMov + valorEstoque;
+
 
   const maisConsumidos = useMemo(() => {
     const mapa = new Map<number, number>();
@@ -74,7 +78,8 @@ export function ResumoEstoque({ mes }: { mes: string }) {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Bloco rotulo="Entradas (valor)" valor={brl(valorEntradas)} />
+          <Bloco rotulo="Entradas (inclui estoque existente)" valor={brl(valorEntradas)} />
+          <Bloco rotulo="Entradas registradas" valor={brl(valorEntradasMov)} />
           <Bloco rotulo="Saídas (valor)" valor={brl(valorSaidas)} />
           <Bloco rotulo="Custo de reposição" valor={brl(custoReposicao)} />
           <Bloco rotulo="Valor atual em estoque" valor={brl(valorEstoque)} />
