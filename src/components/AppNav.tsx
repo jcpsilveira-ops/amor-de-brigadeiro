@@ -1,6 +1,7 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
   ArrowLeftRight,
+  BarChart3,
   Cake,
   ClipboardList,
   FileText,
