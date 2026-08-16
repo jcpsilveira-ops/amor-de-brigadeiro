@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { ImportarDadosLocais } from "@/components/ImportarDadosLocais";
+import { ResumoEstoque } from "@/components/ResumoEstoque";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Cake,
