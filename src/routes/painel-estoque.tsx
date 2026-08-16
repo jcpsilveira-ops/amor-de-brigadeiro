@@ -221,7 +221,11 @@ function PainelEstoque() {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Metrica rotulo="Movimentações no período" valor={String(lista.length)} />
-            <Metrica rotulo="Entradas (valor)" valor={brl(valorEntradas)} />
+            <Metrica
+              rotulo="Entradas (valor) — inclui estoque existente"
+              valor={brl(valorEntradas)}
+            />
+            <Metrica rotulo="Entradas registradas no período" valor={brl(valorEntradasMov)} />
             <Metrica rotulo="Saídas (valor)" valor={brl(valorSaidas)} />
             <Metrica rotulo="Saldo financeiro do período" valor={brl(saldoFinanceiro)} />
             <Metrica rotulo="Custo de reposição das baixas" valor={brl(custoReposicao)} />
