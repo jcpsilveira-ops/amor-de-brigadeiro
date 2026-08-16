@@ -78,7 +78,8 @@ export function ResumoEstoque({ mes }: { mes: string }) {
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Bloco rotulo="Entradas (valor)" valor={brl(valorEntradas)} />
+          <Bloco rotulo="Entradas (inclui estoque existente)" valor={brl(valorEntradas)} />
+          <Bloco rotulo="Entradas registradas" valor={brl(valorEntradasMov)} />
           <Bloco rotulo="Saídas (valor)" valor={brl(valorSaidas)} />
           <Bloco rotulo="Custo de reposição" valor={brl(custoReposicao)} />
           <Bloco rotulo="Valor atual em estoque" valor={brl(valorEstoque)} />
