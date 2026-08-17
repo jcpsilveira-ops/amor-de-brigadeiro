@@ -105,30 +105,42 @@ function PainelEstoque() {
 
 
   const porIngrediente = useMemo(() => {
-    const mapa = new Map<
-      number,
-      {
-        entradaQtd: number;
-        saidaQtd: number;
-        valorEntrada: number;
-        valorSaida: number;
-        reposicao: number;
-        movimentos: number;
-        ultima: string;
-      }
-    >();
+    type Linha = {
+      entradaQtd: number;
+      saidaQtd: number;
+      valorEntrada: number;
+      valorSaida: number;
+      reposicao: number;
+      movimentos: number;
+      ultima: string;
+    };
+    const vazio = (data: string): Linha => ({
+      entradaQtd: 0,
+      saidaQtd: 0,
+      valorEntrada: 0,
+      valorSaida: 0,
+      reposicao: 0,
+      movimentos: 0,
+      ultima: data,
+    });
+    const mapa = new Map<number, Linha>();
+
+    /** O estoque existente entra como entrada de cada ingrediente. */
+    for (const ing of ingredientes) {
+      const convertido = converterQuantidade(
+        ing.estoqueQuantidade,
+        ing.estoqueUnidade ?? ing.unidade,
+        ing.unidade,
+      );
+      if (!convertido || convertido <= 0) continue;
+      const linha = vazio("");
+      linha.entradaQtd += convertido;
+      linha.valorEntrada += convertido * ing.custoUnitario;
+      mapa.set(ing.id, linha);
+    }
+
     for (const m of lista) {
-      const atual =
-        mapa.get(m.ingredienteId) ??
-        {
-          entradaQtd: 0,
-          saidaQtd: 0,
-          valorEntrada: 0,
-          valorSaida: 0,
-          reposicao: 0,
-          movimentos: 0,
-          ultima: m.data,
-        };
+      const atual = mapa.get(m.ingredienteId) ?? vazio(m.data);
       if (m.tipo === "entrada") {
         atual.entradaQtd += m.quantidade;
         atual.valorEntrada += m.valor;
@@ -147,7 +159,8 @@ function PainelEstoque() {
       unidade: ingredientePorId.get(id)?.unidade ?? "",
       ...v,
     }));
-  }, [lista, ingredientePorId]);
+  }, [lista, ingredientes, ingredientePorId]);
+
 
   const maisConsumidos = [...porIngrediente]
     .filter((i) => i.valorSaida > 0)
