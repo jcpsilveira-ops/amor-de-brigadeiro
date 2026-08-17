@@ -247,7 +247,11 @@ function PainelEstoque() {
             <Metrica rotulo="Saldo financeiro do período" valor={brl(saldoFinanceiro)} />
             <Metrica rotulo="Custo de reposição das baixas" valor={brl(custoReposicao)} />
             <Metrica rotulo="Valor atual em estoque" valor={brl(valorEstoque)} />
-            <Metrica rotulo="Ingredientes movimentados" valor={String(porIngrediente.length)} />
+            <Metrica
+              rotulo="Ingredientes movimentados"
+              valor={String(porIngrediente.filter((i) => i.movimentos > 0).length)}
+            />
+
             <Metrica rotulo="Ingredientes sem estoque" valor={String(saldoBaixo.length)} />
           </div>
 
