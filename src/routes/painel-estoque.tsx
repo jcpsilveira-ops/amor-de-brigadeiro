@@ -356,7 +356,7 @@ function PainelEstoque() {
                                 </TableCell>
                                 <TableCell className="text-right">{brl(i.reposicao)}</TableCell>
                                 <TableCell className="text-right text-muted-foreground">
-                                  {dataBR(i.ultima)}
+                                  {i.ultima ? dataBR(i.ultima) : "estoque inicial"}
                                 </TableCell>
                               </TableRow>
                             ))}
