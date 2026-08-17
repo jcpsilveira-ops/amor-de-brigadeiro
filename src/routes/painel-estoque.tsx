@@ -27,7 +27,13 @@ import {
   RefreshCcw,
 } from "lucide-react";
 import { brl, dataBR } from "@/lib/domain";
-import { converterQuantidade, qtd } from "@/lib/estoque";
+import {
+  converterQuantidade,
+  estoqueExistenteComoEntrada,
+  estoqueNaUnidadeDeCompra,
+  qtd,
+} from "@/lib/estoque";
+
 import { useIngredientes, useMovimentacoes } from "@/lib/queries";
 
 export const Route = createFileRoute("/painel-estoque")({
