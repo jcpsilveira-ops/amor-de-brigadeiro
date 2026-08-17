@@ -77,6 +77,23 @@ function MovimentacoesPage() {
   const [mes, setMes] = useState("todos");
   const [detalhe, setDetalhe] = useState<MovimentacaoEstoque | null>(null);
 
+  const ingredientePorId = useMemo(
+    () => new Map(ingredientes.map((i) => [i.id, i])),
+    [ingredientes],
+  );
+
+  /**
+   * Custo de reposição = quantidade da baixa (convertida para a unidade de compra)
+   * x custo unitário atual do ingrediente. Entradas não geram reposição.
+   */
+  const reposicaoDaMov = (m: MovimentacaoEstoque) => {
+    if (m.tipo !== "saida") return 0;
+    const ing = ingredientePorId.get(m.ingredienteId);
+    if (!ing) return m.custoReposicao;
+    const naCompra = converterQuantidade(m.quantidade, m.unidade, ing.unidade) ?? m.quantidade;
+    return Math.round(naCompra * ing.custoUnitario * 100) / 100;
+  };
+
   const nomePorId = useMemo(
     () => new Map(ingredientes.map((i) => [i.id, i.nome])),
     [ingredientes],
@@ -96,7 +113,7 @@ function MovimentacoesPage() {
   const saidas = lista.filter((m) => m.tipo === "saida");
   const totalEntradasRegistradas = entradas.reduce((a, m) => a + m.valor, 0);
   const totalSaidas = saidas.reduce((a, m) => a + m.valor, 0);
-  const totalReposicao = lista.reduce((a, m) => a + m.custoReposicao, 0);
+  const totalReposicao = lista.reduce((a, m) => a + reposicaoDaMov(m), 0);
 
   /** Quantidade do estoque existente convertida para a unidade de compra. */
   const estoqueNaUnidade = (ing: (typeof ingredientes)[number]) =>
@@ -141,7 +158,7 @@ function MovimentacoesPage() {
         atual.saida += m.quantidade;
         atual.valorSaida += m.valor;
       }
-      atual.reposicao += m.custoReposicao;
+      atual.reposicao += reposicaoDaMov(m);
       mapa.set(m.ingredienteId, atual);
     }
     return [...mapa.entries()].sort(
@@ -192,7 +209,7 @@ function MovimentacoesPage() {
   return (
     <PageShell
       title="Movimentações de estoque"
-      subtitle="Toda variação de estoque é registrada com data, quantidade e valor. Nas baixas, mostramos também quanto custa repor o estoque anterior."
+      subtitle="Toda variação de estoque é registrada com data, quantidade e valor. O custo de reposição vem das baixas: quantidade baixada × custo unitário atual do ingrediente."
     >
       <div className="mb-6 flex flex-wrap items-end justify-between gap-3 print:hidden">
         <div>
@@ -313,7 +330,7 @@ function MovimentacoesPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right font-display text-base text-primary">
-                        {m.custoReposicao > 0 ? brl(m.custoReposicao) : "—"}
+                        {reposicaoDaMov(m) > 0 ? brl(reposicaoDaMov(m)) : "—"}
                       </TableCell>
                     </TableRow>
                   ))}
