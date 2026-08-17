@@ -115,20 +115,17 @@ function MovimentacoesPage() {
   const totalSaidas = saidas.reduce((a, m) => a + m.valor, 0);
   const totalReposicao = lista.reduce((a, m) => a + reposicaoDaMov(m), 0);
 
-  /** Quantidade do estoque existente convertida para a unidade de compra. */
-  const estoqueNaUnidade = (ing: (typeof ingredientes)[number]) =>
-    converterQuantidade(ing.estoqueQuantidade, ing.estoqueUnidade ?? ing.unidade, ing.unidade) ?? 0;
-
-  /** O estoque existente é contado como entrada. */
+  /** Saldo anterior às movimentações do período (não duplica entradas registradas). */
   const valorEstoqueExistente = useMemo(
     () =>
-      ingredientes.reduce((acc, ing) => {
-        const q = estoqueNaUnidade(ing);
-        return acc + (q > 0 ? q * ing.custoUnitario : 0);
-      }, 0),
-    [ingredientes],
+      ingredientes.reduce(
+        (acc, ing) => acc + estoqueExistenteComoEntrada(ing, lista) * ing.custoUnitario,
+        0,
+      ),
+    [ingredientes, lista],
   );
   const totalEntradas = totalEntradasRegistradas + valorEstoqueExistente;
+
 
   const porIngrediente = useMemo(() => {
     const mapa = new Map<

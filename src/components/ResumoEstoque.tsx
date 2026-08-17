@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertTriangle, ArrowDownRight, Boxes } from "lucide-react";
 import { brl, dataBR } from "@/lib/domain";
-import { converterQuantidade, qtd } from "@/lib/estoque";
+import { estoqueExistenteComoEntrada, estoqueNaUnidadeDeCompra, qtd } from "@/lib/estoque";
 import { useIngredientes, useMovimentacoes } from "@/lib/queries";
 
 /**
