@@ -129,7 +129,7 @@ export function estoqueNaUnidadeDeCompra(ing: Ingrediente): number {
  */
 export function estoqueExistenteComoEntrada(
   ing: Ingrediente,
-  movimentacoes: { ingredienteId: number; tipo: "entrada" | "saida"; quantidade: number; unidade: Unidade }[],
+  movimentacoes: { ingredienteId: number; tipo: string; quantidade: number; unidade: Unidade }[],
 ): number {
   let saldo = estoqueNaUnidadeDeCompra(ing);
   for (const m of movimentacoes) {
