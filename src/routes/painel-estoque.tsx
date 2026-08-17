@@ -27,7 +27,13 @@ import {
   RefreshCcw,
 } from "lucide-react";
 import { brl, dataBR } from "@/lib/domain";
-import { converterQuantidade, qtd } from "@/lib/estoque";
+import {
+  converterQuantidade,
+  estoqueExistenteComoEntrada,
+  estoqueNaUnidadeDeCompra,
+  qtd,
+} from "@/lib/estoque";
+
 import { useIngredientes, useMovimentacoes } from "@/lib/queries";
 
 export const Route = createFileRoute("/painel-estoque")({
@@ -90,18 +96,21 @@ function PainelEstoque() {
   );
 
   /** Valor atual parado em estoque, na unidade de compra. */
-  const valorEstoque = ingredientes.reduce((acc, ing) => {
-    const convertido = converterQuantidade(
-      ing.estoqueQuantidade,
-      ing.estoqueUnidade ?? ing.unidade,
-      ing.unidade,
-    );
-    return acc + (convertido ?? 0) * ing.custoUnitario;
-  }, 0);
+  const valorEstoque = ingredientes.reduce(
+    (acc, ing) => acc + estoqueNaUnidadeDeCompra(ing) * ing.custoUnitario,
+    0,
+  );
+
+  /** Saldo anterior às movimentações do período, contado como entrada (sem duplicar). */
+  const valorEstoqueInicial = ingredientes.reduce(
+    (acc, ing) => acc + estoqueExistenteComoEntrada(ing, lista) * ing.custoUnitario,
+    0,
+  );
 
   /** O estoque existente é contado como entrada. */
-  const valorEntradas = valorEntradasMov + valorEstoque;
+  const valorEntradas = valorEntradasMov + valorEstoqueInicial;
   const saldoFinanceiro = valorEntradas - valorSaidas;
+
 
 
   const porIngrediente = useMemo(() => {
@@ -125,19 +134,16 @@ function PainelEstoque() {
     });
     const mapa = new Map<number, Linha>();
 
-    /** O estoque existente entra como entrada de cada ingrediente. */
+    /** Somente o saldo anterior às movimentações do período entra como entrada. */
     for (const ing of ingredientes) {
-      const convertido = converterQuantidade(
-        ing.estoqueQuantidade,
-        ing.estoqueUnidade ?? ing.unidade,
-        ing.unidade,
-      );
-      if (!convertido || convertido <= 0) continue;
+      const inicial = estoqueExistenteComoEntrada(ing, lista);
+      if (inicial <= 0) continue;
       const linha = vazio("");
-      linha.entradaQtd += convertido;
-      linha.valorEntrada += convertido * ing.custoUnitario;
+      linha.entradaQtd += inicial;
+      linha.valorEntrada += inicial * ing.custoUnitario;
       mapa.set(ing.id, linha);
     }
+
 
     for (const m of lista) {
       const atual = mapa.get(m.ingredienteId) ?? vazio(m.data);

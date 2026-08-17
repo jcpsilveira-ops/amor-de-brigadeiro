@@ -112,3 +112,31 @@ export function analisarEstoqueProximoPedido(
 }
 
 export const qtd = (v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
+
+/** Estoque atual convertido para a unidade de compra do ingrediente. */
+export function estoqueNaUnidadeDeCompra(ing: Ingrediente): number {
+  return (
+    converterQuantidade(ing.estoqueQuantidade, ing.estoqueUnidade ?? ing.unidade, ing.unidade) ?? 0
+  );
+}
+
+/**
+ * Parte do estoque atual que NÃO vem das movimentações consideradas — ou seja, o
+ * saldo que já existia antes delas. Evita contar duas vezes um ingrediente cujas
+ * entradas já estão registradas no histórico.
+ *
+ * inicial = estoque atual - entradas do período + saídas do período (nunca negativo)
+ */
+export function estoqueExistenteComoEntrada(
+  ing: Ingrediente,
+  movimentacoes: { ingredienteId: number; tipo: string; quantidade: number; unidade: Unidade }[],
+): number {
+  let saldo = estoqueNaUnidadeDeCompra(ing);
+  for (const m of movimentacoes) {
+    if (m.ingredienteId !== ing.id) continue;
+    const q = converterQuantidade(m.quantidade, m.unidade, ing.unidade) ?? m.quantidade;
+    saldo += m.tipo === "entrada" ? -q : q;
+  }
+  return Math.max(0, Math.round(saldo * 1000) / 1000);
+}
+
