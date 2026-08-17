@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowDownRight, ArrowLeftRight, ArrowUpRight, Printer } from "lucide-react";
 import { brl, dataBR, type MovimentacaoEstoque } from "@/lib/domain";
-import { qtd } from "@/lib/estoque";
+import { converterQuantidade, qtd } from "@/lib/estoque";
 import {
   useBolos,
   useClientes,
@@ -94,15 +94,42 @@ function MovimentacoesPage() {
 
   const entradas = lista.filter((m) => m.tipo === "entrada");
   const saidas = lista.filter((m) => m.tipo === "saida");
-  const totalEntradas = entradas.reduce((a, m) => a + m.valor, 0);
+  const totalEntradasRegistradas = entradas.reduce((a, m) => a + m.valor, 0);
   const totalSaidas = saidas.reduce((a, m) => a + m.valor, 0);
   const totalReposicao = lista.reduce((a, m) => a + m.custoReposicao, 0);
+
+  /** Quantidade do estoque existente convertida para a unidade de compra. */
+  const estoqueNaUnidade = (ing: (typeof ingredientes)[number]) =>
+    converterQuantidade(ing.estoqueQuantidade, ing.estoqueUnidade ?? ing.unidade, ing.unidade) ?? 0;
+
+  /** O estoque existente é contado como entrada. */
+  const valorEstoqueExistente = useMemo(
+    () =>
+      ingredientes.reduce((acc, ing) => {
+        const q = estoqueNaUnidade(ing);
+        return acc + (q > 0 ? q * ing.custoUnitario : 0);
+      }, 0),
+    [ingredientes],
+  );
+  const totalEntradas = totalEntradasRegistradas + valorEstoqueExistente;
 
   const porIngrediente = useMemo(() => {
     const mapa = new Map<
       number,
       { entrada: number; saida: number; valorEntrada: number; valorSaida: number; reposicao: number }
     >();
+    /** O estoque existente entra como entrada de cada ingrediente. */
+    for (const ing of ingredientes) {
+      const q = estoqueNaUnidade(ing);
+      if (q <= 0) continue;
+      mapa.set(ing.id, {
+        entrada: q,
+        saida: 0,
+        valorEntrada: q * ing.custoUnitario,
+        valorSaida: 0,
+        reposicao: 0,
+      });
+    }
     for (const m of lista) {
       const atual =
         mapa.get(m.ingredienteId) ??
@@ -117,8 +144,10 @@ function MovimentacoesPage() {
       atual.reposicao += m.custoReposicao;
       mapa.set(m.ingredienteId, atual);
     }
-    return [...mapa.entries()].sort((a, b) => b[1].reposicao - a[1].reposicao);
-  }, [lista]);
+    return [...mapa.entries()].sort(
+      (a, b) => b[1].reposicao - a[1].reposicao || b[1].valorEntrada - a[1].valorEntrada,
+    );
+  }, [lista, ingredientes]);
 
   const pedidoDoDetalhe = useMemo(() => {
     const id = Number(detalhe?.observacao?.match(/#(\d+)/)?.[1]);
@@ -194,8 +223,12 @@ function MovimentacoesPage() {
           <p className="mt-1 font-display text-2xl text-primary">{lista.length}</p>
         </div>
         <div className="panel p-5">
-          <p className="label-caps">Entradas (valor)</p>
+          <p className="label-caps">Entradas (inclui estoque existente)</p>
           <p className="mt-1 font-display text-2xl text-primary">{brl(totalEntradas)}</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Registradas {brl(totalEntradasRegistradas)} + estoque existente{" "}
+            {brl(valorEstoqueExistente)}
+          </p>
         </div>
         <div className="panel p-5">
           <p className="label-caps">Baixas (valor)</p>
