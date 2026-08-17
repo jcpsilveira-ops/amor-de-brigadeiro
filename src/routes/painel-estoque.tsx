@@ -134,19 +134,16 @@ function PainelEstoque() {
     });
     const mapa = new Map<number, Linha>();
 
-    /** O estoque existente entra como entrada de cada ingrediente. */
+    /** Somente o saldo anterior às movimentações do período entra como entrada. */
     for (const ing of ingredientes) {
-      const convertido = converterQuantidade(
-        ing.estoqueQuantidade,
-        ing.estoqueUnidade ?? ing.unidade,
-        ing.unidade,
-      );
-      if (!convertido || convertido <= 0) continue;
+      const inicial = estoqueExistenteComoEntrada(ing, lista);
+      if (inicial <= 0) continue;
       const linha = vazio("");
-      linha.entradaQtd += convertido;
-      linha.valorEntrada += convertido * ing.custoUnitario;
+      linha.entradaQtd += inicial;
+      linha.valorEntrada += inicial * ing.custoUnitario;
       mapa.set(ing.id, linha);
     }
+
 
     for (const m of lista) {
       const atual = mapa.get(m.ingredienteId) ?? vazio(m.data);
