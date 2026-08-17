@@ -52,20 +52,19 @@ export const Route = createFileRoute("/estoque")({
   component: EstoquePage,
 });
 
-const valorDoEstoque = (ing: Ingrediente) => {
-  const convertido = converterQuantidade(
-    ing.estoqueQuantidade,
-    ing.estoqueUnidade ?? ing.unidade,
-    ing.unidade,
-  );
-  return (convertido ?? 0) * ing.custoUnitario;
-};
+const quantidadeNaUnidadeDeCompra = (ing: Ingrediente) =>
+  converterQuantidade(ing.estoqueQuantidade, ing.estoqueUnidade ?? ing.unidade, ing.unidade) ?? 0;
+
+const valorDoEstoque = (ing: Ingrediente) =>
+  quantidadeNaUnidadeDeCompra(ing) * ing.custoUnitario;
+
+const numeroBR = (v: string) => Number(v.replace(",", "."));
 
 function EstoquePage() {
   const { data: ingredientes = [], isLoading } = useIngredientes();
-  const [rascunhos, setRascunhos] = useState<Record<number, { quantidade: string; unidade: Unidade }>>(
-    {},
-  );
+  const [rascunhos, setRascunhos] = useState<
+    Record<number, { quantidade: string; unidade: Unidade; custo: string }>
+  >({});
 
   const total = useMemo(
     () => ingredientes.reduce((acc, ing) => acc + valorDoEstoque(ing), 0),
@@ -78,10 +77,12 @@ function EstoquePage() {
       ing,
       quantidade,
       unidade,
+      custoUnitario,
     }: {
       ing: Ingrediente;
       quantidade: number;
       unidade: Unidade;
+      custoUnitario: number;
     }) => {
       const unidadeAnterior = ing.estoqueUnidade ?? ing.unidade;
       const anteriorNaUnidade =
@@ -91,14 +92,14 @@ function EstoquePage() {
       const salvo = await ingredientesApi.update(ing.id, {
         nome: ing.nome,
         unidade: ing.unidade,
-        custoUnitario: ing.custoUnitario,
+        custoUnitario,
         estoqueQuantidade: quantidade,
         estoqueUnidade: unidade,
       });
       if (delta !== 0) {
         const deltaNaCompra =
           converterQuantidade(Math.abs(delta), unidade, ing.unidade) ?? Math.abs(delta);
-        const valor = Math.round(deltaNaCompra * ing.custoUnitario * 100) / 100;
+        const valor = Math.round(deltaNaCompra * custoUnitario * 100) / 100;
         await movimentacoesApi.create({
           ingredienteId: ing.id,
           data: hojeISO(),
@@ -107,7 +108,7 @@ function EstoquePage() {
           unidade,
           quantidadeAnterior: Math.round(anteriorNaUnidade * 1000) / 1000,
           quantidadeNova: quantidade,
-          custoUnitario: ing.custoUnitario,
+          custoUnitario,
           valor,
           custoReposicao: delta < 0 ? valor : 0,
           observacao: null,
@@ -129,18 +130,35 @@ function EstoquePage() {
     rascunhos[ing.id]?.quantidade ?? String(ing.estoqueQuantidade);
   const unidadeDe = (ing: Ingrediente) =>
     rascunhos[ing.id]?.unidade ?? (ing.estoqueUnidade ?? ing.unidade);
+  const custoDe = (ing: Ingrediente) =>
+    rascunhos[ing.id]?.custo ?? String(ing.custoUnitario);
 
-  const atualizar = (ing: Ingrediente, patch: { quantidade?: string; unidade?: Unidade }) =>
+  const atualizar = (
+    ing: Ingrediente,
+    patch: { quantidade?: string; unidade?: Unidade; custo?: string },
+  ) =>
     setRascunhos((prev) => ({
       ...prev,
       [ing.id]: {
         quantidade: patch.quantidade ?? valorDe(ing),
         unidade: patch.unidade ?? unidadeDe(ing),
+        custo: patch.custo ?? custoDe(ing),
       },
     }));
 
+  // Custo de reposição por item = quantidade em estoque (convertida para a unidade
+  // de compra) x custo unitário informado.
+  const reposicaoDe = (ing: Ingrediente) => {
+    const quantidade = numeroBR(valorDe(ing)) || 0;
+    const custo = numeroBR(custoDe(ing)) || 0;
+    const naCompra = converterQuantidade(quantidade, unidadeDe(ing), ing.unidade);
+    const convertivel = naCompra !== null && naCompra !== undefined;
+    const quantidadeCompra = convertivel ? naCompra : quantidade;
+    return { quantidadeCompra, custo, total: quantidadeCompra * custo, convertivel };
+  };
+
   const ajustar = (ing: Ingrediente, delta: number) => {
-    const atual = Number(valorDe(ing).replace(",", ".")) || 0;
+    const atual = numeroBR(valorDe(ing)) || 0;
     const proximo = Math.max(0, Math.round((atual + delta) * 1000) / 1000);
     atualizar(ing, { quantidade: String(proximo) });
   };
@@ -148,10 +166,14 @@ function EstoquePage() {
   const alterado = (ing: Ingrediente) => {
     const rascunho = rascunhos[ing.id];
     if (!rascunho) return false;
-    const numero = Number(rascunho.quantidade.replace(",", "."));
+    const numero = numeroBR(rascunho.quantidade);
+    const custo = numeroBR(rascunho.custo);
     if (!Number.isFinite(numero) || numero < 0) return false;
+    if (!Number.isFinite(custo) || custo < 0) return false;
     return (
-      numero !== ing.estoqueQuantidade || rascunho.unidade !== (ing.estoqueUnidade ?? ing.unidade)
+      numero !== ing.estoqueQuantidade ||
+      rascunho.unidade !== (ing.estoqueUnidade ?? ing.unidade) ||
+      custo !== ing.custoUnitario
     );
   };
 
@@ -197,6 +219,7 @@ function EstoquePage() {
                     <TableHead>Ingrediente</TableHead>
                     <TableHead>Custo unitário</TableHead>
                     <TableHead>Estoque</TableHead>
+                    <TableHead>Custo de reposição</TableHead>
                     <TableHead className="text-right">Valor em estoque</TableHead>
                     <TableHead className="text-right">Ajustar</TableHead>
                   </TableRow>
@@ -213,7 +236,20 @@ function EstoquePage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        {brl(ing.custoUnitario)} / {ing.unidade}
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-xs text-muted-foreground">R$</span>
+                          <Input
+                            className="w-24"
+                            inputMode="decimal"
+                            aria-label={`Custo unitário de ${ing.nome}`}
+                            value={custoDe(ing)}
+                            onChange={(e) => atualizar(ing, { custo: e.target.value })}
+                          />
+                          <span className="text-xs text-muted-foreground">/ {ing.unidade}</span>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Atual: {brl(ing.custoUnitario)} / {ing.unidade}
+                        </p>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -265,6 +301,26 @@ function EstoquePage() {
                           Atual: {qtd(ing.estoqueQuantidade)} {ing.estoqueUnidade ?? ing.unidade}
                         </p>
                       </TableCell>
+                      <TableCell>
+                        {(() => {
+                          const r = reposicaoDe(ing);
+                          return (
+                            <>
+                              <p className="font-display text-base text-primary">{brl(r.total)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {qtd(r.quantidadeCompra)} {ing.unidade} × {brl(r.custo)} ={" "}
+                                {brl(r.total)}
+                              </p>
+                              {!r.convertivel && (
+                                <p className="text-xs text-destructive">
+                                  Unidade do estoque incompatível com {ing.unidade} — usamos a
+                                  quantidade informada.
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </TableCell>
                       <TableCell className="text-right font-display text-base text-primary">
                         {brl(valorDoEstoque(ing))}
                       </TableCell>
@@ -276,8 +332,9 @@ function EstoquePage() {
                           onClick={() =>
                             salvar.mutate({
                               ing,
-                              quantidade: Number(valorDe(ing).replace(",", ".")),
+                              quantidade: numeroBR(valorDe(ing)),
                               unidade: unidadeDe(ing),
+                              custoUnitario: numeroBR(custoDe(ing)),
                             })
                           }
                         >
