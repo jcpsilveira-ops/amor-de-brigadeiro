@@ -185,9 +185,13 @@ function PainelEstoque() {
   const maiorBarra = Math.max(1, ...evolucao.map(([, v]) => Math.max(v.entrada, v.saida)));
 
   const semMovimento = useMemo(
-    () => ingredientes.filter((i) => !porIngrediente.some((p) => p.id === i.id)),
+    () =>
+      ingredientes.filter(
+        (i) => !porIngrediente.some((p) => p.id === i.id && p.movimentos > 0),
+      ),
     [ingredientes, porIngrediente],
   );
+
 
   const saldoBaixo = useMemo(
     () =>
