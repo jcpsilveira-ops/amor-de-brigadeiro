@@ -30,17 +30,18 @@ export function ResumoEstoque({ mes }: { mes: string }) {
   const valorSaidas = lista.filter((m) => m.tipo === "saida").reduce((a, m) => a + m.valor, 0);
   const custoReposicao = lista.reduce((a, m) => a + m.custoReposicao, 0);
 
-  const valorEstoque = ingredientes.reduce((acc, ing) => {
-    const convertido = converterQuantidade(
-      ing.estoqueQuantidade,
-      ing.estoqueUnidade ?? ing.unidade,
-      ing.unidade,
-    );
-    return acc + (convertido ?? 0) * ing.custoUnitario;
-  }, 0);
+  const valorEstoque = ingredientes.reduce(
+    (acc, ing) => acc + estoqueNaUnidadeDeCompra(ing) * ing.custoUnitario,
+    0,
+  );
 
-  /** O estoque existente é contado como entrada. */
-  const valorEntradas = valorEntradasMov + valorEstoque;
+  /** Somente o saldo anterior às movimentações do período conta como entrada. */
+  const valorEstoqueInicial = ingredientes.reduce(
+    (acc, ing) => acc + estoqueExistenteComoEntrada(ing, lista) * ing.custoUnitario,
+    0,
+  );
+  const valorEntradas = valorEntradasMov + valorEstoqueInicial;
+
 
 
   const maisConsumidos = useMemo(() => {
