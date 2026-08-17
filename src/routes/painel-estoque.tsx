@@ -90,18 +90,21 @@ function PainelEstoque() {
   );
 
   /** Valor atual parado em estoque, na unidade de compra. */
-  const valorEstoque = ingredientes.reduce((acc, ing) => {
-    const convertido = converterQuantidade(
-      ing.estoqueQuantidade,
-      ing.estoqueUnidade ?? ing.unidade,
-      ing.unidade,
-    );
-    return acc + (convertido ?? 0) * ing.custoUnitario;
-  }, 0);
+  const valorEstoque = ingredientes.reduce(
+    (acc, ing) => acc + estoqueNaUnidadeDeCompra(ing) * ing.custoUnitario,
+    0,
+  );
+
+  /** Saldo anterior às movimentações do período, contado como entrada (sem duplicar). */
+  const valorEstoqueInicial = ingredientes.reduce(
+    (acc, ing) => acc + estoqueExistenteComoEntrada(ing, lista) * ing.custoUnitario,
+    0,
+  );
 
   /** O estoque existente é contado como entrada. */
-  const valorEntradas = valorEntradasMov + valorEstoque;
+  const valorEntradas = valorEntradasMov + valorEstoqueInicial;
   const saldoFinanceiro = valorEntradas - valorSaidas;
+
 
 
   const porIngrediente = useMemo(() => {
