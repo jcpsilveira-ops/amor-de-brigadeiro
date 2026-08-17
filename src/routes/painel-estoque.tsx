@@ -105,30 +105,42 @@ function PainelEstoque() {
 
 
   const porIngrediente = useMemo(() => {
-    const mapa = new Map<
-      number,
-      {
-        entradaQtd: number;
-        saidaQtd: number;
-        valorEntrada: number;
-        valorSaida: number;
-        reposicao: number;
-        movimentos: number;
-        ultima: string;
-      }
-    >();
+    type Linha = {
+      entradaQtd: number;
+      saidaQtd: number;
+      valorEntrada: number;
+      valorSaida: number;
+      reposicao: number;
+      movimentos: number;
+      ultima: string;
+    };
+    const vazio = (data: string): Linha => ({
+      entradaQtd: 0,
+      saidaQtd: 0,
+      valorEntrada: 0,
+      valorSaida: 0,
+      reposicao: 0,
+      movimentos: 0,
+      ultima: data,
+    });
+    const mapa = new Map<number, Linha>();
+
+    /** O estoque existente entra como entrada de cada ingrediente. */
+    for (const ing of ingredientes) {
+      const convertido = converterQuantidade(
+        ing.estoqueQuantidade,
+        ing.estoqueUnidade ?? ing.unidade,
+        ing.unidade,
+      );
+      if (!convertido || convertido <= 0) continue;
+      const linha = vazio("");
+      linha.entradaQtd += convertido;
+      linha.valorEntrada += convertido * ing.custoUnitario;
+      mapa.set(ing.id, linha);
+    }
+
     for (const m of lista) {
-      const atual =
-        mapa.get(m.ingredienteId) ??
-        {
-          entradaQtd: 0,
-          saidaQtd: 0,
-          valorEntrada: 0,
-          valorSaida: 0,
-          reposicao: 0,
-          movimentos: 0,
-          ultima: m.data,
-        };
+      const atual = mapa.get(m.ingredienteId) ?? vazio(m.data);
       if (m.tipo === "entrada") {
         atual.entradaQtd += m.quantidade;
         atual.valorEntrada += m.valor;
@@ -147,7 +159,8 @@ function PainelEstoque() {
       unidade: ingredientePorId.get(id)?.unidade ?? "",
       ...v,
     }));
-  }, [lista, ingredientePorId]);
+  }, [lista, ingredientes, ingredientePorId]);
+
 
   const maisConsumidos = [...porIngrediente]
     .filter((i) => i.valorSaida > 0)
@@ -172,9 +185,13 @@ function PainelEstoque() {
   const maiorBarra = Math.max(1, ...evolucao.map(([, v]) => Math.max(v.entrada, v.saida)));
 
   const semMovimento = useMemo(
-    () => ingredientes.filter((i) => !porIngrediente.some((p) => p.id === i.id)),
+    () =>
+      ingredientes.filter(
+        (i) => !porIngrediente.some((p) => p.id === i.id && p.movimentos > 0),
+      ),
     [ingredientes, porIngrediente],
   );
+
 
   const saldoBaixo = useMemo(
     () =>
@@ -230,7 +247,11 @@ function PainelEstoque() {
             <Metrica rotulo="Saldo financeiro do período" valor={brl(saldoFinanceiro)} />
             <Metrica rotulo="Custo de reposição das baixas" valor={brl(custoReposicao)} />
             <Metrica rotulo="Valor atual em estoque" valor={brl(valorEstoque)} />
-            <Metrica rotulo="Ingredientes movimentados" valor={String(porIngrediente.length)} />
+            <Metrica
+              rotulo="Ingredientes movimentados"
+              valor={String(porIngrediente.filter((i) => i.movimentos > 0).length)}
+            />
+
             <Metrica rotulo="Ingredientes sem estoque" valor={String(saldoBaixo.length)} />
           </div>
 
@@ -335,7 +356,7 @@ function PainelEstoque() {
                                 </TableCell>
                                 <TableCell className="text-right">{brl(i.reposicao)}</TableCell>
                                 <TableCell className="text-right text-muted-foreground">
-                                  {dataBR(i.ultima)}
+                                  {i.ultima ? dataBR(i.ultima) : "estoque inicial"}
                                 </TableCell>
                               </TableRow>
                             ))}
