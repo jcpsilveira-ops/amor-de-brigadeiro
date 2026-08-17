@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowDownRight, ArrowLeftRight, ArrowUpRight, Printer } from "lucide-react";
 import { brl, dataBR, type MovimentacaoEstoque } from "@/lib/domain";
-import { converterQuantidade, qtd } from "@/lib/estoque";
+import { converterQuantidade, estoqueExistenteComoEntrada, qtd } from "@/lib/estoque";
 import {
   useBolos,
   useClientes,
@@ -132,9 +132,10 @@ function MovimentacoesPage() {
       number,
       { entrada: number; saida: number; valorEntrada: number; valorSaida: number; reposicao: number }
     >();
-    /** O estoque existente entra como entrada de cada ingrediente. */
+    /** Somente o saldo anterior às movimentações do período entra como entrada. */
     for (const ing of ingredientes) {
-      const q = estoqueNaUnidade(ing);
+      const q = estoqueExistenteComoEntrada(ing, lista);
+
       if (q <= 0) continue;
       mapa.set(ing.id, {
         entrada: q,
