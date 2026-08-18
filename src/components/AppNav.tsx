@@ -10,6 +10,7 @@ import {
   Layers,
   PackageCheck,
   PiggyBank,
+  ShoppingBag,
   Users,
   Wallet,
   Wheat,
@@ -29,6 +30,7 @@ const links = [
   { to: "/despesas", label: "Outras Despesas", icon: Wallet },
   { to: "/movimentacoes", label: "Movimentações", icon: ArrowLeftRight },
   { to: "/painel-estoque", label: "Painel de estoque", icon: BarChart3 },
+  { to: "/painel-pedidos", label: "Painel de pedidos", icon: ShoppingBag },
   { to: "/relatorio", label: "Relatório", icon: FileText },
 ] as const;
 
