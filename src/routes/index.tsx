@@ -11,6 +11,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { ImportarDadosLocais } from "@/components/ImportarDadosLocais";
 import { ResumoEstoque } from "@/components/ResumoEstoque";
+import { ResumoPedidos } from "@/components/ResumoPedidos";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Cake,
@@ -214,6 +215,8 @@ function Painel() {
         <Metrica rotulo="Margem média" valor={`${percentual.toFixed(1)}%`} />
         <Metrica rotulo="Pedidos" valor={String(pedidos.length)} />
       </div>
+
+      <ResumoPedidos mes={mes} />
 
       <ResumoEstoque mes={mes} />
 
