@@ -216,6 +216,8 @@ function Painel() {
         <Metrica rotulo="Pedidos" valor={String(pedidos.length)} />
       </div>
 
+      <ResumoPedidos mes={mes} />
+
       <ResumoEstoque mes={mes} />
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_360px]">
