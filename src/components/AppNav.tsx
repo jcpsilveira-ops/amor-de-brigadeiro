@@ -10,6 +10,7 @@ import {
   Layers,
   PackageCheck,
   PiggyBank,
+  ShoppingBag,
   Users,
   Wallet,
   Wheat,

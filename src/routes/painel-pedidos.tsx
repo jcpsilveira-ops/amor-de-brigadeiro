@@ -62,7 +62,6 @@ function PainelPedidos() {
     <PageShell
       title="Painel de pedidos"
       subtitle="Indicadores de vendas, rentabilidade, produtos e clientes para embasar decisões."
-      icon={<ClipboardList className="h-6 w-6 text-accent" />}
     >
       <div className="mb-6 flex flex-wrap items-center gap-3 panel p-4">
         <Label htmlFor="filtro-mes-pedidos" className="label-caps">
