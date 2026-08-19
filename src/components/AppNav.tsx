@@ -72,6 +72,16 @@ export function AppNav() {
               </Link>
             );
           })}
+          <a
+            href="https://amordash-5yrr3vx8.manus.space/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            Dashboard externo
+            <ExternalLink className="h-3 w-3 opacity-70" />
+          </a>
         </nav>
       </div>
     </header>
