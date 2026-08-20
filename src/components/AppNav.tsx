@@ -15,9 +15,12 @@ import {
   ShoppingBag,
   Users,
   Wallet,
+  Settings,
   Wheat,
 } from "lucide-react";
 import logoAsset from "@/assets/logo.jpg.asset.json";
+import { CONFIG_DASHBOARD_URL } from "@/lib/domain";
+import { useConfiguracoes } from "@/lib/queries";
 
 const links = [
   { to: "/", label: "Painel", icon: Home },
@@ -34,10 +37,13 @@ const links = [
   { to: "/painel-estoque", label: "Painel de estoque", icon: BarChart3 },
   { to: "/painel-pedidos", label: "Painel de pedidos", icon: ShoppingBag },
   { to: "/relatorio", label: "Relatório", icon: FileText },
+  { to: "/configuracoes", label: "Configurações", icon: Settings },
 ] as const;
 
 export function AppNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: config } = useConfiguracoes();
+  const dashboardUrl = (config?.[CONFIG_DASHBOARD_URL] ?? "").trim();
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
@@ -72,8 +78,9 @@ export function AppNav() {
               </Link>
             );
           })}
+          {dashboardUrl ? (
           <a
-            href="https://amordash-5yrr3vx8.manus.space/"
+            href={dashboardUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-secondary hover:text-secondary-foreground"
@@ -82,6 +89,7 @@ export function AppNav() {
             Dashboard externo
             <ExternalLink className="h-3 w-3 opacity-70" />
           </a>
+          ) : null}
         </nav>
       </div>
     </header>

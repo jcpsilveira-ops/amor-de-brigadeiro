@@ -83,6 +83,27 @@ export type Database = {
         }
         Relationships: []
       }
+      configuracoes: {
+        Row: {
+          atualizado_em: string
+          chave: string
+          criado_em: string
+          valor: string
+        }
+        Insert: {
+          atualizado_em?: string
+          chave: string
+          criado_em?: string
+          valor?: string
+        }
+        Update: {
+          atualizado_em?: string
+          chave?: string
+          criado_em?: string
+          valor?: string
+        }
+        Relationships: []
+      }
       cursos: {
         Row: {
           criado_em: string
