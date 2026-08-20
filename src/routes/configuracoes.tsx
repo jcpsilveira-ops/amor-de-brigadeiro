@@ -128,7 +128,82 @@ function ConfiguracoesPage() {
             )}
           </CardContent>
         </Card>
+
+        <ChatGptCard />
       </div>
     </PageShell>
   );
 }
+
+function ChatGptCard() {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(CHATGPT_OPENAPI_URL);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // ignorar
+    }
+  };
+
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Bot className="h-5 w-5 text-primary" />
+          ChatGPT / GPT Actions
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <p className="text-muted-foreground">
+          Use as ferramentas de precificação do Amor de Brigadeiro diretamente dentro de um GPT
+          personalizado do ChatGPT: calcular custo e margem de receitas, sugerir preço de venda e
+          consultar as regras do sistema.
+        </p>
+
+        <div className="rounded-md border bg-muted/50 p-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            URL do schema OpenAPI
+          </p>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 break-all text-xs">{CHATGPT_OPENAPI_URL}</code>
+            <Button type="button" variant="outline" size="sm" onClick={copy} className="shrink-0">
+              {copied ? (
+                <>
+                  <Check className="mr-1.5 h-3.5 w-3.5" />
+                  Copiado
+                </>
+              ) : (
+                <>
+                  <Copy className="mr-1.5 h-3.5 w-3.5" />
+                  Copiar
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+
+        <ol className="list-decimal space-y-1.5 pl-5 text-muted-foreground">
+          <li>No ChatGPT, crie um novo GPT (Configurações → Meus GPTs → Criar).</li>
+          <li>Em “Actions”, clique em “Create new action”.</li>
+          <li>Cole a URL do schema OpenAPI no campo “Schema” e salve.</li>
+          <li>Defina a autenticação como “None” — as ferramentas são públicas.</li>
+          <li>Na instrução do GPT, peça para usar as ferramentas quando o usuário falar de receitas, custos ou preços.</li>
+        </ol>
+
+        <a
+          href={CHATGPT_OPENAPI_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 font-semibold text-primary hover:underline"
+        >
+          Testar schema
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      </CardContent>
+    </Card>
+  );
+}
+
