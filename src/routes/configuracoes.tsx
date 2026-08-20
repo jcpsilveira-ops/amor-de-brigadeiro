@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ExternalLink, Save } from "lucide-react";
+import { Bot, Check, Copy, ExternalLink, Save } from "lucide-react";
 import { PageShell, FieldError } from "@/components/PageShell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CONFIG_DASHBOARD_URL, dashboardUrlSchema } from "@/lib/domain";
 import { configuracoesApi, keys, useAppMutation, useConfiguracoes } from "@/lib/queries";
+
+const CHATGPT_OPENAPI_URL = "https://amor-de-brigadeiro.lovable.app/api/public/chatgpt";
+
 
 export const Route = createFileRoute("/configuracoes")({
   head: () => ({
