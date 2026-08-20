@@ -215,3 +215,20 @@ export interface MovimentacaoInput {
   custoReposicao: number;
   observacao?: string | null;
 }
+
+/* --------------------------- configurações do sistema --------------------------- */
+
+export const CONFIG_DASHBOARD_URL = "dashboard_externo_url";
+
+export type Configuracoes = Record<string, string>;
+
+export const dashboardUrlSchema = z.object({
+  url: z
+    .string()
+    .trim()
+    .max(500, "URL muito longa")
+    .refine(
+      (v) => v === "" || /^https?:\/\/[^\s]+\.[^\s]+/i.test(v),
+      "Informe uma URL completa começando com https://",
+    ),
+});

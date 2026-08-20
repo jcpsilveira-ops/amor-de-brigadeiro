@@ -517,3 +517,25 @@ export const movimentacoesApi = {
     if (error) throw new ApiError(error.message);
   },
 };
+
+/* --------------------------- configurações do sistema --------------------------- */
+
+interface ConfigRow {
+  chave: string;
+  valor: string;
+}
+
+export const configuracoesApi = {
+  list: async (): Promise<Record<string, string>> => {
+    const rows = check(await supabase.from("configuracoes").select("chave, valor"));
+    const mapa: Record<string, string> = {};
+    for (const row of rows as unknown as ConfigRow[]) mapa[row.chave] = row.valor ?? "";
+    return mapa;
+  },
+  set: async (chave: string, valor: string): Promise<void> => {
+    const { error } = await supabase
+      .from("configuracoes")
+      .upsert({ chave, valor, atualizado_em: new Date().toISOString() }, { onConflict: "chave" });
+    if (error) throw new ApiError(error.message);
+  },
+};
