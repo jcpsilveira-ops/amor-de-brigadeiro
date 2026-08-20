@@ -7,6 +7,7 @@ import {
 import { toast } from "sonner";
 import {
   bolosApi,
+  configuracoesApi,
   clientesApi,
   coberturasApi,
   cursosApi,
@@ -27,6 +28,7 @@ export const keys = {
   despesas: ["outras_despesas"] as QueryKey,
   receitasAvulsas: ["outras_receitas"] as QueryKey,
   movimentacoes: ["movimentacoes_estoque"] as QueryKey,
+  configuracoes: ["configuracoes"] as QueryKey,
 };
 
 export const useIngredientes = () =>
@@ -41,6 +43,8 @@ export const usePedidos = () =>
   useQuery({ queryKey: keys.pedidos, queryFn: pedidosApi.list });
 export const useMovimentacoes = () =>
   useQuery({ queryKey: keys.movimentacoes, queryFn: movimentacoesApi.list });
+export const useConfiguracoes = () =>
+  useQuery({ queryKey: keys.configuracoes, queryFn: configuracoesApi.list });
 export const useDespesas = () =>
   useQuery({ queryKey: keys.despesas, queryFn: despesasApi.list });
 export const useReceitasAvulsas = () =>
@@ -69,6 +73,7 @@ export function useAppMutation<TInput>(options: {
 
 export {
   bolosApi,
+  configuracoesApi,
   clientesApi,
   coberturasApi,
   cursosApi,
