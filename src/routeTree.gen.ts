@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BolosRouteImport } from './routes/bolos'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CoberturasRouteImport } from './routes/coberturas'
+import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
 import { Route as CursosRouteImport } from './routes/cursos'
 import { Route as DespesasRouteImport } from './routes/despesas'
 import { Route as EstoqueRouteImport } from './routes/estoque'
@@ -46,6 +47,11 @@ const ClientesRoute = ClientesRouteImport.update({
 const CoberturasRoute = CoberturasRouteImport.update({
   id: '/coberturas',
   path: '/coberturas',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfiguracoesRoute = ConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CursosRoute = CursosRouteImport.update({
@@ -127,6 +133,7 @@ export interface FileRoutesByFullPath {
   '/bolos': typeof BolosRoute
   '/clientes': typeof ClientesRoute
   '/coberturas': typeof CoberturasRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/cursos': typeof CursosRoute
   '/despesas': typeof DespesasRoute
   '/estoque': typeof EstoqueRoute
@@ -147,6 +154,7 @@ export interface FileRoutesByTo {
   '/bolos': typeof BolosRoute
   '/clientes': typeof ClientesRoute
   '/coberturas': typeof CoberturasRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/cursos': typeof CursosRoute
   '/despesas': typeof DespesasRoute
   '/estoque': typeof EstoqueRoute
@@ -168,6 +176,7 @@ export interface FileRoutesById {
   '/bolos': typeof BolosRoute
   '/clientes': typeof ClientesRoute
   '/coberturas': typeof CoberturasRoute
+  '/configuracoes': typeof ConfiguracoesRoute
   '/cursos': typeof CursosRoute
   '/despesas': typeof DespesasRoute
   '/estoque': typeof EstoqueRoute
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/bolos'
     | '/clientes'
     | '/coberturas'
+    | '/configuracoes'
     | '/cursos'
     | '/despesas'
     | '/estoque'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/bolos'
     | '/clientes'
     | '/coberturas'
+    | '/configuracoes'
     | '/cursos'
     | '/despesas'
     | '/estoque'
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/bolos'
     | '/clientes'
     | '/coberturas'
+    | '/configuracoes'
     | '/cursos'
     | '/despesas'
     | '/estoque'
@@ -251,6 +263,7 @@ export interface RootRouteChildren {
   BolosRoute: typeof BolosRoute
   ClientesRoute: typeof ClientesRoute
   CoberturasRoute: typeof CoberturasRoute
+  ConfiguracoesRoute: typeof ConfiguracoesRoute
   CursosRoute: typeof CursosRoute
   DespesasRoute: typeof DespesasRoute
   EstoqueRoute: typeof EstoqueRoute
@@ -295,6 +308,13 @@ declare module '@tanstack/react-router' {
       path: '/coberturas'
       fullPath: '/coberturas'
       preLoaderRoute: typeof CoberturasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/configuracoes': {
+      id: '/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/configuracoes'
+      preLoaderRoute: typeof ConfiguracoesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cursos': {
@@ -403,6 +423,7 @@ const rootRouteChildren: RootRouteChildren = {
   BolosRoute: BolosRoute,
   ClientesRoute: ClientesRoute,
   CoberturasRoute: CoberturasRoute,
+  ConfiguracoesRoute: ConfiguracoesRoute,
   CursosRoute: CursosRoute,
   DespesasRoute: DespesasRoute,
   EstoqueRoute: EstoqueRoute,
