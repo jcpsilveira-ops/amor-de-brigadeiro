@@ -128,3 +128,38 @@
   }
 }
 
+
+/* ---------- Mobile: áreas seguras (notch) e transições de tela ---------- */
+@utility safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+@utility safe-x {
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+}
+@utility safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@keyframes tela-entrar {
+  from { opacity: 0; transform: translate3d(14px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+@keyframes tela-voltar {
+  from { opacity: 0; transform: translate3d(-14px, 0, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.animate-tela-entrar {
+  animation: tela-entrar 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.animate-tela-voltar {
+  animation: tela-voltar 0.24s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-tela-entrar,
+  .animate-tela-voltar {
+    animation: none;
+  }
+}
