@@ -37,6 +37,8 @@ const links = [
   { to: "/movimentacoes", label: "Movimentações", icon: ArrowLeftRight },
   { to: "/painel-estoque", label: "Painel de estoque", icon: BarChart3 },
   { to: "/painel-pedidos", label: "Painel de pedidos", icon: ShoppingBag },
+  { to: "/painel-receitas", label: "Painel de receitas", icon: NotebookText },
+
   { to: "/relatorio", label: "Relatório", icon: FileText },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ] as const;
