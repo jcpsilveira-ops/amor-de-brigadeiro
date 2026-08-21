@@ -30,6 +30,7 @@ export const keys = {
   receitasAvulsas: ["outras_receitas"] as QueryKey,
   movimentacoes: ["movimentacoes_estoque"] as QueryKey,
   configuracoes: ["configuracoes"] as QueryKey,
+  historicoPrecos: ["historico_precos"] as QueryKey,
 };
 
 export const useIngredientes = () =>
@@ -48,6 +49,8 @@ export const useConfiguracoes = () =>
   useQuery({ queryKey: keys.configuracoes, queryFn: configuracoesApi.list });
 export const useDespesas = () =>
   useQuery({ queryKey: keys.despesas, queryFn: despesasApi.list });
+export const useHistoricoPrecos = () =>
+  useQuery({ queryKey: keys.historicoPrecos, queryFn: historicoPrecosApi.list });
 export const useReceitasAvulsas = () =>
   useQuery({ queryKey: keys.receitasAvulsas, queryFn: receitasAvulsasApi.list });
 
@@ -79,6 +82,7 @@ export {
   coberturasApi,
   cursosApi,
   despesasApi,
+  historicoPrecosApi,
   ingredientesApi,
   movimentacoesApi,
   pedidosApi,
