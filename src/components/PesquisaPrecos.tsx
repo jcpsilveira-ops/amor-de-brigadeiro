@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowDown,
@@ -255,6 +255,7 @@ export function PesquisaPrecos({
   const cotacoes = data?.cotacoes ?? [];
 
   /* Salva o histórico de cada pesquisa concluída (uma vez por resultado). */
+  const qc = useQueryClient();
   const registrado = useRef<string>("");
   useEffect(() => {
     if (!data || data.cotacoes.length === 0) return;
@@ -270,8 +271,9 @@ export function PesquisaPrecos({
           fonte: c.fonte,
         })),
       )
+      .then(() => qc.invalidateQueries({ queryKey: keys.historicoPrecos }))
       .catch(() => undefined);
-  }, [data]);
+  }, [data, qc]);
 
   const comparativo = useMemo(
     () =>
