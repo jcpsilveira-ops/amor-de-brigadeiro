@@ -12,6 +12,7 @@ import {
   coberturasApi,
   cursosApi,
   despesasApi,
+  historicoPrecosApi,
   ingredientesApi,
   movimentacoesApi,
   pedidosApi,
