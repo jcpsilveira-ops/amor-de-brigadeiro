@@ -1,6 +1,9 @@
 import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { hapticTap } from "@/hooks/use-mobile-shell";
 import { Cake, Layers, Percent, Wheat } from "lucide-react";
+
 import { brl, calcularCusto, margem, type Ingrediente, type Receita } from "@/lib/domain";
 import { useBolos, useCoberturas, useIngredientes } from "@/lib/queries";
 
@@ -190,18 +193,24 @@ export function ResumoReceitas({ tipoFiltro = "todos" }: { tipoFiltro?: "todos" 
           <Card key={`${l.tipo}-${l.id}`}>
             <CardHeader className="pb-3">
               <CardTitle className="flex flex-wrap items-center justify-between gap-2 font-display text-lg text-primary">
-                <span>
+                <Link
+                  to="/receita/$tipo/$id"
+                  params={{ tipo: l.tipo === "Bolo" ? "bolo" : "cobertura", id: String(l.id) }}
+                  onClick={() => hapticTap()}
+                  className="hover:underline"
+                >
                   {l.nome}
                   <span className="ml-2 rounded-full bg-secondary px-2 py-0.5 text-xs font-semibold text-secondary-foreground">
                     {l.tipo}
                   </span>
-                </span>
+                </Link>
                 <span className="text-sm font-semibold text-muted-foreground">
                   Custo {brl(l.custo)} · Venda {brl(l.precoVenda)} · Lucro {brl(l.lucro)} (
                   {l.percentual.toFixed(1)}%)
                 </span>
               </CardTitle>
             </CardHeader>
+
             <CardContent>
               <ul className="grid gap-1.5 sm:grid-cols-2">
                 {l.itens.map((item, idx) => (
