@@ -30,6 +30,7 @@ import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as ApiPublicChatgptRouteImport } from './routes/api/public/chatgpt'
+import { Route as ReceitaTipoIdRouteImport } from './routes/receita.$tipo.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -139,6 +140,11 @@ const ApiPublicChatgptRoute = ApiPublicChatgptRouteImport.update({
   path: '/api/public/chatgpt',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReceitaTipoIdRoute = ReceitaTipoIdRouteImport.update({
+  id: '/receita/$tipo/$id',
+  path: '/receita/$tipo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/chatgpt': typeof ApiPublicChatgptRoute
+  '/receita/$tipo/$id': typeof ReceitaTipoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/chatgpt': typeof ApiPublicChatgptRoute
+  '/receita/$tipo/$id': typeof ReceitaTipoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -209,6 +217,7 @@ export interface FileRoutesById {
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
   '/api/public/chatgpt': typeof ApiPublicChatgptRoute
+  '/receita/$tipo/$id': typeof ReceitaTipoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/chatgpt'
+    | '/receita/$tipo/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/chatgpt'
+    | '/receita/$tipo/$id'
   id:
     | '__root__'
     | '/'
@@ -280,6 +291,7 @@ export interface FileRouteTypes {
     | '/.well-known/oauth-protected-resource'
     | '/.mcp/invoke-tool/$tool'
     | '/api/public/chatgpt'
+    | '/receita/$tipo/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -304,6 +316,7 @@ export interface RootRouteChildren {
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
   ApiPublicChatgptRoute: typeof ApiPublicChatgptRoute
+  ReceitaTipoIdRoute: typeof ReceitaTipoIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -455,6 +468,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicChatgptRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/receita/$tipo/$id': {
+      id: '/receita/$tipo/$id'
+      path: '/receita/$tipo/$id'
+      fullPath: '/receita/$tipo/$id'
+      preLoaderRoute: typeof ReceitaTipoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -481,6 +501,7 @@ const rootRouteChildren: RootRouteChildren = {
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,
   ApiPublicChatgptRoute: ApiPublicChatgptRoute,
+  ReceitaTipoIdRoute: ReceitaTipoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
