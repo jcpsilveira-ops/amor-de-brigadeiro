@@ -73,7 +73,10 @@ function DetalheReceita() {
     };
   });
 
-  const maiorCusto = itens.reduce((a, b) => (b.custoItem > a.custoItem ? b : a), itens[0]);
+  const maiorCusto = itens.length
+    ? itens.reduce((a, b) => (b.custoItem > a.custoItem ? b : a))
+    : null;
+
 
   return (
     <PageShell
