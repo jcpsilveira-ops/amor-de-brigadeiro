@@ -22,6 +22,7 @@ import { Route as McpRouteImport } from './routes/mcp'
 import { Route as MovimentacoesRouteImport } from './routes/movimentacoes'
 import { Route as PainelEstoqueRouteImport } from './routes/painel-estoque'
 import { Route as PainelPedidosRouteImport } from './routes/painel-pedidos'
+import { Route as PainelReceitasRouteImport } from './routes/painel-receitas'
 import { Route as PedidosRouteImport } from './routes/pedidos'
 import { Route as ReceitasRouteImport } from './routes/receitas'
 import { Route as RelatorioRouteImport } from './routes/relatorio'
@@ -95,6 +96,11 @@ const PainelPedidosRoute = PainelPedidosRouteImport.update({
   path: '/painel-pedidos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PainelReceitasRoute = PainelReceitasRouteImport.update({
+  id: '/painel-receitas',
+  path: '/painel-receitas',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PedidosRoute = PedidosRouteImport.update({
   id: '/pedidos',
   path: '/pedidos',
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/movimentacoes': typeof MovimentacoesRoute
   '/painel-estoque': typeof PainelEstoqueRoute
   '/painel-pedidos': typeof PainelPedidosRoute
+  '/painel-receitas': typeof PainelReceitasRoute
   '/pedidos': typeof PedidosRoute
   '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
@@ -170,6 +177,7 @@ export interface FileRoutesByTo {
   '/movimentacoes': typeof MovimentacoesRoute
   '/painel-estoque': typeof PainelEstoqueRoute
   '/painel-pedidos': typeof PainelPedidosRoute
+  '/painel-receitas': typeof PainelReceitasRoute
   '/pedidos': typeof PedidosRoute
   '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
@@ -193,6 +201,7 @@ export interface FileRoutesById {
   '/movimentacoes': typeof MovimentacoesRoute
   '/painel-estoque': typeof PainelEstoqueRoute
   '/painel-pedidos': typeof PainelPedidosRoute
+  '/painel-receitas': typeof PainelReceitasRoute
   '/pedidos': typeof PedidosRoute
   '/receitas': typeof ReceitasRoute
   '/relatorio': typeof RelatorioRoute
@@ -217,6 +226,7 @@ export interface FileRouteTypes {
     | '/movimentacoes'
     | '/painel-estoque'
     | '/painel-pedidos'
+    | '/painel-receitas'
     | '/pedidos'
     | '/receitas'
     | '/relatorio'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/movimentacoes'
     | '/painel-estoque'
     | '/painel-pedidos'
+    | '/painel-receitas'
     | '/pedidos'
     | '/receitas'
     | '/relatorio'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/movimentacoes'
     | '/painel-estoque'
     | '/painel-pedidos'
+    | '/painel-receitas'
     | '/pedidos'
     | '/receitas'
     | '/relatorio'
@@ -284,6 +296,7 @@ export interface RootRouteChildren {
   MovimentacoesRoute: typeof MovimentacoesRoute
   PainelEstoqueRoute: typeof PainelEstoqueRoute
   PainelPedidosRoute: typeof PainelPedidosRoute
+  PainelReceitasRoute: typeof PainelReceitasRoute
   PedidosRoute: typeof PedidosRoute
   ReceitasRoute: typeof ReceitasRoute
   RelatorioRoute: typeof RelatorioRoute
@@ -386,6 +399,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PainelPedidosRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/painel-receitas': {
+      id: '/painel-receitas'
+      path: '/painel-receitas'
+      fullPath: '/painel-receitas'
+      preLoaderRoute: typeof PainelReceitasRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pedidos': {
       id: '/pedidos'
       path: '/pedidos'
@@ -452,6 +472,7 @@ const rootRouteChildren: RootRouteChildren = {
   MovimentacoesRoute: MovimentacoesRoute,
   PainelEstoqueRoute: PainelEstoqueRoute,
   PainelPedidosRoute: PainelPedidosRoute,
+  PainelReceitasRoute: PainelReceitasRoute,
   PedidosRoute: PedidosRoute,
   ReceitasRoute: ReceitasRoute,
   RelatorioRoute: RelatorioRoute,
