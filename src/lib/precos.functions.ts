@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import type { PesquisaPrecos } from "./precos";
+import { MERCADOS, type Mercado, type PesquisaPrecos } from "./precos";
 
 const schema = z.object({
   ingredientes: z
@@ -13,6 +13,7 @@ const schema = z.object({
       }),
     )
     .max(40),
+  mercados: z.array(z.enum(MERCADOS)).optional(),
 });
 
 export const pesquisarPrecosMercados = createServerFn({ method: "POST" })
@@ -20,7 +21,10 @@ export const pesquisarPrecosMercados = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<PesquisaPrecos> => {
     const { pesquisarPrecos } = await import("./precos.server");
     try {
-      return await pesquisarPrecos(data.ingredientes);
+      return await pesquisarPrecos(
+        data.ingredientes,
+        (data.mercados as Mercado[] | undefined) ?? MERCADOS,
+      );
     } catch (e) {
       return {
         atualizadoEm: new Date().toISOString(),

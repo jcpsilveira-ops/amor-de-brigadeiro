@@ -7,6 +7,7 @@ import {
   identificarMercado,
   MERCADOS,
   type Cotacao,
+  type Mercado,
   type PesquisaPrecos,
 } from "./precos";
 
@@ -53,9 +54,11 @@ async function buscar(query: string): Promise<ResultadoBusca[]> {
 
 export async function pesquisarPrecos(
   ingredientes: { id: number; nome: string; unidade: string }[],
+  mercados: readonly Mercado[] = MERCADOS,
 ): Promise<PesquisaPrecos> {
   const alvo = ingredientes.slice(0, MAX_INGREDIENTES_PESQUISA);
-  const redes = MERCADOS.join(" OR ");
+  const selecionados = mercados.length > 0 ? mercados : MERCADOS;
+  const redes = selecionados.join(" OR ");
   const cotacoes: Cotacao[] = [];
   const semCotacao: string[] = [];
   let erro: string | undefined;
@@ -77,7 +80,7 @@ export async function pesquisarPrecos(
     for (const r of resultados) {
       const contexto = `${r.title ?? ""} ${r.url ?? ""} ${r.description ?? ""}`;
       const mercado = identificarMercado(contexto);
-      if (!mercado) continue;
+      if (!mercado || !selecionados.includes(mercado)) continue;
       const texto = `${r.title ?? ""} ${r.description ?? ""} ${(r.markdown ?? "").slice(0, 2000)}`;
       const precos = extrairPrecos(texto);
       if (precos.length === 0) continue;
