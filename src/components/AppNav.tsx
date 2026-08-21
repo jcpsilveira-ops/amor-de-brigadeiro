@@ -1,4 +1,5 @@
 import { Link, useRouterState } from "@tanstack/react-router";
+import { hapticTap } from "@/hooks/use-mobile-shell";
 import {
   ArrowLeftRight,
   BarChart3,
