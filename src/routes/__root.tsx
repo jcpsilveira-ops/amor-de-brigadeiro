@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AppNav } from "../components/AppNav";
+import { MobileChrome } from "../components/MobileChrome";
 import { Toaster } from "../components/ui/sonner";
 import { RealtimeSync } from "../components/RealtimeSync";
 
@@ -130,7 +130,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <RealtimeSync />
-      <AppNav />
+      <MobileChrome />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
       <Toaster richColors position="top-right" />
