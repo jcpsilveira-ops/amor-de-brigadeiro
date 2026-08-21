@@ -1,10 +1,29 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { RefreshCw, Search, Trophy, TriangleAlert } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowUp,
+  History,
+  RefreshCw,
+  Search,
+  Settings2,
+  Timer,
+  Trophy,
+  TriangleAlert,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -17,13 +36,158 @@ import { brl, type Ingrediente } from "@/lib/domain";
 import { qtd, type LinhaCesta } from "@/lib/cesta";
 import { pesquisarPrecosMercados } from "@/lib/precos.functions";
 import {
-  compararComEstoque,
+  CONFIG_INTERVALO,
+  CONFIG_MERCADOS,
+  INTERVALOS,
   MERCADOS,
+  compararComEstoque,
+  lerIntervaloConfigurado,
+  lerMercadosConfigurados,
   rankearReceitas,
+  variacoesDoHistorico,
+  type Mercado,
   type PesquisaPrecos as Pesquisa,
 } from "@/lib/precos";
+import {
+  configuracoesApi,
+  historicoPrecosApi,
+  keys,
+  useConfiguracoes,
+  useHistoricoPrecos,
+  useAppMutation,
+} from "@/lib/queries";
 
 const MEDALHAS = ["1º", "2º", "3º"];
+
+const rotuloIntervalo = (min: number) =>
+  min === 0 ? "Desligada" : min < 60 ? `A cada ${min} min` : `A cada ${min / 60} h`;
+
+const dataHora = (iso: string) => new Date(iso).toLocaleString("pt-BR");
+
+function PainelConfiguracao({
+  mercados,
+  intervalo,
+  onSalvar,
+  salvando,
+}: {
+  mercados: Mercado[];
+  intervalo: number;
+  onSalvar: (input: { mercados: Mercado[]; intervalo: number }) => void;
+  salvando: boolean;
+}) {
+  const [ordem, setOrdem] = useState<Mercado[]>(mercados);
+  const [selecionados, setSelecionados] = useState<Mercado[]>(mercados);
+  const [minutos, setMinutos] = useState(intervalo);
+
+  useEffect(() => {
+    const restantes = MERCADOS.filter((m) => !mercados.includes(m));
+    setOrdem([...mercados, ...restantes]);
+    setSelecionados(mercados);
+    setMinutos(intervalo);
+  }, [mercados, intervalo]);
+
+  const mover = (index: number, direcao: -1 | 1) => {
+    const destino = index + direcao;
+    if (destino < 0 || destino >= ordem.length) return;
+    const copia = [...ordem];
+    const atual = copia[index]!;
+    copia[index] = copia[destino]!;
+    copia[destino] = atual;
+    setOrdem(copia);
+  };
+
+  const alternar = (mercado: Mercado, ativo: boolean) =>
+    setSelecionados((atual) =>
+      ativo ? [...atual, mercado] : atual.filter((m) => m !== mercado),
+    );
+
+  const salvar = () =>
+    onSalvar({
+      mercados: ordem.filter((m) => selecionados.includes(m)),
+      intervalo: minutos,
+    });
+
+  return (
+    <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
+      <div className="flex items-center gap-2">
+        <Settings2 className="h-4 w-4 text-primary" />
+        <p className="label-caps text-muted-foreground">
+          Fornecedores no ranking e prioridade
+        </p>
+      </div>
+
+      <ul className="grid gap-2 sm:grid-cols-2">
+        {ordem.map((mercado, i) => (
+          <li
+            key={mercado}
+            className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2"
+          >
+            <label className="flex items-center gap-2 text-sm font-semibold">
+              <Checkbox
+                checked={selecionados.includes(mercado)}
+                onCheckedChange={(v) => alternar(mercado, v === true)}
+                aria-label={`Incluir ${mercado} no ranking`}
+              />
+              <span className="text-xs text-muted-foreground">{i + 1}º</span>
+              {mercado}
+            </label>
+            <span className="flex gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                aria-label={`Subir ${mercado}`}
+                disabled={i === 0}
+                onClick={() => mover(i, -1)}
+              >
+                <ArrowUp className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                aria-label={`Descer ${mercado}`}
+                disabled={i === ordem.length - 1}
+                onClick={() => mover(i, 1)}
+              >
+                <ArrowDown className="h-3.5 w-3.5" />
+              </Button>
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <Label htmlFor="intervalo-pesquisa" className="label-caps flex items-center gap-1">
+            <Timer className="h-3.5 w-3.5" /> Atualização automática
+          </Label>
+          <Select
+            value={String(minutos)}
+            onValueChange={(v) => setMinutos(Number(v))}
+          >
+            <SelectTrigger id="intervalo-pesquisa" className="mt-1 w-52">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {INTERVALOS.map((min) => (
+                <SelectItem key={min} value={String(min)}>
+                  {rotuloIntervalo(min)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={salvar} disabled={salvando || selecionados.length === 0}>
+          {salvando ? "Salvando..." : "Salvar preferências"}
+        </Button>
+        {selecionados.length === 0 ? (
+          <p className="text-xs text-destructive">Selecione pelo menos um fornecedor.</p>
+        ) : null}
+      </div>
+    </div>
+  );
+}
 
 export function PesquisaPrecos({
   linhas,
@@ -33,6 +197,24 @@ export function PesquisaPrecos({
   ingredientes: Ingrediente[];
 }) {
   const pesquisar = useServerFn(pesquisarPrecosMercados);
+  const { data: config } = useConfiguracoes();
+  const { data: historico = [] } = useHistoricoPrecos();
+  const [mostrarConfig, setMostrarConfig] = useState(false);
+
+  const mercados = useMemo(
+    () => lerMercadosConfigurados(config?.[CONFIG_MERCADOS]),
+    [config],
+  );
+  const intervalo = lerIntervaloConfigurado(config?.[CONFIG_INTERVALO]);
+
+  const salvarConfig = useAppMutation<{ mercados: Mercado[]; intervalo: number }>({
+    mutationFn: async (input) => {
+      await configuracoesApi.set(CONFIG_MERCADOS, JSON.stringify(input.mercados));
+      await configuracoesApi.set(CONFIG_INTERVALO, String(input.intervalo));
+    },
+    invalidate: [keys.configuracoes],
+    successMessage: "Preferências da pesquisa salvas.",
+  });
 
   /** Ingredientes usados nas receitas listadas, dos mais caros para os mais baratos. */
   const usados = useMemo(() => {
@@ -43,16 +225,19 @@ export function PesquisaPrecos({
       .slice(0, 12);
   }, [linhas, ingredientes]);
 
-  const chave = usados.map((i) => i.id).join(",");
+  const chave = `${usados.map((i) => i.id).join(",")}|${mercados.join(",")}`;
 
-  const { data, isFetching, refetch } = useQuery<Pesquisa>({
+  const { data, isFetching, dataUpdatedAt, refetch } = useQuery<Pesquisa>({
     queryKey: ["pesquisa-precos", chave],
     enabled: usados.length > 0,
-    // Atualiza a pesquisa sempre que a Cesta da produção é aberta.
+    // Atualiza sempre que a Cesta da produção é aberta e, se configurado,
+    // em intervalos automáticos enquanto a tela permanece aberta.
     staleTime: 0,
     gcTime: 0,
     refetchOnMount: "always",
     refetchOnWindowFocus: false,
+    refetchInterval: intervalo > 0 ? intervalo * 60_000 : false,
+    refetchIntervalInBackground: false,
     retry: false,
     queryFn: () =>
       pesquisar({
@@ -62,19 +247,45 @@ export function PesquisaPrecos({
             nome: i.nome,
             unidade: i.unidade,
           })),
+          mercados,
         },
       }),
   });
 
   const cotacoes = data?.cotacoes ?? [];
-  const comparativo = useMemo(
-    () => compararComEstoque(usados, cotacoes).filter((c) => c.melhorPreco !== null),
-    [usados, cotacoes],
-  );
-  const rankings = useMemo(() => rankearReceitas(linhas, cotacoes), [linhas, cotacoes]);
-  const comRanking = rankings.filter((r) => r.ranking.length > 0);
 
-  const mercadosComPreco = MERCADOS.filter((m) => cotacoes.some((c) => c.mercado === m));
+  /* Salva o histórico de cada pesquisa concluída (uma vez por resultado). */
+  const registrado = useRef<string>("");
+  useEffect(() => {
+    if (!data || data.cotacoes.length === 0) return;
+    if (registrado.current === data.atualizadoEm) return;
+    registrado.current = data.atualizadoEm;
+    void historicoPrecosApi
+      .registrar(
+        data.cotacoes.map((c) => ({
+          ingredienteId: c.ingredienteId,
+          ingredienteNome: c.ingrediente,
+          mercado: c.mercado,
+          preco: c.preco,
+          fonte: c.fonte,
+        })),
+      )
+      .catch(() => undefined);
+  }, [data]);
+
+  const comparativo = useMemo(
+    () =>
+      compararComEstoque(usados, cotacoes, mercados).filter((c) => c.melhorPreco !== null),
+    [usados, cotacoes, mercados],
+  );
+  const rankings = useMemo(
+    () => rankearReceitas(linhas, cotacoes, mercados),
+    [linhas, cotacoes, mercados],
+  );
+  const comRanking = rankings.filter((r) => r.ranking.length > 0);
+  const variacoes = useMemo(() => variacoesDoHistorico(historico), [historico]);
+
+  const mercadosComPreco = mercados.filter((m) => cotacoes.some((c) => c.mercado === m));
 
   return (
     <Card>
@@ -84,24 +295,46 @@ export function PesquisaPrecos({
             <Search className="h-5 w-5" />
             Pesquisa de preços — Uberlândia
           </CardTitle>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => void refetch()}
-            disabled={isFetching}
-          >
-            <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-            {isFetching ? "Pesquisando..." : "Atualizar pesquisa"}
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMostrarConfig((v) => !v)}
+            >
+              <Settings2 className="h-4 w-4" />
+              {mostrarConfig ? "Fechar ajustes" : "Ajustar fornecedores"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void refetch()}
+              disabled={isFetching}
+            >
+              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+              {isFetching ? "Pesquisando..." : "Atualizar agora"}
+            </Button>
+          </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Busca automática em Atacadão, Mart Minas, Assaí, BH, ABC, Leal e D&apos;Ville a cada
-          abertura desta tela. Os valores são aproximados (encartes e lojas online) e servem
-          como referência de comparação com o preço cadastrado no estoque.
+          Busca automática nos fornecedores escolhidos ({mercados.join(", ")}) a cada abertura
+          desta tela · atualização automática: {rotuloIntervalo(intervalo).toLowerCase()}. Os
+          valores são aproximados (encartes e lojas online) e servem de referência para
+          comparar com o preço cadastrado no estoque.
         </p>
       </CardHeader>
 
       <CardContent className="space-y-6">
+        {mostrarConfig ? (
+          <PainelConfiguracao
+            mercados={mercados}
+            intervalo={intervalo}
+            salvando={salvarConfig.isPending}
+            onSalvar={(input) =>
+              salvarConfig.mutate(input, { onSuccess: () => setMostrarConfig(false) })
+            }
+          />
+        ) : null}
+
         {isFetching && cotacoes.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
             Pesquisando preços nos mercados de Uberlândia...
@@ -233,6 +466,68 @@ export function PesquisaPrecos({
           </div>
         ) : null}
 
+        {variacoes.length > 0 ? (
+          <div className="space-y-2">
+            <p className="label-caps flex items-center gap-2 text-muted-foreground">
+              <History className="h-4 w-4 text-primary" />
+              Histórico e variação por fornecedor
+            </p>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Ingrediente</TableHead>
+                    <TableHead>Fornecedor</TableHead>
+                    <TableHead className="text-right">Preço atual</TableHead>
+                    <TableHead className="text-right">Preço anterior</TableHead>
+                    <TableHead className="text-right">Variação</TableHead>
+                    <TableHead className="text-right">Mín. / Máx.</TableHead>
+                    <TableHead className="text-right">Medições</TableHead>
+                    <TableHead className="text-right">Atualizado</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {variacoes.slice(0, 40).map((v) => (
+                    <TableRow key={`${v.ingredienteId}-${v.mercado}`}>
+                      <TableCell className="font-semibold">{v.ingrediente}</TableCell>
+                      <TableCell>{v.mercado}</TableCell>
+                      <TableCell className="text-right">{brl(v.precoAtual)}</TableCell>
+                      <TableCell className="text-right">
+                        {v.precoAnterior === null ? "—" : brl(v.precoAnterior)}
+                      </TableCell>
+                      <TableCell
+                        className={`text-right font-semibold ${
+                          (v.variacao ?? 0) > 0
+                            ? "text-destructive"
+                            : (v.variacao ?? 0) < 0
+                              ? "text-primary"
+                              : ""
+                        }`}
+                      >
+                        {v.variacao === null
+                          ? "—"
+                          : `${v.variacao > 0 ? "+" : "−"}${brl(Math.abs(v.variacao))}`}
+                        {v.variacaoPercentual === null ? null : (
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            ({v.variacaoPercentual.toFixed(0)}%)
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {brl(v.menor)} / {brl(v.maior)}
+                      </TableCell>
+                      <TableCell className="text-right">{v.medicoes}</TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">
+                        {dataHora(v.atualizadoEm)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        ) : null}
+
         {data?.semCotacao?.length ? (
           <p className="text-xs text-muted-foreground">
             Sem cotação pública nesta pesquisa: {data.semCotacao.join(", ")}. Para esses itens
@@ -242,9 +537,14 @@ export function PesquisaPrecos({
 
         {data?.atualizadoEm ? (
           <p className="text-xs text-muted-foreground">
-            Pesquisa atualizada em{" "}
-            {new Date(data.atualizadoEm).toLocaleString("pt-BR")} · {qtd(cotacoes.length)}{" "}
-            cotações encontradas.
+            Pesquisa atualizada em {dataHora(data.atualizadoEm)} · {qtd(cotacoes.length)}{" "}
+            cotações encontradas
+            {dataUpdatedAt && intervalo > 0
+              ? ` · próxima atualização automática por volta de ${new Date(
+                  dataUpdatedAt + intervalo * 60_000,
+                ).toLocaleTimeString("pt-BR")}`
+              : ""}
+            .
           </p>
         ) : null}
       </CardContent>
