@@ -5,11 +5,14 @@
 import {
   extrairPrecos,
   identificarMercado,
+  medidaPorUnidade,
+  precosPorMedidaDoTexto,
   MERCADOS,
   type Cotacao,
   type Mercado,
   type PesquisaPrecos,
 } from "./precos";
+
 
 const GATEWAY = "https://connector-gateway.lovable.dev/firecrawl/v2";
 /** Limite de ingredientes por pesquisa para manter a tela rápida. */
