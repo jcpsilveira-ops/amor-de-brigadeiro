@@ -1,6 +1,9 @@
 import { useMemo } from "react";
+import { Link } from "@tanstack/react-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { hapticTap } from "@/hooks/use-mobile-shell";
 import { Cake, Layers, Percent, Wheat } from "lucide-react";
+
 import { brl, calcularCusto, margem, type Ingrediente, type Receita } from "@/lib/domain";
 import { useBolos, useCoberturas, useIngredientes } from "@/lib/queries";
 
