@@ -33,7 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { brl, type Ingrediente } from "@/lib/domain";
-import { qtd, type LinhaCesta } from "@/lib/cesta";
+import { brlPreciso, qtd, type LinhaCesta } from "@/lib/cesta";
 import { pesquisarPrecosMercados } from "@/lib/precos.functions";
 import {
   CONFIG_INTERVALO,
@@ -43,11 +43,14 @@ import {
   compararComEstoque,
   lerIntervaloConfigurado,
   lerMercadosConfigurados,
+  medidaPorUnidade,
   rankearReceitas,
+  rotuloMedida,
   variacoesDoHistorico,
   type Mercado,
   type PesquisaPrecos as Pesquisa,
 } from "@/lib/precos";
+
 import {
   configuracoesApi,
   historicoPrecosApi,
