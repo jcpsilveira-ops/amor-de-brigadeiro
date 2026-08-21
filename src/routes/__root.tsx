@@ -13,6 +13,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { MobileChrome } from "../components/MobileChrome";
+import { MobileTransition } from "../components/MobileTransition";
 import { Toaster } from "../components/ui/sonner";
 import { RealtimeSync } from "../components/RealtimeSync";
 
@@ -80,7 +81,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Amor de Brigadeiro | Gestão da confeitaria" },
       {
         name: "description",
@@ -132,7 +133,9 @@ function RootComponent() {
       <RealtimeSync />
       <MobileChrome />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <MobileTransition>
+        <Outlet />
+      </MobileTransition>
       <Toaster richColors position="top-right" />
     </QueryClientProvider>
   );
