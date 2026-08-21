@@ -62,10 +62,13 @@ export interface Cotacao {
   mercado: Mercado;
   /** Preço encontrado, por unidade cadastrada do ingrediente (aproximado). */
   preco: number;
+  /** Preço por g/ml encontrado (null/ausente quando o item é contado por unidade). */
+  precoPorMedida?: number;
   /** Trecho da página que originou o preço. */
   trecho: string;
   fonte: string;
 }
+
 
 export interface PesquisaPrecos {
   atualizadoEm: string;
@@ -73,6 +76,37 @@ export interface PesquisaPrecos {
   /** Ingredientes sem nenhuma cotação encontrada. */
   semCotacao: string[];
   erro?: string;
+}
+
+/** Quantos g/ml existem em uma unidade cadastrada (null = item contado). */
+export function medidaPorUnidade(unidade: string): number | null {
+  const fator: Record<string, number> = { kg: 1000, l: 1000, g: 1, ml: 1 };
+  return fator[unidade] ?? null;
+}
+
+/** Converte um preço por unidade cadastrada em preço por g/ml. */
+export function precoPorMedida(preco: number, unidade: string): number | null {
+  const fator = medidaPorUnidade(unidade);
+  return fator ? preco / fator : null;
+}
+
+/** Rótulo da medida usada nas comparações (g para massa, ml para volume). */
+export function rotuloMedida(unidade: string): string {
+  return unidade === "l" || unidade === "ml" ? "ml" : "g";
+}
+
+/** Extrai o tamanho da embalagem citado em um texto, em g/ml. */
+export function extrairEmbalagem(texto: string): number | null {
+  const re = /([0-9]{1,4}(?:[.,][0-9]{1,3})?)\s*(kg|kilo?s?|quilos?|g|gr|gramas?|l|lt|litros?|ml)\b/i;
+  const m = re.exec(texto);
+  if (!m) return null;
+  const valor = Number(m[1]!.replace(",", "."));
+  if (!Number.isFinite(valor) || valor <= 0) return null;
+  const un = m[2]!.toLowerCase();
+  const gramas = /^(kg|kilo|kilos|quilo|quilos|l|lt|litro|litros)/.test(un)
+    ? valor * 1000
+    : valor;
+  return gramas >= 5 && gramas <= 30_000 ? gramas : null;
 }
 
 /** Extrai valores em reais de um texto (R$ 12,90 / R$ 5.99). */
@@ -88,6 +122,32 @@ export function extrairPrecos(texto: string): number[] {
   }
   return achados;
 }
+
+/**
+ * Preços por g/ml encontrados em um texto: cada preço é dividido pelo
+ * tamanho da embalagem citado por perto (ex.: "Leite condensado 395g R$ 6,99").
+ */
+export function precosPorMedidaDoTexto(texto: string): number[] {
+  const achados: number[] = [];
+  const re = /R\$\s*([0-9]{1,3}(?:[.,][0-9]{2,3})*(?:[.,][0-9]{1,2})?)/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(texto)) !== null) {
+    const normal = m[1]!.replace(/\.(?=\d{3}\b)/g, "").replace(",", ".");
+    const preco = Number(normal);
+    if (!Number.isFinite(preco) || preco <= 0.5 || preco >= 500) continue;
+    const inicio = Math.max(0, m.index - 80);
+    const janela = `${texto.slice(inicio, m.index)} ${texto.slice(
+      m.index,
+      m.index + 80,
+    )}`;
+    const embalagem = extrairEmbalagem(janela);
+    if (embalagem === null) continue;
+    const porMedida = preco / embalagem;
+    if (porMedida > 0 && porMedida < 5) achados.push(porMedida);
+  }
+  return achados;
+}
+
 
 /** Identifica a rede citada em um texto/URL, se houver. */
 export function identificarMercado(texto: string): Mercado | null {
