@@ -2,8 +2,7 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { ShoppingBasket, Scale, Percent, Wheat } from "lucide-react";
 
-import { PageShell } from "@/components/PageShell";
-import { EmptyState } from "@/components/PageShell";
+import { EmptyState, PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import {
