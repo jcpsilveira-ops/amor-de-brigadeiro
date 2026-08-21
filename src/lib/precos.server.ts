@@ -101,16 +101,27 @@ export async function pesquisarPrecos(
       const mercado = identificarMercado(contexto);
       if (!mercado || !selecionados.includes(mercado)) continue;
       const texto = `${r.title ?? ""} ${r.description ?? ""} ${(r.markdown ?? "").slice(0, 2000)}`;
-      const precos = extrairPrecos(texto);
+      const fator = medidaPorUnidade(ing.unidade);
+      // Itens em kg/l/g/ml: usa o preço por g/ml (preço ÷ embalagem citada) e
+      // converte para a unidade cadastrada. Itens contados usam o preço cheio.
+      const porMedida = fator === null ? [] : precosPorMedidaDoTexto(texto);
+      const precos =
+        fator === null
+          ? extrairPrecos(texto)
+          : porMedida.map((p) => Math.round(p * fator * 100) / 100);
       if (precos.length === 0) continue;
       cotacoes.push({
         ingredienteId: ing.id,
         ingrediente: ing.nome,
         mercado,
         preco: Math.min(...precos),
+        ...(fator === null
+          ? {}
+          : { precoPorMedida: Math.min(...porMedida) }),
         trecho: (r.title ?? r.description ?? "").slice(0, 140),
         fonte: r.url ?? "",
       });
+
       encontrou = true;
     }
     if (!encontrou) semCotacao.push(ing.nome);
