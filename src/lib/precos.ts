@@ -62,10 +62,13 @@ export interface Cotacao {
   mercado: Mercado;
   /** Preço encontrado, por unidade cadastrada do ingrediente (aproximado). */
   preco: number;
+  /** Preço por g/ml encontrado (null/ausente quando o item é contado por unidade). */
+  precoPorMedida?: number;
   /** Trecho da página que originou o preço. */
   trecho: string;
   fonte: string;
 }
+
 
 export interface PesquisaPrecos {
   atualizadoEm: string;
