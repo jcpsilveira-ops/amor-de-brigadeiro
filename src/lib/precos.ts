@@ -28,6 +28,34 @@ export const APELIDOS: Record<Mercado, string[]> = {
   "D'Ville": ["d'ville", "dville", "d ville", "d’ville"],
 };
 
+/** Chaves em `configuracoes` usadas pela pesquisa de preços. */
+export const CONFIG_MERCADOS = "pesquisa_precos_mercados";
+export const CONFIG_INTERVALO = "pesquisa_precos_intervalo_min";
+
+/** Intervalos disponíveis para a atualização automática (em minutos; 0 = desligado). */
+export const INTERVALOS = [0, 5, 15, 30, 60, 180] as const;
+
+/** Lê a lista de fornecedores configurada (na ordem de prioridade escolhida). */
+export function lerMercadosConfigurados(valor: string | undefined): Mercado[] {
+  if (!valor) return [...MERCADOS];
+  try {
+    const bruto = JSON.parse(valor) as unknown;
+    if (!Array.isArray(bruto)) return [...MERCADOS];
+    const lista = bruto.filter((m): m is Mercado =>
+      MERCADOS.includes(m as Mercado),
+    );
+    return lista.length > 0 ? lista : [...MERCADOS];
+  } catch {
+    return [...MERCADOS];
+  }
+}
+
+/** Lê o intervalo de atualização automática em minutos (0 = desligado). */
+export function lerIntervaloConfigurado(valor: string | undefined): number {
+  const n = Number(valor);
+  return INTERVALOS.includes(n as (typeof INTERVALOS)[number]) ? n : 0;
+}
+
 export interface Cotacao {
   ingredienteId: number;
   ingrediente: string;
@@ -102,6 +130,7 @@ export interface ComparativoIngrediente {
 export function compararComEstoque(
   ingredientes: Ingrediente[],
   cotacoes: Cotacao[],
+  mercados: readonly Mercado[] = MERCADOS,
 ): ComparativoIngrediente[] {
   return ingredientes.map((ing) => {
     const porMercado = cotacoesPorMercado(cotacoes, ing.id);
@@ -109,7 +138,7 @@ export function compararComEstoque(
     let melhorMercado: Mercado | null = null;
     let melhorPreco: number | null = null;
 
-    for (const mercado of MERCADOS) {
+    for (const mercado of mercados) {
       const cot = porMercado[mercado];
       if (!cot) continue;
       precos[mercado] = cot.preco;
@@ -166,11 +195,12 @@ export interface RankingReceita {
 export function rankearReceitas(
   linhas: LinhaCesta[],
   cotacoes: Cotacao[],
+  mercados: readonly Mercado[] = MERCADOS,
 ): RankingReceita[] {
   return linhas.map((linha) => {
     const ranking: RankingMercado[] = [];
 
-    for (const mercado of MERCADOS) {
+    for (const mercado of mercados) {
       let custo = 0;
       let cobertura = 0;
       for (const item of linha.itens) {
@@ -190,7 +220,14 @@ export function rankearReceitas(
       });
     }
 
-    ranking.sort((a, b) => a.custo - b.custo || b.cobertura - a.cobertura);
+    // Empate no custo: vence quem tem mais itens cotados e, depois, a
+    // prioridade de fornecedor configurada pelo usuário.
+    ranking.sort(
+      (a, b) =>
+        a.custo - b.custo ||
+        b.cobertura - a.cobertura ||
+        mercados.indexOf(a.mercado) - mercados.indexOf(b.mercado),
+    );
 
     return {
       id: linha.id,
@@ -201,4 +238,72 @@ export function rankearReceitas(
       melhor: ranking[0] ?? null,
     };
   });
+}
+
+export interface VariacaoPreco {
+  ingredienteId: number;
+  ingrediente: string;
+  mercado: string;
+  precoAtual: number;
+  precoAnterior: number | null;
+  variacao: number | null;
+  variacaoPercentual: number | null;
+  atualizadoEm: string;
+  medicoes: number;
+  menor: number;
+  maior: number;
+}
+
+/**
+ * Compara a cotação mais recente de cada ingrediente/fornecedor com a
+ * anterior, para acompanhar as variações ao longo do tempo.
+ */
+export function variacoesDoHistorico(
+  historico: {
+    ingredienteId: number;
+    ingredienteNome: string;
+    mercado: string;
+    preco: number;
+    criadoEm: string;
+  }[],
+): VariacaoPreco[] {
+  const grupos = new Map<string, typeof historico>();
+  for (const h of historico) {
+    const chave = `${h.ingredienteId}|${h.mercado}`;
+    const lista = grupos.get(chave);
+    if (lista) lista.push(h);
+    else grupos.set(chave, [h]);
+  }
+
+  const saida: VariacaoPreco[] = [];
+  for (const lista of grupos.values()) {
+    const ordenada = [...lista].sort((a, b) => b.criadoEm.localeCompare(a.criadoEm));
+    const atual = ordenada[0]!;
+    const anterior = ordenada.find((h) => h.preco !== atual.preco) ?? null;
+    const variacao =
+      anterior === null ? null : Math.round((atual.preco - anterior.preco) * 100) / 100;
+    const precos = ordenada.map((h) => h.preco);
+    saida.push({
+      ingredienteId: atual.ingredienteId,
+      ingrediente: atual.ingredienteNome,
+      mercado: atual.mercado,
+      precoAtual: atual.preco,
+      precoAnterior: anterior?.preco ?? null,
+      variacao,
+      variacaoPercentual:
+        variacao === null || !anterior || anterior.preco <= 0
+          ? null
+          : (variacao / anterior.preco) * 100,
+      atualizadoEm: atual.criadoEm,
+      medicoes: ordenada.length,
+      menor: Math.min(...precos),
+      maior: Math.max(...precos),
+    });
+  }
+
+  return saida.sort(
+    (a, b) =>
+      Math.abs(b.variacaoPercentual ?? 0) - Math.abs(a.variacaoPercentual ?? 0) ||
+      a.ingrediente.localeCompare(b.ingrediente),
+  );
 }

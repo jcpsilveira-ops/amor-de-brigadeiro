@@ -128,6 +128,44 @@ export type Database = {
         }
         Relationships: []
       }
+      historico_precos: {
+        Row: {
+          criado_em: string
+          fonte: string | null
+          id: number
+          ingrediente_id: number
+          ingrediente_nome: string
+          mercado: string
+          preco: number
+        }
+        Insert: {
+          criado_em?: string
+          fonte?: string | null
+          id?: number
+          ingrediente_id: number
+          ingrediente_nome: string
+          mercado: string
+          preco?: number
+        }
+        Update: {
+          criado_em?: string
+          fonte?: string | null
+          id?: number
+          ingrediente_id?: number
+          ingrediente_nome?: string
+          mercado?: string
+          preco?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_precos_ingrediente_id_fkey"
+            columns: ["ingrediente_id"]
+            isOneToOne: false
+            referencedRelation: "ingredientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ingredientes: {
         Row: {
           criado_em: string

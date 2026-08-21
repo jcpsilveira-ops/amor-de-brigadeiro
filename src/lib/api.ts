@@ -539,3 +539,69 @@ export const configuracoesApi = {
     if (error) throw new ApiError(error.message);
   },
 };
+
+/* --------------------------- histórico de preços pesquisados --------------------------- */
+
+export interface HistoricoPreco {
+  id: number;
+  ingredienteId: number;
+  ingredienteNome: string;
+  mercado: string;
+  preco: number;
+  fonte: string | null;
+  criadoEm: string;
+}
+
+interface HistoricoPrecoRow {
+  id: number;
+  ingrediente_id: number;
+  ingrediente_nome: string;
+  mercado: string;
+  preco: number | string;
+  fonte: string | null;
+  criado_em: string;
+}
+
+const toHistorico = (row: HistoricoPrecoRow): HistoricoPreco => ({
+  id: row.id,
+  ingredienteId: row.ingrediente_id,
+  ingredienteNome: row.ingrediente_nome,
+  mercado: row.mercado,
+  preco: Number(row.preco),
+  fonte: row.fonte,
+  criadoEm: row.criado_em,
+});
+
+export const historicoPrecosApi = {
+  list: async (): Promise<HistoricoPreco[]> => {
+    const rows = check(
+      await supabase
+        .from("historico_precos")
+        .select("*")
+        .order("criado_em", { ascending: false })
+        .limit(1000),
+    );
+    return (rows as unknown as HistoricoPrecoRow[]).map(toHistorico);
+  },
+  registrar: async (
+    cotacoes: {
+      ingredienteId: number;
+      ingredienteNome: string;
+      mercado: string;
+      preco: number;
+      fonte?: string;
+    }[],
+  ): Promise<void> => {
+    if (cotacoes.length === 0) return;
+    const { error } = await supabase.from("historico_precos").insert(
+      cotacoes.map((c) => ({
+        ingrediente_id: c.ingredienteId,
+        ingrediente_nome: c.ingredienteNome,
+        mercado: c.mercado,
+        preco: c.preco,
+        fonte: c.fonte ?? null,
+      })),
+    );
+    if (error) throw new ApiError(error.message);
+  },
+};
