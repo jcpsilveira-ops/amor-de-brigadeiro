@@ -28,6 +28,7 @@ import {
   resumirIngredientes,
   type LinhaCesta,
 } from "@/lib/cesta";
+import { PesquisaPrecos } from "@/components/PesquisaPrecos";
 import { useBolos, useCoberturas, useIngredientes } from "@/lib/queries";
 
 export const Route = createFileRoute("/cesta-producao")({
@@ -287,6 +288,9 @@ function CestaProducao() {
               </p>
             </CardContent>
           </Card>
+
+          <PesquisaPrecos linhas={linhas} ingredientes={ingredientes} />
+
 
           {linhas.map((linha) => (
             <CartaoReceita key={`${linha.tipo}-${linha.id}`} linha={linha} />
