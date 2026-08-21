@@ -66,8 +66,9 @@ export function AppNav() {
               <Link
                 key={to}
                 to={to}
+                onClick={() => hapticTap()}
                 className={[
-                  "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors",
+                  "inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all duration-150 active:scale-95",
                   active
                     ? "bg-primary text-primary-foreground shadow-soft"
                     : "text-muted-foreground hover:bg-secondary hover:text-secondary-foreground",
