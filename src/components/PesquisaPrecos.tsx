@@ -360,7 +360,7 @@ export function PesquisaPrecos({
         {comparativo.length > 0 ? (
           <div className="space-y-2">
             <p className="label-caps text-muted-foreground">
-              Preço por ingrediente x estoque
+              Preço por g/ml x estoque
             </p>
             <div className="overflow-x-auto">
               <Table>
@@ -378,49 +378,63 @@ export function PesquisaPrecos({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {comparativo.map((c) => (
-                    <TableRow key={c.ingredienteId}>
-                      <TableCell className="font-semibold">
-                        {c.nome}
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          /{c.unidade}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">{brl(c.precoEstoque)}</TableCell>
-                      {mercadosComPreco.map((m) => (
+                  {comparativo.map((c) => {
+                    const medida = medidaPorUnidade(c.unidade);
+                    const valor = (v: number) =>
+                      medida ? brlPreciso(v / medida) : brl(v);
+                    return (
+                      <TableRow key={c.ingredienteId}>
+                        <TableCell className="font-semibold">
+                          {c.nome}
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            /{medida ? rotuloMedida(c.unidade) : c.unidade}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {valor(c.precoEstoque)}
+                        </TableCell>
+                        {mercadosComPreco.map((m) => (
+                          <TableCell
+                            key={m}
+                            className={`text-right ${
+                              c.melhorMercado === m ? "font-semibold text-primary" : ""
+                            }`}
+                          >
+                            {c.precos[m] === undefined ? "—" : valor(c.precos[m]!)}
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-right font-semibold text-primary">
+                          {c.melhorMercado ?? "—"}
+                        </TableCell>
                         <TableCell
-                          key={m}
-                          className={`text-right ${
-                            c.melhorMercado === m ? "font-semibold text-primary" : ""
+                          className={`text-right font-semibold ${
+                            (c.diferenca ?? 0) < 0 ? "text-primary" : "text-destructive"
                           }`}
                         >
-                          {c.precos[m] === undefined ? "—" : brl(c.precos[m]!)}
+                          {c.diferenca === null
+                            ? "—"
+                            : `${c.diferenca < 0 ? "−" : "+"}${valor(
+                                Math.abs(c.diferenca),
+                              )}`}
+                          {c.diferencaPercentual === null ? null : (
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              ({c.diferencaPercentual.toFixed(0)}%)
+                            </span>
+                          )}
                         </TableCell>
-                      ))}
-                      <TableCell className="text-right font-semibold text-primary">
-                        {c.melhorMercado ?? "—"}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right font-semibold ${
-                          (c.diferenca ?? 0) < 0 ? "text-primary" : "text-destructive"
-                        }`}
-                      >
-                        {c.diferenca === null
-                          ? "—"
-                          : `${c.diferenca < 0 ? "−" : "+"}${brl(Math.abs(c.diferenca))}`}
-                        {c.diferencaPercentual === null ? null : (
-                          <span className="ml-1 text-xs text-muted-foreground">
-                            ({c.diferencaPercentual.toFixed(0)}%)
-                          </span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Valores por g/ml (preço da embalagem dividido pelo peso/volume). Itens
+              contados por unidade aparecem com o preço da unidade.
+            </p>
           </div>
         ) : null}
+
 
         {comRanking.length > 0 ? (
           <div className="space-y-3">
