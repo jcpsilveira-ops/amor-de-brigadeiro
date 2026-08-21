@@ -12,6 +12,7 @@ import {
   Layers,
   LayoutDashboard,
   NotebookText,
+  ShoppingBasket,
   PackageCheck,
 
   PiggyBank,
@@ -40,6 +41,7 @@ const links = [
   { to: "/painel-estoque", label: "Painel de estoque", icon: BarChart3 },
   { to: "/painel-pedidos", label: "Painel de pedidos", icon: ShoppingBag },
   { to: "/painel-receitas", label: "Painel de receitas", icon: NotebookText },
+  { to: "/cesta-producao", label: "Cesta da produção", icon: ShoppingBasket },
 
   { to: "/relatorio", label: "Relatório", icon: FileText },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
