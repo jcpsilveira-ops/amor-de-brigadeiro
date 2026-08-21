@@ -11,7 +11,9 @@ import {
   Home,
   Layers,
   LayoutDashboard,
+  NotebookText,
   PackageCheck,
+
   PiggyBank,
   ShoppingBag,
   Users,
