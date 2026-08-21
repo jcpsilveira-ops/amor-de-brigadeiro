@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as BolosRouteImport } from './routes/bolos'
+import { Route as CestaProducaoRouteImport } from './routes/cesta-producao'
 import { Route as ClientesRouteImport } from './routes/clientes'
 import { Route as CoberturasRouteImport } from './routes/coberturas'
 import { Route as ConfiguracoesRouteImport } from './routes/configuracoes'
@@ -40,6 +41,11 @@ const IndexRoute = IndexRouteImport.update({
 const BolosRoute = BolosRouteImport.update({
   id: '/bolos',
   path: '/bolos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CestaProducaoRoute = CestaProducaoRouteImport.update({
+  id: '/cesta-producao',
+  path: '/cesta-producao',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ClientesRoute = ClientesRouteImport.update({
@@ -149,6 +155,7 @@ const ReceitaTipoIdRoute = ReceitaTipoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/bolos': typeof BolosRoute
+  '/cesta-producao': typeof CestaProducaoRoute
   '/clientes': typeof ClientesRoute
   '/coberturas': typeof CoberturasRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/bolos': typeof BolosRoute
+  '/cesta-producao': typeof CestaProducaoRoute
   '/clientes': typeof ClientesRoute
   '/coberturas': typeof CoberturasRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -198,6 +206,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/bolos': typeof BolosRoute
+  '/cesta-producao': typeof CestaProducaoRoute
   '/clientes': typeof ClientesRoute
   '/coberturas': typeof CoberturasRoute
   '/configuracoes': typeof ConfiguracoesRoute
@@ -224,6 +233,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/bolos'
+    | '/cesta-producao'
     | '/clientes'
     | '/coberturas'
     | '/configuracoes'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/bolos'
+    | '/cesta-producao'
     | '/clientes'
     | '/coberturas'
     | '/configuracoes'
@@ -272,6 +283,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/bolos'
+    | '/cesta-producao'
     | '/clientes'
     | '/coberturas'
     | '/configuracoes'
@@ -297,6 +309,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BolosRoute: typeof BolosRoute
+  CestaProducaoRoute: typeof CestaProducaoRoute
   ClientesRoute: typeof ClientesRoute
   CoberturasRoute: typeof CoberturasRoute
   ConfiguracoesRoute: typeof ConfiguracoesRoute
@@ -333,6 +346,13 @@ declare module '@tanstack/react-router' {
       path: '/bolos'
       fullPath: '/bolos'
       preLoaderRoute: typeof BolosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cesta-producao': {
+      id: '/cesta-producao'
+      path: '/cesta-producao'
+      fullPath: '/cesta-producao'
+      preLoaderRoute: typeof CestaProducaoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/clientes': {
@@ -481,6 +501,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BolosRoute: BolosRoute,
+  CestaProducaoRoute: CestaProducaoRoute,
   ClientesRoute: ClientesRoute,
   CoberturasRoute: CoberturasRoute,
   ConfiguracoesRoute: ConfiguracoesRoute,
