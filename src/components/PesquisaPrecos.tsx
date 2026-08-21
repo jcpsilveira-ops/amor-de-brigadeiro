@@ -219,14 +219,11 @@ export function PesquisaPrecos({
     successMessage: "Preferências da pesquisa salvas.",
   });
 
-  /** Ingredientes usados nas receitas listadas, dos mais caros para os mais baratos. */
-  const usados = useMemo(() => {
-    const ids = new Set(linhas.flatMap((l) => l.itens.map((i) => i.ingredienteId)));
-    return ingredientes
-      .filter((i) => ids.has(i.id))
-      .sort((a, b) => b.custoUnitario - a.custoUnitario)
-      .slice(0, 12);
-  }, [linhas, ingredientes]);
+  /** Todos os ingredientes cadastrados, em ordem alfabética. */
+  const usados = useMemo(
+    () => [...ingredientes].sort((a, b) => a.nome.localeCompare(b.nome)),
+    [ingredientes],
+  );
 
   const chave = `${usados.map((i) => i.id).join(",")}|${mercados.join(",")}`;
 
@@ -279,8 +276,7 @@ export function PesquisaPrecos({
   }, [data, qc]);
 
   const comparativo = useMemo(
-    () =>
-      compararComEstoque(usados, cotacoes, mercados).filter((c) => c.melhorPreco !== null),
+    () => compararComEstoque(usados, cotacoes, mercados),
     [usados, cotacoes, mercados],
   );
   const rankings = useMemo(
