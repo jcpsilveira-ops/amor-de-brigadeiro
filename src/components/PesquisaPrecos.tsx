@@ -581,7 +581,11 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                             {ing.nome}
                             <span className="ml-1 text-xs text-muted-foreground">/{rotulo}</span>
                           </TableCell>
-                          <TableCell className="text-right text-sm">
+                          <TableCell
+                            className={`text-right text-sm ${
+                              menor && menor.nome === "Estoque" ? "font-semibold text-primary" : ""
+                            }`}
+                          >
                             {estoqueValor === null ? "—" : `${brlPreciso(estoqueValor)}/${rotulo}`}
                           </TableCell>
                           {porMercado.map((x) => (
