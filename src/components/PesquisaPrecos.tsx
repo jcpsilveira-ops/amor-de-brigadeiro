@@ -528,7 +528,9 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
             </div>
 
             <div className="space-y-2">
-              <p className="label-caps text-muted-foreground">Preço por g/ml — estoque × supermercados</p>
+              <p className="label-caps text-muted-foreground">
+                Preço comparativo — estoque × supermercados (por unidade ou por g/ml)
+              </p>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
