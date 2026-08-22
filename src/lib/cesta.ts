@@ -124,16 +124,28 @@ export interface ResumoIngredienteCesta {
   /** Estoque disponível cadastrado. */
   estoqueQuantidade: number;
   estoqueUnidade: string;
+  /** Preço unitário do estoque, na unidade do estoque. */
+  estoquePrecoUnitario: number;
+  /** Quantidade consumida no mês de referência, na unidade do estoque. */
+  consumoQuantidade: number;
+  consumoUnidade: string;
+  /** Preço unitário usado no consumo (mesmo preço informado no estoque). */
+  consumoPrecoUnitario: number;
+  /** Custo de reposição do consumo do mês (consumo × preço do estoque). */
+  custoReposicao: number;
 }
 
 /**
  * Agrupa os ingredientes de todas as receitas da cesta (lista de compras).
  * Quando `ingredientes` é informado, todos os ingredientes cadastrados entram
  * na lista — os que não aparecem em nenhuma receita ficam com quantidade zero.
+ * `consumo` traz a quantidade consumida no período de referência, na unidade de
+ * compra do ingrediente (id → quantidade).
  */
 export function resumirIngredientes(
   linhas: LinhaCesta[],
   ingredientes: Ingrediente[] = [],
+  consumo: Map<number, number> = new Map(),
 ): ResumoIngredienteCesta[] {
   const mapa = new Map<number, ResumoIngredienteCesta>();
 
@@ -144,19 +156,32 @@ export function resumirIngredientes(
     custoUnitario: number;
     estoqueQuantidade?: number;
     estoqueUnidade?: string | null;
-  }): ResumoIngredienteCesta => ({
-    ingredienteId: ing.id,
-    nome: ing.nome,
-    unidade: ing.unidade,
-    precoCompra: ing.custoUnitario,
-    quantidadeTotal: 0,
-    gramasTotais: null,
-    custoPorGrama: null,
-    custoTotal: 0,
-    receitas: 0,
-    estoqueQuantidade: ing.estoqueQuantidade ?? 0,
-    estoqueUnidade: ing.estoqueUnidade ?? ing.unidade,
-  });
+  }): ResumoIngredienteCesta => {
+    const unidadeEstoque = ing.estoqueUnidade ?? ing.unidade;
+    const fator =
+      converterQuantidade(1, ing.unidade as Ingrediente["unidade"], unidadeEstoque as Ingrediente["unidade"]) ?? 1;
+    const precoEstoque = fator > 0 ? ing.custoUnitario / fator : ing.custoUnitario;
+    const consumidoCompra = consumo.get(ing.id) ?? 0;
+    const consumidoEstoque = Math.round(consumidoCompra * fator * 1000) / 1000;
+    return {
+      ingredienteId: ing.id,
+      nome: ing.nome,
+      unidade: ing.unidade,
+      precoCompra: ing.custoUnitario,
+      quantidadeTotal: 0,
+      gramasTotais: null,
+      custoPorGrama: null,
+      custoTotal: 0,
+      receitas: 0,
+      estoqueQuantidade: ing.estoqueQuantidade ?? 0,
+      estoqueUnidade: unidadeEstoque,
+      estoquePrecoUnitario: precoEstoque,
+      consumoQuantidade: consumidoEstoque,
+      consumoUnidade: unidadeEstoque,
+      consumoPrecoUnitario: precoEstoque,
+      custoReposicao: Math.round(consumidoEstoque * precoEstoque * 100) / 100,
+    };
+  };
 
   for (const ing of ingredientes) mapa.set(ing.id, base(ing));
 
@@ -192,6 +217,7 @@ export function resumirIngredientes(
     (a, b) => b.custoTotal - a.custoTotal || a.nome.localeCompare(b.nome, "pt-BR"),
   );
 }
+
 
 
 /** Formata quantidade com no máximo 3 decimais. */
