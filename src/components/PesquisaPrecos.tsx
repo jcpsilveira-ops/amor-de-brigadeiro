@@ -588,7 +588,9 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                             <TableCell
                               key={x.id}
                               className={`text-right text-sm ${
-                                menor && menor.id === x.id ? "font-semibold text-primary" : ""
+                                menor && menor.nome === (mercados.find((m) => m.id === x.id)?.nome ?? "—")
+                                  ? "font-semibold text-primary"
+                                  : ""
                               }`}
                             >
                               {x.valor === null ? "—" : `${brlPreciso(x.valor)}/${rotulo}`}
