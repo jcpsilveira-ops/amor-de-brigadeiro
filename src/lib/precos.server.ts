@@ -179,6 +179,10 @@ export async function pesquisarPrecos(
     if (!encontrou) semCotacao.push(ing.nome);
   }
 
+  if (!erro && limitados > 0) {
+    erro = `O provedor limitou ${limitados} consulta(s); esses itens ficaram em branco e podem ser atualizados em instantes.`;
+  }
+
   return {
     atualizadoEm: new Date().toISOString(),
     cotacoes,
