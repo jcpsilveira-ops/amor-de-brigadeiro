@@ -29,7 +29,7 @@ import {
   type LinhaCesta,
 } from "@/lib/cesta";
 import { PesquisaPrecos } from "@/components/PesquisaPrecos";
-import { useBolos, useCoberturas, useIngredientes } from "@/lib/queries";
+import { useBolos, useCoberturas, useIngredientes, usePedidos } from "@/lib/queries";
 
 export const Route = createFileRoute("/cesta-producao")({
   head: () => ({
@@ -168,21 +168,48 @@ function CestaProducao() {
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
   const { data: ingredientes = [] } = useIngredientes();
+  const { data: pedidos = [] } = usePedidos();
   const [tipo, setTipo] = useState<"todos" | "bolos" | "coberturas">("todos");
+  const [mes, setMes] = useState<string>("todos");
+
+  const mesesDisponiveis = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of pedidos) if (p.data) set.add(p.data.slice(0, 7));
+    return [...set].sort().reverse();
+  }, [pedidos]);
+
+  const receitasDoMes = useMemo(() => {
+    if (mes === "todos") return null;
+    const bolosUsados = new Set<number>();
+    const coberturasUsadas = new Set<number>();
+    for (const p of pedidos) {
+      if (!p.data?.startsWith(mes)) continue;
+      if (p.boloId) bolosUsados.add(p.boloId);
+      if (p.coberturaId) coberturasUsadas.add(p.coberturaId);
+    }
+    return { bolosUsados, coberturasUsadas };
+  }, [mes, pedidos]);
 
   const linhas = useMemo(() => {
     const todas = [
       ...montarCesta(bolos, "Bolo", ingredientes),
       ...montarCesta(coberturas, "Cobertura", ingredientes),
     ];
-    const filtradas =
+    let filtradas =
       tipo === "bolos"
         ? todas.filter((l) => l.tipo === "Bolo")
         : tipo === "coberturas"
           ? todas.filter((l) => l.tipo === "Cobertura")
           : todas;
+    if (receitasDoMes) {
+      filtradas = filtradas.filter((l) =>
+        l.tipo === "Bolo"
+          ? receitasDoMes.bolosUsados.has(l.id)
+          : receitasDoMes.coberturasUsadas.has(l.id),
+      );
+    }
     return filtradas.sort((a, b) => b.percentual - a.percentual);
-  }, [bolos, coberturas, ingredientes, tipo]);
+  }, [bolos, coberturas, ingredientes, tipo, receitasDoMes]);
 
   const cesta = useMemo(() => resumirIngredientes(linhas, ingredientes), [linhas, ingredientes]);
 
@@ -194,6 +221,13 @@ function CestaProducao() {
   const margemMedia = linhas.length
     ? linhas.reduce((a, l) => a + l.percentual, 0) / linhas.length
     : 0;
+
+  const rotuloMes = (valor: string) => {
+    const [ano, m] = valor.split("-");
+    return new Date(Number(ano), Number(m) - 1, 1)
+      .toLocaleDateString("pt-BR", { month: "long", year: "numeric" })
+      .replace(/^./, (c) => c.toUpperCase());
+  };
 
   return (
     <PageShell
@@ -214,7 +248,34 @@ function CestaProducao() {
             <SelectItem value="coberturas">Somente coberturas</SelectItem>
           </SelectContent>
         </Select>
+
+        <Label htmlFor="mes-cesta" className="label-caps">
+          Referência
+        </Label>
+        <Select value={mes} onValueChange={setMes}>
+          <SelectTrigger id="mes-cesta" className="w-56">
+            <SelectValue placeholder="Período" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">Todos os meses</SelectItem>
+            {mesesDisponiveis.map((m) => (
+              <SelectItem key={m} value={m}>
+                {rotuloMes(m)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-xs text-muted-foreground">
+          {mes === "todos"
+            ? "Todas as receitas cadastradas."
+            : `Somente receitas com pedidos em ${rotuloMes(mes)}.`}
+        </p>
       </div>
+
+      {mes !== "todos" && linhas.length === 0 ? (
+        <EmptyState message={`Nenhum pedido com bolos ou coberturas em ${rotuloMes(mes)}.`} />
+      ) : null}
+
 
       {linhas.length === 0 ? (
         <EmptyState message="Cadastre bolos ou coberturas com ingredientes para montar a cesta da produção." />
