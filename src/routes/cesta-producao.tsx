@@ -167,6 +167,7 @@ function CartaoReceita({ linha }: { linha: LinhaCesta }) {
 function CestaProducao() {
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
+  const { data: cursos = [] } = useCursos();
   const { data: ingredientes = [] } = useIngredientes();
   const { data: pedidos = [] } = usePedidos();
   const [tipo, setTipo] = useState<"todos" | "bolos" | "coberturas">("todos");
@@ -190,6 +191,26 @@ function CestaProducao() {
     return { bolosUsados, coberturasUsadas };
   }, [mes, pedidos]);
 
+  /** Consumo de ingredientes dos pedidos do período (unidade de compra). */
+  const consumoPeriodo = useMemo(() => {
+    const porBolo = new Map(bolos.map((b) => [b.id, b]));
+    const porCobertura = new Map(coberturas.map((c) => [c.id, c]));
+    const porCurso = new Map(cursos.map((c) => [c.id, c]));
+    const total = new Map<number, number>();
+    for (const p of pedidos) {
+      if (mes !== "todos" && !p.data?.startsWith(mes)) continue;
+      const receitas = [
+        p.boloId ? porBolo.get(p.boloId) : null,
+        p.coberturaId ? porCobertura.get(p.coberturaId) : null,
+        p.cursoId ? porCurso.get(p.cursoId) : null,
+      ];
+      for (const [id, q] of consumoDoPedido(receitas)) {
+        total.set(id, (total.get(id) ?? 0) + q);
+      }
+    }
+    return total;
+  }, [pedidos, bolos, coberturas, cursos, mes]);
+
   const linhas = useMemo(() => {
     const todas = [
       ...montarCesta(bolos, "Bolo", ingredientes),
@@ -211,7 +232,12 @@ function CestaProducao() {
     return filtradas.sort((a, b) => b.percentual - a.percentual);
   }, [bolos, coberturas, ingredientes, tipo, receitasDoMes]);
 
-  const cesta = useMemo(() => resumirIngredientes(linhas, ingredientes), [linhas, ingredientes]);
+  const cesta = useMemo(
+    () => resumirIngredientes(linhas, ingredientes, consumoPeriodo),
+    [linhas, ingredientes, consumoPeriodo],
+  );
+  const totalReposicao = cesta.reduce((a, i) => a + i.custoReposicao, 0);
+
 
   const custoTotal = linhas.reduce((a, l) => a + l.custoReceita, 0);
   const custoPorGramaMedio = (() => {
