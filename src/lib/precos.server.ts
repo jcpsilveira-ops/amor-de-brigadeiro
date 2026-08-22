@@ -95,7 +95,7 @@ async function chamarProvedor(query: string): Promise<ResultadoBusca[] | "limita
 }
 
 /** Busca com cache, fila e retentativa exponencial; nunca derruba a pesquisa inteira. */
-async function buscar(query: string): Promise<{ resultados: ResultadoBusca[]; limitado: boolean }> {
+export async function buscar(query: string): Promise<{ resultados: ResultadoBusca[]; limitado: boolean }> {
   const emCache = cache.get(query);
   if (emCache && Date.now() - emCache.em < CACHE_TTL) {
     return { resultados: emCache.resultados, limitado: false };
