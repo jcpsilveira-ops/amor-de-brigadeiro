@@ -116,7 +116,7 @@ function DespesasPage() {
                   step="0.01"
                   min="0"
                   value={valor}
-                  onChange={(e) => setValor(e.target.value)}
+                  onChange={(e) => setValor(limitarPreco(e.target.value))}
                   placeholder="35,00"
                 />
                 <FieldError message={tocado || valor !== "" ? erros["valor"] : undefined} />

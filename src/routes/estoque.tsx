@@ -243,7 +243,7 @@ function EstoquePage() {
                             inputMode="decimal"
                             aria-label={`Custo unitário de ${ing.nome}`}
                             value={custoDe(ing)}
-                            onChange={(e) => atualizar(ing, { custo: e.target.value })}
+                            onChange={(e) => atualizar(ing, { custo: limitarPreco(e.target.value) })}
                           />
                           <span className="text-xs text-muted-foreground">/ {ing.unidade}</span>
                         </div>
