@@ -196,6 +196,30 @@ export type Database = {
         }
         Relationships: []
       }
+      mercados: {
+        Row: {
+          criado_em: string
+          id: number
+          nome: string
+          origem: string
+          url_busca: string | null
+        }
+        Insert: {
+          criado_em?: string
+          id?: never
+          nome: string
+          origem?: string
+          url_busca?: string | null
+        }
+        Update: {
+          criado_em?: string
+          id?: never
+          nome?: string
+          origem?: string
+          url_busca?: string | null
+        }
+        Relationships: []
+      }
       movimentacoes_estoque: {
         Row: {
           criado_em: string
@@ -361,6 +385,60 @@ export type Database = {
             columns: ["curso_id"]
             isOneToOne: false
             referencedRelation: "cursos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      precos_mercado: {
+        Row: {
+          atualizado_em: string
+          criado_em: string
+          fonte: string | null
+          id: number
+          ingrediente_id: number
+          mercado_id: number
+          nome_produto: string | null
+          origem: string
+          peso: string | null
+          preco: number | null
+        }
+        Insert: {
+          atualizado_em?: string
+          criado_em?: string
+          fonte?: string | null
+          id?: never
+          ingrediente_id: number
+          mercado_id: number
+          nome_produto?: string | null
+          origem?: string
+          peso?: string | null
+          preco?: number | null
+        }
+        Update: {
+          atualizado_em?: string
+          criado_em?: string
+          fonte?: string | null
+          id?: never
+          ingrediente_id?: number
+          mercado_id?: number
+          nome_produto?: string | null
+          origem?: string
+          peso?: string | null
+          preco?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "precos_mercado_ingrediente_id_fkey"
+            columns: ["ingrediente_id"]
+            isOneToOne: false
+            referencedRelation: "ingredientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "precos_mercado_mercado_id_fkey"
+            columns: ["mercado_id"]
+            isOneToOne: false
+            referencedRelation: "mercados"
             referencedColumns: ["id"]
           },
         ]
