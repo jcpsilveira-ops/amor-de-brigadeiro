@@ -113,37 +113,86 @@ export interface ResumoIngredienteCesta {
   precoCompra: number;
   /** Quantidade total consumida somando todas as receitas. */
   quantidadeTotal: number;
+  /** Equivalente em g/ml (null quando contado por unidade). */
+  gramasTotais: number | null;
+  /** Custo por g/ml do ingrediente (null quando contado por unidade). */
+  custoPorGrama: number | null;
   /** Custo total do ingrediente somando todas as receitas. */
   custoTotal: number;
   /** Em quantas receitas o ingrediente aparece. */
   receitas: number;
+  /** Estoque disponível cadastrado. */
+  estoqueQuantidade: number;
+  estoqueUnidade: string;
 }
 
-/** Agrupa os ingredientes de todas as receitas da cesta (lista de compras). */
-export function resumirIngredientes(linhas: LinhaCesta[]): ResumoIngredienteCesta[] {
+/**
+ * Agrupa os ingredientes de todas as receitas da cesta (lista de compras).
+ * Quando `ingredientes` é informado, todos os ingredientes cadastrados entram
+ * na lista — os que não aparecem em nenhuma receita ficam com quantidade zero.
+ */
+export function resumirIngredientes(
+  linhas: LinhaCesta[],
+  ingredientes: Ingrediente[] = [],
+): ResumoIngredienteCesta[] {
   const mapa = new Map<number, ResumoIngredienteCesta>();
+
+  const base = (ing: {
+    id: number;
+    nome: string;
+    unidade: string;
+    custoUnitario: number;
+    estoqueQuantidade?: number;
+    estoqueUnidade?: string | null;
+  }): ResumoIngredienteCesta => ({
+    ingredienteId: ing.id,
+    nome: ing.nome,
+    unidade: ing.unidade,
+    precoCompra: ing.custoUnitario,
+    quantidadeTotal: 0,
+    gramasTotais: null,
+    custoPorGrama: null,
+    custoTotal: 0,
+    receitas: 0,
+    estoqueQuantidade: ing.estoqueQuantidade ?? 0,
+    estoqueUnidade: ing.estoqueUnidade ?? ing.unidade,
+  });
+
+  for (const ing of ingredientes) mapa.set(ing.id, base(ing));
+
   for (const linha of linhas) {
     for (const item of linha.itens) {
-      const atual = mapa.get(item.ingredienteId);
-      if (atual) {
-        atual.quantidadeTotal += item.quantidade;
-        atual.custoTotal = Math.round((atual.custoTotal + item.custo) * 100) / 100;
-        atual.receitas += 1;
-      } else {
-        mapa.set(item.ingredienteId, {
-          ingredienteId: item.ingredienteId,
+      let atual = mapa.get(item.ingredienteId);
+      if (!atual) {
+        atual = base({
+          id: item.ingredienteId,
           nome: item.nome,
           unidade: item.unidade,
-          precoCompra: item.precoCompra,
-          quantidadeTotal: item.quantidade,
-          custoTotal: item.custo,
-          receitas: 1,
+          custoUnitario: item.precoCompra,
         });
+        mapa.set(item.ingredienteId, atual);
       }
+      atual.quantidadeTotal += item.quantidade;
+      atual.custoTotal = Math.round((atual.custoTotal + item.custo) * 100) / 100;
+      atual.receitas += 1;
+      if (item.gramas !== null) atual.gramasTotais = (atual.gramasTotais ?? 0) + item.gramas;
     }
   }
-  return [...mapa.values()].sort((a, b) => b.custoTotal - a.custoTotal);
+
+  for (const item of mapa.values()) {
+    item.quantidadeTotal = Math.round(item.quantidadeTotal * 1000) / 1000;
+    if (item.gramasTotais !== null) {
+      item.gramasTotais = Math.round(item.gramasTotais * 100) / 100;
+      item.custoPorGrama =
+        item.gramasTotais > 0 ? item.custoTotal / item.gramasTotais : null;
+    }
+  }
+
+  return [...mapa.values()].sort(
+    (a, b) => b.custoTotal - a.custoTotal || a.nome.localeCompare(b.nome, "pt-BR"),
+  );
 }
+
 
 /** Formata quantidade com no máximo 3 decimais. */
 export const qtd = (v: number) =>
