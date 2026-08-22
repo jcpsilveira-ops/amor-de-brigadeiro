@@ -67,7 +67,7 @@ function extrair(r: ResultadoBusca): {
 
 export async function buscarPrecosPorMercado(
   ingredientes: { id: number; nome: string; unidade: string }[],
-  mercados: { id: number; nome: string; urlBusca?: string | null }[],
+  mercados: { id: number; nome: string; urlBusca?: string | null | undefined }[],
 ): Promise<{ achados: AchadoPreco[]; semResultado: number; erro?: string }> {
   const pares: { ing: (typeof ingredientes)[number]; merc: (typeof mercados)[number] }[] = [];
   for (const ing of ingredientes) for (const merc of mercados) pares.push({ ing, merc });
