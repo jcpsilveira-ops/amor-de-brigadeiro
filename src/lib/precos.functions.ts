@@ -10,6 +10,8 @@ const schema = z.object({
         id: z.coerce.number().int().positive(),
         nome: z.string().trim().min(1).max(120),
         unidade: z.string().trim().max(20),
+        /** Unidade cadastrada no estoque, usada no texto da busca. */
+        unidadeEstoque: z.string().trim().max(20).optional(),
       }),
     )
     .max(300),
