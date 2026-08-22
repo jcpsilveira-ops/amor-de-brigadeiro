@@ -60,15 +60,36 @@ export interface Pedido {
 }
 
 
+/* ------------------------------- dinheiro -------------------------------- */
+
+/** Arredonda qualquer valor monetário para 2 casas decimais. */
+export const dinheiro = (v: number): number =>
+  Number.isFinite(v) ? Math.round(v * 100) / 100 : 0;
+
+/** Verifica se o valor informado tem no máximo 2 casas decimais. */
+export const temNoMaximo2Casas = (v: number): boolean =>
+  Number.isFinite(v) && Math.abs(v * 100 - Math.round(v * 100)) < 1e-9;
+
+const MSG_CASAS = "Use no máximo 2 casas decimais (ex.: 12,50)";
+
+/** Campo monetário: valida 2 casas decimais e normaliza o valor. */
+const precoField = (opts: { min?: "positivo" | "naoNegativo"; msg?: string } = {}) => {
+  let base = z.coerce
+    .number({ invalid_type_error: "Informe um número" })
+    .max(1_000_000);
+  base =
+    opts.min === "positivo"
+      ? base.positive(opts.msg ?? "O valor deve ser maior que zero")
+      : base.nonnegative(opts.msg ?? "O valor não pode ser negativo");
+  return base.refine(temNoMaximo2Casas, MSG_CASAS).transform(dinheiro);
+};
+
 /* ------------------------------- validação ------------------------------- */
 
 export const ingredienteSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome do ingrediente").max(80),
   unidade: z.enum(UNIDADES),
-  custoUnitario: z.coerce
-    .number({ invalid_type_error: "Informe um número" })
-    .positive("O custo deve ser maior que zero")
-    .max(1_000_000),
+  custoUnitario: precoField({ min: "positivo", msg: "O custo deve ser maior que zero" }),
   estoqueQuantidade: z.coerce
     .number({ invalid_type_error: "Informe um número" })
     .nonnegative("O estoque não pode ser negativo")
