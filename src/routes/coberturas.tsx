@@ -111,6 +111,9 @@ function CoberturasPage() {
                           <p className="text-xs text-muted-foreground">
                             {c.itens.length} ingrediente(s) · criada em {dataBR(c.criadoEm)}
                           </p>
+                          <p className="text-xs text-muted-foreground">
+                            Menor preço: {[...new Set(c.itens.map((i) => origens.get(i.ingredienteId)?.origem ?? "Estoque"))].join(", ")}
+                          </p>
                         </TableCell>
                         <TableCell>{brl(custo)}</TableCell>
                         <TableCell>{brl(c.precoVenda)}</TableCell>
