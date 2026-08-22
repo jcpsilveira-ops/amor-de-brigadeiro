@@ -184,7 +184,7 @@ function CestaProducao() {
     return filtradas.sort((a, b) => b.percentual - a.percentual);
   }, [bolos, coberturas, ingredientes, tipo]);
 
-  const cesta = useMemo(() => resumirIngredientes(linhas), [linhas]);
+  const cesta = useMemo(() => resumirIngredientes(linhas, ingredientes), [linhas, ingredientes]);
 
   const custoTotal = linhas.reduce((a, l) => a + l.custoReceita, 0);
   const custoPorGramaMedio = (() => {
