@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Minus, PackageCheck, Plus, Save } from "lucide-react";
-import { brl, hojeISO, UNIDADES, type Ingrediente, type Unidade } from "@/lib/domain";
+import { brl, hojeISO, limitarPreco, UNIDADES, type Ingrediente, type Unidade } from "@/lib/domain";
 import { converterQuantidade, qtd } from "@/lib/estoque";
 import {
   ingredientesApi,

@@ -32,7 +32,7 @@ import {
   useIngredientes,
   usePedidos,
 } from "@/lib/queries";
-import { dataBR } from "@/lib/domain";
+import { dataBR, limitarPreco } from "@/lib/domain";
 
 export const Route = createFileRoute("/ingredientes")({
   head: () => ({

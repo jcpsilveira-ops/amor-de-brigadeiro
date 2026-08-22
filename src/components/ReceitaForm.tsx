@@ -20,6 +20,7 @@ import {
   type Ingrediente,
   type Receita,
   type ReceitaInput,
+  limitarPreco,
 } from "@/lib/domain";
 
 interface Linha {
