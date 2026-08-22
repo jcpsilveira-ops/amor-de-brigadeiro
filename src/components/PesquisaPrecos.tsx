@@ -597,9 +597,7 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                             </TableCell>
                           ))}
                           <TableCell className="text-right text-sm font-semibold text-primary">
-                            {menor
-                              ? (mercados.find((m) => m.id === menor.id)?.nome ?? "—")
-                              : "—"}
+                            {menor ? menor.nome : "—"}
                           </TableCell>
                         </TableRow>
                       );
