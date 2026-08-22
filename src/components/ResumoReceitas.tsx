@@ -5,7 +5,8 @@ import { hapticTap } from "@/hooks/use-mobile-shell";
 import { Cake, Layers, Percent, Wheat } from "lucide-react";
 
 import { brl, calcularCusto, margem, type Ingrediente, type Receita } from "@/lib/domain";
-import { useBolos, useCoberturas, useIngredientes } from "@/lib/queries";
+import { useBolos, useCoberturas, useIngredientes, useMercados, usePrecosMercado } from "@/lib/queries";
+import { aplicarMenoresPrecos, type MenorPreco } from "@/lib/precos-mercado";
 
 type LinhaReceita = {
   id: number;
@@ -15,13 +16,14 @@ type LinhaReceita = {
   custo: number;
   lucro: number;
   percentual: number;
-  itens: { nome: string; quantidade: number; unidade: string; custo: number }[];
+  itens: { nome: string; quantidade: number; unidade: string; custo: number; origem: string }[];
 };
 
 function montarLinhas(
   receitas: Receita[],
   tipo: "Bolo" | "Cobertura",
   ingredientes: Ingrediente[],
+  origens: Map<number, MenorPreco>,
 ): LinhaReceita[] {
   const porId = new Map(ingredientes.map((i) => [i.id, i]));
   return receitas.map((r) => {
@@ -42,6 +44,7 @@ function montarLinhas(
           quantidade: item.quantidade,
           unidade: ing?.unidade ?? "",
           custo: ing ? Math.round(ing.custoUnitario * item.quantidade * 100) / 100 : 0,
+          origem: origens.get(item.ingredienteId)?.origem ?? "Estoque",
         };
       }),
     };
@@ -75,12 +78,20 @@ const Kpi = ({
 export function ResumoReceitas({ tipoFiltro = "todos" }: { tipoFiltro?: "todos" | "bolos" | "coberturas" }) {
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
-  const { data: ingredientes = [] } = useIngredientes();
+  const { data: ingredientesBase = [] } = useIngredientes();
+  const { data: mercados = [] } = useMercados();
+  const { data: precos = [] } = usePrecosMercado();
+
+  // Nas receitas o custo usa o MENOR preço encontrado (estoque × supermercados).
+  const { ingredientes, origens } = useMemo(
+    () => aplicarMenoresPrecos(ingredientesBase, precos, mercados),
+    [ingredientesBase, precos, mercados],
+  );
 
   const linhas = useMemo(() => {
     const todas = [
-      ...montarLinhas(bolos, "Bolo", ingredientes),
-      ...montarLinhas(coberturas, "Cobertura", ingredientes),
+      ...montarLinhas(bolos, "Bolo", ingredientes, origens),
+      ...montarLinhas(coberturas, "Cobertura", ingredientes, origens),
     ];
     const filtradas =
       tipoFiltro === "bolos"
@@ -89,7 +100,7 @@ export function ResumoReceitas({ tipoFiltro = "todos" }: { tipoFiltro?: "todos" 
           ? todas.filter((l) => l.tipo === "Cobertura")
           : todas;
     return filtradas.sort((a, b) => b.percentual - a.percentual);
-  }, [bolos, coberturas, ingredientes, tipoFiltro]);
+  }, [bolos, coberturas, ingredientes, origens, tipoFiltro]);
 
   const custoMedio = linhas.length
     ? linhas.reduce((a, l) => a + l.custo, 0) / linhas.length
@@ -221,7 +232,7 @@ export function ResumoReceitas({ tipoFiltro = "todos" }: { tipoFiltro?: "todos" 
                     <span className="truncate">
                       {item.nome}
                       <span className="ml-1 text-xs text-muted-foreground">
-                        {item.quantidade} {item.unidade}
+                        {item.quantidade} {item.unidade} · menor preço: {item.origem}
                       </span>
                     </span>
                     <span className="font-semibold">{brl(item.custo)}</span>
