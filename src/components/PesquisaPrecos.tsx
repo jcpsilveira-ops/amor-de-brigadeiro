@@ -565,8 +565,15 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                       const validos = porMercado.filter(
                         (x): x is { id: number; valor: number } => x.valor !== null,
                       );
-                      const menor = validos.length
-                        ? validos.reduce((a, b) => (b.valor < a.valor ? b : a))
+                      const candidatos: { nome: string; valor: number }[] = validos.map((x) => ({
+                        nome: mercados.find((m) => m.id === x.id)?.nome ?? "—",
+                        valor: x.valor,
+                      }));
+                      if (estoqueValor !== null && estoqueValor !== undefined) {
+                        candidatos.push({ nome: "Estoque", valor: estoqueValor });
+                      }
+                      const menor = candidatos.length
+                        ? candidatos.reduce((a, b) => (b.valor < a.valor ? b : a))
                         : null;
                       return (
                         <TableRow key={ing.id}>
@@ -574,23 +581,27 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                             {ing.nome}
                             <span className="ml-1 text-xs text-muted-foreground">/{rotulo}</span>
                           </TableCell>
-                          <TableCell className="text-right text-sm">
+                          <TableCell
+                            className={`text-right text-sm ${
+                              menor && menor.nome === "Estoque" ? "font-semibold text-primary" : ""
+                            }`}
+                          >
                             {estoqueValor === null ? "—" : `${brlPreciso(estoqueValor)}/${rotulo}`}
                           </TableCell>
                           {porMercado.map((x) => (
                             <TableCell
                               key={x.id}
                               className={`text-right text-sm ${
-                                menor && menor.id === x.id ? "font-semibold text-primary" : ""
+                                menor && menor.nome === (mercados.find((m) => m.id === x.id)?.nome ?? "—")
+                                  ? "font-semibold text-primary"
+                                  : ""
                               }`}
                             >
                               {x.valor === null ? "—" : `${brlPreciso(x.valor)}/${rotulo}`}
                             </TableCell>
                           ))}
                           <TableCell className="text-right text-sm font-semibold text-primary">
-                            {menor
-                              ? (mercados.find((m) => m.id === menor.id)?.nome ?? "—")
-                              : "—"}
+                            {menor ? menor.nome : "—"}
                           </TableCell>
                         </TableRow>
                       );
