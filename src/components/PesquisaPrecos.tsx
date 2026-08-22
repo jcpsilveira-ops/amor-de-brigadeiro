@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/table";
 import { brl, type Ingrediente } from "@/lib/domain";
 import { brlPreciso } from "@/lib/cesta";
-import { precoPorMedida, rotuloMedida } from "@/lib/precos";
+import { medidaPorUnidade, precoPorMedida, rotuloMedida } from "@/lib/precos";
 
 import {
   buscarPrecosMercados,
@@ -528,7 +528,9 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
             </div>
 
             <div className="space-y-2">
-              <p className="label-caps text-muted-foreground">Preço por g/ml — estoque × supermercados</p>
+              <p className="label-caps text-muted-foreground">
+                Preço comparativo — estoque × supermercados (por unidade ou por g/ml)
+              </p>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
@@ -546,11 +548,19 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                   <TableBody>
                     {lista.map((ing) => {
                       const unidade = ing.estoqueUnidade ?? ing.unidade;
-                      const medida = rotuloMedida(unidade);
-                      const estoquePorMedida = precoPorMedida(ing.custoUnitario, unidade);
+                      // Item contado por unidade (un., cx, dz...) → compara pelo
+                      // preço da unidade; massa/volume (kg, g, l, ml) → por g/ml.
+                      const porMedida = medidaPorUnidade(unidade) !== null;
+                      const rotulo = porMedida ? rotuloMedida(unidade) : "un.";
+                      const estoqueValor = porMedida
+                        ? precoPorMedida(ing.custoUnitario, unidade)
+                        : ing.custoUnitario;
                       const porMercado = mercados.map((m) => {
                         const p = indice.get(`${ing.id}|${m.id}`);
-                        return { id: m.id, valor: p ? precoPorMedidaDoRegistro(p) : null };
+                        return {
+                          id: m.id,
+                          valor: p ? (porMedida ? precoPorMedidaDoRegistro(p) : p.preco) : null,
+                        };
                       });
                       const validos = porMercado.filter(
                         (x): x is { id: number; valor: number } => x.valor !== null,
@@ -562,10 +572,10 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                         <TableRow key={ing.id}>
                           <TableCell className="sticky left-0 z-10 bg-card font-semibold">
                             {ing.nome}
-                            <span className="ml-1 text-xs text-muted-foreground">/{medida}</span>
+                            <span className="ml-1 text-xs text-muted-foreground">/{rotulo}</span>
                           </TableCell>
                           <TableCell className="text-right text-sm">
-                            {estoquePorMedida === null ? "—" : `${brlPreciso(estoquePorMedida)}/${medida}`}
+                            {estoqueValor === null ? "—" : `${brlPreciso(estoqueValor)}/${rotulo}`}
                           </TableCell>
                           {porMercado.map((x) => (
                             <TableCell
@@ -574,7 +584,7 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                                 menor && menor.id === x.id ? "font-semibold text-primary" : ""
                               }`}
                             >
-                              {x.valor === null ? "—" : `${brlPreciso(x.valor)}/${medida}`}
+                              {x.valor === null ? "—" : `${brlPreciso(x.valor)}/${rotulo}`}
                             </TableCell>
                           ))}
                           <TableCell className="text-right text-sm font-semibold text-primary">
