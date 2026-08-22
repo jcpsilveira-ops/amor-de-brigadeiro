@@ -285,6 +285,10 @@ export function PesquisaPrecos({
   );
   const comRanking = rankings.filter((r) => r.ranking.length > 0);
   const variacoes = useMemo(() => variacoesDoHistorico(historico), [historico]);
+  const unidadePorId = useMemo(
+    () => new Map(ingredientes.map((i) => [i.id, i.unidade])),
+    [ingredientes],
+  );
 
   const mercadosComPreco = mercados.filter((m) => cotacoes.some((c) => c.mercado === m));
 
