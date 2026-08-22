@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageShell, EmptyState } from "@/components/PageShell";
 import { brl, calcularCusto, margem } from "@/lib/domain";
 import { qtd, estoqueNaUnidadeDeCompra } from "@/lib/estoque";
-import { useBolos, useCoberturas, useIngredientes } from "@/lib/queries";
+import { useBolos, useCoberturas, useIngredientes, useMercados, usePrecosMercado } from "@/lib/queries";
+import { aplicarMenoresPrecos } from "@/lib/precos-mercado";
 
 export const Route = createFileRoute("/receita/$tipo/$id")({
   head: () => ({
@@ -35,7 +36,12 @@ function DetalheReceita() {
   const ehBolo = tipo === "bolo";
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
-  const { data: ingredientes = [] } = useIngredientes();
+  const { data: ingredientesBase = [] } = useIngredientes();
+  const { data: mercados = [] } = useMercados();
+  const { data: precos = [] } = usePrecosMercado();
+
+  // Custos das receitas usam o MENOR preço encontrado (estoque × supermercados).
+  const { ingredientes, origens } = aplicarMenoresPrecos(ingredientesBase, precos, mercados);
 
   const lista = ehBolo ? bolos : coberturas;
   const receita = lista.find((r) => String(r.id) === id);
@@ -68,6 +74,7 @@ function DetalheReceita() {
       quantidade: item.quantidade,
       custoItem,
       participacao: custo > 0 ? (custoItem / custo) * 100 : 0,
+      origem: origens.get(item.ingredienteId)?.origem ?? "Estoque",
       disponivel,
       suficiente: disponivel >= item.quantidade,
     };
@@ -149,7 +156,10 @@ function DetalheReceita() {
                 <span>
                   {qtd(item.quantidade)} {item.unidade}
                 </span>
-                <span>{brl(item.custoUnitario)} por {item.unidade || "unidade"}</span>
+                <span>
+                  {brl(item.custoUnitario)} por {item.unidade || "unidade"} · menor preço:{" "}
+                  <span className="font-semibold text-primary">{item.origem}</span>
+                </span>
                 <span>{item.participacao.toFixed(1)}% do custo</span>
                 <span className={item.suficiente ? "" : "font-semibold text-destructive"}>
                   Estoque: {qtd(item.disponivel)} {item.unidade}
