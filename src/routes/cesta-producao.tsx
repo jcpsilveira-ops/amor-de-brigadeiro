@@ -347,7 +347,9 @@ function CestaProducao() {
                 Cesta de ingredientes
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Todos os ingredientes cadastrados, com o total consumido nas receitas listadas.
+                Estoque disponível e consumo dos pedidos{" "}
+                {mes === "todos" ? "de todos os meses" : `de ${rotuloMes(mes)}`}, com o custo de
+                reposição pelo preço informado no estoque.
               </p>
             </CardHeader>
             <CardContent className="overflow-x-auto">
@@ -355,46 +357,45 @@ function CestaProducao() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Ingrediente</TableHead>
-                    <TableHead className="text-right">Quantidade</TableHead>
-                    <TableHead className="text-right">Equivalente g/ml</TableHead>
-                    <TableHead className="text-right">Preço de compra</TableHead>
-                    <TableHead className="text-right">Custo por g/ml</TableHead>
-                    <TableHead className="text-right">Custo total</TableHead>
-                    <TableHead className="text-right">Receitas</TableHead>
-                    <TableHead className="text-right">Estoque</TableHead>
+                    <TableHead className="text-right">Estoque: qtde</TableHead>
+                    <TableHead className="text-right">Estoque: unidade</TableHead>
+                    <TableHead className="text-right">Estoque: preço unit.</TableHead>
+                    <TableHead className="text-right">Consumo: qtde</TableHead>
+                    <TableHead className="text-right">Consumo: unidade</TableHead>
+                    <TableHead className="text-right">Consumo: preço unit.</TableHead>
+                    <TableHead className="text-right">Custo de reposição</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {cesta.map((item) => (
-                    <TableRow key={item.ingredienteId} className={item.receitas === 0 ? "opacity-60" : undefined}>
+                    <TableRow
+                      key={item.ingredienteId}
+                      className={item.consumoQuantidade === 0 ? "opacity-60" : undefined}
+                    >
                       <TableCell className="font-semibold">{item.nome}</TableCell>
+                      <TableCell className="text-right">{qtd(item.estoqueQuantidade)}</TableCell>
+                      <TableCell className="text-right">{item.estoqueUnidade}</TableCell>
                       <TableCell className="text-right">
-                        {item.quantidadeTotal > 0 ? `${qtd(item.quantidadeTotal)} ${item.unidade}` : "—"}
+                        {brlPreciso(item.estoquePrecoUnitario)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {item.gramasTotais && item.gramasTotais > 0
-                          ? `${qtd(item.gramasTotais)} ${item.unidade === "l" || item.unidade === "ml" ? "ml" : "g"}`
-                          : "—"}
+                        {item.consumoQuantidade > 0 ? qtd(item.consumoQuantidade) : "—"}
                       </TableCell>
+                      <TableCell className="text-right">{item.consumoUnidade}</TableCell>
                       <TableCell className="text-right">
-                        {brl(item.precoCompra)}/{item.unidade}
+                        {brlPreciso(item.consumoPrecoUnitario)}
                       </TableCell>
-                      <TableCell className="text-right">
-                        {item.custoPorGrama ? brlPreciso(item.custoPorGrama) : "—"}
-                      </TableCell>
-                      <TableCell className="text-right">{brl(item.custoTotal)}</TableCell>
-                      <TableCell className="text-right">{item.receitas}</TableCell>
-                      <TableCell className="text-right">
-                        {qtd(item.estoqueQuantidade)} {item.estoqueUnidade}
-                      </TableCell>
+                      <TableCell className="text-right">{brl(item.custoReposicao)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
               </Table>
 
               <p className="mt-4 text-right text-sm font-semibold text-primary">
-                Custo total da cesta: {brl(custoTotal)}
+                Custo de reposição do período: {brl(totalReposicao)} · Custo total das receitas:{" "}
+                {brl(custoTotal)}
               </p>
+
             </CardContent>
           </Card>
 
