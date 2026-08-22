@@ -26,7 +26,7 @@ const MAX_TENTATIVAS = 5;
 
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-interface ResultadoBusca {
+export interface ResultadoBusca {
   url?: string;
   title?: string;
   description?: string;
