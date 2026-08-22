@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowDown,
   ArrowUp,
-  History,
   RefreshCw,
   Search,
   Settings2,
@@ -46,7 +45,6 @@ import {
   medidaPorUnidade,
   rankearReceitas,
   rotuloMedida,
-  variacoesDoHistorico,
   type Mercado,
   type PesquisaPrecos as Pesquisa,
 } from "@/lib/precos";
@@ -56,7 +54,6 @@ import {
   historicoPrecosApi,
   keys,
   useConfiguracoes,
-  useHistoricoPrecos,
   useAppMutation,
 } from "@/lib/queries";
 
@@ -201,7 +198,6 @@ export function PesquisaPrecos({
 }) {
   const pesquisar = useServerFn(pesquisarPrecosMercados);
   const { data: config } = useConfiguracoes();
-  const { data: historico = [] } = useHistoricoPrecos();
   const [mostrarConfig, setMostrarConfig] = useState(false);
 
   const mercados = useMemo(
@@ -284,11 +280,6 @@ export function PesquisaPrecos({
     [linhas, cotacoes, mercados],
   );
   const comRanking = rankings.filter((r) => r.ranking.length > 0);
-  const variacoes = useMemo(() => variacoesDoHistorico(historico), [historico]);
-  const unidadePorId = useMemo(
-    () => new Map(ingredientes.map((i) => [i.id, i.unidade])),
-    [ingredientes],
-  );
 
   const mercadosComPreco = mercados.filter((m) => cotacoes.some((c) => c.mercado === m));
 
@@ -482,92 +473,6 @@ export function PesquisaPrecos({
                 </div>
               ))}
             </div>
-          </div>
-        ) : null}
-
-        {variacoes.length > 0 ? (
-          <div className="space-y-2">
-            <p className="label-caps flex items-center gap-2 text-muted-foreground">
-              <History className="h-4 w-4 text-primary" />
-              Histórico e variação por fornecedor
-            </p>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ingrediente</TableHead>
-                    <TableHead>Fornecedor</TableHead>
-                    <TableHead className="text-right">Preço atual</TableHead>
-                    <TableHead className="text-right">Preço anterior</TableHead>
-                    <TableHead className="text-right">Variação</TableHead>
-                    <TableHead className="text-right">Mín. / Máx.</TableHead>
-                    <TableHead className="text-right">Medições</TableHead>
-                    <TableHead className="text-right">Atualizado</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {variacoes.slice(0, 40).map((v) => {
-                    const unidade = unidadePorId.get(v.ingredienteId) ?? "";
-                    const medida = medidaPorUnidade(unidade);
-                    const valor = (x: number) =>
-                      medida ? brlPreciso(x / medida) : brl(x);
-                    const rotulo = medida
-                      ? `/${rotuloMedida(unidade)}`
-                      : unidade
-                        ? `/${unidade}`
-                        : "";
-                    return (
-                      <TableRow key={`${v.ingredienteId}-${v.mercado}`}>
-                        <TableCell className="font-semibold">
-                          {v.ingrediente}
-                          <span className="ml-1 text-xs text-muted-foreground">
-                            {rotulo}
-                          </span>
-                        </TableCell>
-                        <TableCell>{v.mercado}</TableCell>
-                        <TableCell className="text-right">
-                          {valor(v.precoAtual)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {v.precoAnterior === null ? "—" : valor(v.precoAnterior)}
-                        </TableCell>
-                        <TableCell
-                          className={`text-right font-semibold ${
-                            (v.variacao ?? 0) > 0
-                              ? "text-destructive"
-                              : (v.variacao ?? 0) < 0
-                                ? "text-primary"
-                                : ""
-                          }`}
-                        >
-                          {v.variacao === null
-                            ? "—"
-                            : `${v.variacao > 0 ? "+" : "−"}${valor(
-                                Math.abs(v.variacao),
-                              )}`}
-                          {v.variacaoPercentual === null ? null : (
-                            <span className="ml-1 text-xs text-muted-foreground">
-                              ({v.variacaoPercentual.toFixed(0)}%)
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {valor(v.menor)} / {valor(v.maior)}
-                        </TableCell>
-                        <TableCell className="text-right">{v.medicoes}</TableCell>
-                        <TableCell className="text-right text-xs text-muted-foreground">
-                          {dataHora(v.atualizadoEm)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Valores por g/ml (preço da embalagem dividido pelo peso/volume). Itens
-              contados por unidade aparecem com o preço da unidade.
-            </p>
           </div>
         ) : null}
 
