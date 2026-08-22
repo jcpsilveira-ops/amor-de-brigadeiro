@@ -30,6 +30,16 @@ import {
   dinheiro,
 } from "./domain";
 
+import {
+  deveAtualizar,
+  indexarPrecos,
+  mesclarAchado,
+  type AchadoPreco,
+  type MercadoCadastro,
+  type MercadoInput,
+  type PrecoMercado,
+} from "./precos-mercado";
+
 export class ApiError extends Error {}
 
 function apiBase(): string | null {
@@ -603,6 +613,154 @@ export const historicoPrecosApi = {
         fonte: c.fonte ?? null,
       })),
     );
+    if (error) throw new ApiError(error.message);
+  },
+};
+
+/* ------------------------- mercados e preços ------------------------------ */
+
+interface MercadoRow {
+  id: number;
+  nome: string;
+  url_busca: string | null;
+  origem: string;
+}
+
+const toMercado = (r: MercadoRow): MercadoCadastro => ({
+  id: r.id,
+  nome: r.nome,
+  urlBusca: r.url_busca,
+  origem: (r.origem === "automatico" ? "automatico" : "manual"),
+});
+
+export const mercadosApi = {
+  list: async (): Promise<MercadoCadastro[]> => {
+    const rows = check(
+      await supabase.from("mercados").select("*").order("nome", { ascending: true }),
+    );
+    return (rows as unknown as MercadoRow[]).map(toMercado);
+  },
+  create: async (input: MercadoInput): Promise<MercadoCadastro> => {
+    const row = check(
+      await supabase
+        .from("mercados")
+        .insert({
+          nome: input.nome.trim(),
+          url_busca: input.urlBusca?.trim() ? input.urlBusca.trim() : null,
+          origem: "manual",
+        })
+        .select("*")
+        .single(),
+    );
+    return toMercado(row as unknown as MercadoRow);
+  },
+  update: async (id: number, input: MercadoInput): Promise<MercadoCadastro> => {
+    const row = check(
+      await supabase
+        .from("mercados")
+        .update({
+          nome: input.nome.trim(),
+          url_busca: input.urlBusca?.trim() ? input.urlBusca.trim() : null,
+        })
+        .eq("id", id)
+        .select("*")
+        .single(),
+    );
+    return toMercado(row as unknown as MercadoRow);
+  },
+  remove: async (id: number): Promise<void> => {
+    const { error } = await supabase.from("mercados").delete().eq("id", id);
+    if (error) throw new ApiError(error.message);
+  },
+};
+
+interface PrecoMercadoRow {
+  id: number;
+  ingrediente_id: number;
+  mercado_id: number;
+  nome_produto: string | null;
+  preco: number | string | null;
+  peso: string | null;
+  fonte: string | null;
+  origem: string;
+  atualizado_em: string;
+}
+
+const toPrecoMercado = (r: PrecoMercadoRow): PrecoMercado => ({
+  id: r.id,
+  ingredienteId: r.ingrediente_id,
+  mercadoId: r.mercado_id,
+  nomeProduto: r.nome_produto,
+  preco: r.preco === null ? null : dinheiro(Number(r.preco)),
+  peso: r.peso,
+  fonte: r.fonte,
+  origem: r.origem === "manual" ? "manual" : "automatico",
+  atualizadoEm: r.atualizado_em,
+});
+
+export const precosMercadoApi = {
+  list: async (): Promise<PrecoMercado[]> => {
+    const rows = check(await supabase.from("precos_mercado").select("*").limit(5000));
+    return (rows as unknown as PrecoMercadoRow[]).map(toPrecoMercado);
+  },
+
+  /** Entrada manual (ou correção) de nome, preço e peso de um item. */
+  salvarManual: async (input: {
+    ingredienteId: number;
+    mercadoId: number;
+    nomeProduto: string | null;
+    preco: number | null;
+    peso: string | null;
+  }): Promise<void> => {
+    const { error } = await supabase.from("precos_mercado").upsert(
+      {
+        ingrediente_id: input.ingredienteId,
+        mercado_id: input.mercadoId,
+        nome_produto: input.nomeProduto?.trim() ? input.nomeProduto.trim() : null,
+        preco: input.preco === null ? null : dinheiro(input.preco),
+        peso: input.peso?.trim() ? input.peso.trim() : null,
+        origem: "manual",
+        atualizado_em: new Date().toISOString(),
+      },
+      { onConflict: "ingrediente_id,mercado_id" },
+    );
+    if (error) throw new ApiError(error.message);
+  },
+
+  /**
+   * Aplica os achados da pesquisa respeitando a regra: só substitui quando o
+   * valor anterior está em branco ou quando o novo preço é MENOR.
+   */
+  aplicarAchados: async (achados: AchadoPreco[]): Promise<number> => {
+    if (achados.length === 0) return 0;
+    const atuais = indexarPrecos(await precosMercadoApi.list());
+    const agora = new Date().toISOString();
+    const linhas = achados
+      .filter((a) => deveAtualizar(atuais.get(`${a.ingredienteId}|${a.mercadoId}`), a))
+      .map((a) => {
+        const anterior = atuais.get(`${a.ingredienteId}|${a.mercadoId}`);
+        const mesclado = mesclarAchado(anterior, a);
+        return {
+          ingrediente_id: a.ingredienteId,
+          mercado_id: a.mercadoId,
+          nome_produto: mesclado.nomeProduto,
+          preco: mesclado.preco === null ? null : dinheiro(mesclado.preco),
+          peso: mesclado.peso,
+          fonte: mesclado.fonte,
+          origem: "automatico",
+          atualizado_em: agora,
+        };
+      });
+    if (linhas.length === 0) return 0;
+    const { error } = await supabase
+      .from("precos_mercado")
+      .upsert(linhas, { onConflict: "ingrediente_id,mercado_id" });
+    if (error) throw new ApiError(error.message);
+    return linhas.length;
+  },
+
+  remove: async (id: number): Promise<void> => {
+    const { error } = await supabase.from("precos_mercado").delete().eq("id", id);
     if (error) throw new ApiError(error.message);
   },
 };

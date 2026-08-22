@@ -15,7 +15,9 @@ import {
   historicoPrecosApi,
   ingredientesApi,
   movimentacoesApi,
+  mercadosApi,
   pedidosApi,
+  precosMercadoApi,
   receitasAvulsasApi,
 } from "./api";
 
@@ -31,6 +33,8 @@ export const keys = {
   movimentacoes: ["movimentacoes_estoque"] as QueryKey,
   configuracoes: ["configuracoes"] as QueryKey,
   historicoPrecos: ["historico_precos"] as QueryKey,
+  mercados: ["mercados"] as QueryKey,
+  precosMercado: ["precos_mercado"] as QueryKey,
 };
 
 export const useIngredientes = () =>
@@ -51,6 +55,10 @@ export const useDespesas = () =>
   useQuery({ queryKey: keys.despesas, queryFn: despesasApi.list });
 export const useHistoricoPrecos = () =>
   useQuery({ queryKey: keys.historicoPrecos, queryFn: historicoPrecosApi.list });
+export const useMercados = () =>
+  useQuery({ queryKey: keys.mercados, queryFn: mercadosApi.list });
+export const usePrecosMercado = () =>
+  useQuery({ queryKey: keys.precosMercado, queryFn: precosMercadoApi.list });
 export const useReceitasAvulsas = () =>
   useQuery({ queryKey: keys.receitasAvulsas, queryFn: receitasAvulsasApi.list });
 
@@ -85,6 +93,8 @@ export {
   historicoPrecosApi,
   ingredientesApi,
   movimentacoesApi,
+  mercadosApi,
   pedidosApi,
+  precosMercadoApi,
   receitasAvulsasApi,
 };

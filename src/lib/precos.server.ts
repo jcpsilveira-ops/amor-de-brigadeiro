@@ -26,7 +26,7 @@ const MAX_TENTATIVAS = 5;
 
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-interface ResultadoBusca {
+export interface ResultadoBusca {
   url?: string;
   title?: string;
   description?: string;
@@ -95,7 +95,7 @@ async function chamarProvedor(query: string): Promise<ResultadoBusca[] | "limita
 }
 
 /** Busca com cache, fila e retentativa exponencial; nunca derruba a pesquisa inteira. */
-async function buscar(query: string): Promise<{ resultados: ResultadoBusca[]; limitado: boolean }> {
+export async function buscar(query: string): Promise<{ resultados: ResultadoBusca[]; limitado: boolean }> {
   const emCache = cache.get(query);
   if (emCache && Date.now() - emCache.em < CACHE_TTL) {
     return { resultados: emCache.resultados, limitado: false };

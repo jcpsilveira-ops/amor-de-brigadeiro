@@ -1,28 +1,28 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import {
-  ArrowDown,
-  ArrowUp,
+  Compass,
+  Pencil,
+  Plus,
   RefreshCw,
   Search,
-  Settings2,
-  Timer,
-  Trophy,
+  Store,
   TriangleAlert,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
+import { ConfirmDelete } from "@/components/ConfirmDelete";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Table,
   TableBody,
@@ -32,257 +32,372 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { brl, type Ingrediente } from "@/lib/domain";
-import { brlPreciso, qtd, type LinhaCesta } from "@/lib/cesta";
-import { pesquisarPrecosMercados } from "@/lib/precos.functions";
+import { brlPreciso } from "@/lib/cesta";
 import {
-  CONFIG_INTERVALO,
-  CONFIG_MERCADOS,
-  INTERVALOS,
-  MERCADOS,
-  compararComEstoque,
-  lerIntervaloConfigurado,
-  lerMercadosConfigurados,
-  medidaPorUnidade,
-  rankearReceitas,
-  rotuloMedida,
-  type Mercado,
-  type PesquisaPrecos as Pesquisa,
-} from "@/lib/precos";
-
+  buscarPrecosMercados,
+  descobrirLinkMercadoFn,
+  descobrirMercadosFn,
+} from "@/lib/precos-mercado.functions";
 import {
-  configuracoesApi,
-  historicoPrecosApi,
+  indexarPrecos,
+  melhorMercadoDoIngrediente,
+  precoPorMedidaDoRegistro,
+  type MercadoCadastro,
+  type PrecoMercado,
+  type SugestaoMercado,
+} from "@/lib/precos-mercado";
+import {
   keys,
-  useConfiguracoes,
+  mercadosApi,
+  precosMercadoApi,
   useAppMutation,
+  useMercados,
+  usePrecosMercado,
 } from "@/lib/queries";
 
-const MEDALHAS = ["1º", "2º", "3º"];
+const dataHora = (iso: string) =>
+  new Date(iso).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
 
-const rotuloIntervalo = (min: number) =>
-  min === 0 ? "Desligada" : min < 60 ? `A cada ${min} min` : `A cada ${min / 60} h`;
+interface EdicaoManual {
+  ingrediente: Ingrediente;
+  mercado: MercadoCadastro;
+  atual: PrecoMercado | undefined;
+}
 
-const dataHora = (iso: string) => new Date(iso).toLocaleString("pt-BR");
+/* ----------------------------- cadastro de mercados ---------------------- */
 
-function PainelConfiguracao({
+function CadastroMercados({
   mercados,
-  intervalo,
-  onSalvar,
-  salvando,
+  onFechar,
 }: {
-  mercados: Mercado[];
-  intervalo: number;
-  onSalvar: (input: { mercados: Mercado[]; intervalo: number }) => void;
-  salvando: boolean;
+  mercados: MercadoCadastro[];
+  onFechar: () => void;
 }) {
-  const [ordem, setOrdem] = useState<Mercado[]>(mercados);
-  const [selecionados, setSelecionados] = useState<Mercado[]>(mercados);
-  const [minutos, setMinutos] = useState(intervalo);
+  const [nome, setNome] = useState("");
+  const [url, setUrl] = useState("");
+  const [sugestoes, setSugestoes] = useState<SugestaoMercado[]>([]);
+  const [descobrindo, setDescobrindo] = useState(false);
+  const descobrirLink = useServerFn(descobrirLinkMercadoFn);
+  const descobrir = useServerFn(descobrirMercadosFn);
 
-  useEffect(() => {
-    const restantes = MERCADOS.filter((m) => !mercados.includes(m));
-    setOrdem([...mercados, ...restantes]);
-    setSelecionados(mercados);
-    setMinutos(intervalo);
-  }, [mercados, intervalo]);
+  const criar = useAppMutation<{ nome: string; urlBusca: string | null }>({
+    mutationFn: async (input) => {
+      // Sem link informado: o sistema procura o site do mercado na internet.
+      const urlBusca =
+        input.urlBusca ?? (await descobrirLink({ data: { nome: input.nome } })).urlBusca;
+      await mercadosApi.create({ nome: input.nome, urlBusca });
+    },
+    invalidate: [keys.mercados],
+    successMessage: "Supermercado cadastrado.",
+  });
 
-  const mover = (index: number, direcao: -1 | 1) => {
-    const destino = index + direcao;
-    if (destino < 0 || destino >= ordem.length) return;
-    const copia = [...ordem];
-    const atual = copia[index]!;
-    copia[index] = copia[destino]!;
-    copia[destino] = atual;
-    setOrdem(copia);
+  const excluir = useAppMutation<number>({
+    mutationFn: (id) => mercadosApi.remove(id),
+    invalidate: [keys.mercados, keys.precosMercado],
+    successMessage: "Supermercado removido.",
+  });
+
+  const adicionar = () => {
+    const limpo = nome.trim();
+    if (limpo.length < 2) {
+      toast.error("Informe o nome do supermercado.");
+      return;
+    }
+    criar.mutate(
+      { nome: limpo, urlBusca: url.trim() ? url.trim() : null },
+      {
+        onSuccess: () => {
+          setNome("");
+          setUrl("");
+        },
+      },
+    );
   };
 
-  const alternar = (mercado: Mercado, ativo: boolean) =>
-    setSelecionados((atual) =>
-      ativo ? [...atual, mercado] : atual.filter((m) => m !== mercado),
-    );
-
-  const salvar = () =>
-    onSalvar({
-      mercados: ordem.filter((m) => selecionados.includes(m)),
-      intervalo: minutos,
-    });
+  const buscarSugestoes = async () => {
+    setDescobrindo(true);
+    try {
+      const r = await descobrir({ data: { jaCadastrados: mercados.map((m) => m.nome) } });
+      setSugestoes(r.sugestoes);
+      if (r.sugestoes.length === 0) {
+        toast.error(r.erro ?? "Nenhum supermercado novo encontrado agora.");
+      }
+    } finally {
+      setDescobrindo(false);
+    }
+  };
 
   return (
     <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
-      <div className="flex items-center gap-2">
-        <Settings2 className="h-4 w-4 text-primary" />
-        <p className="label-caps text-muted-foreground">
-          Fornecedores no ranking e prioridade
+      <div className="flex items-center justify-between gap-2">
+        <p className="label-caps flex items-center gap-2 text-muted-foreground">
+          <Store className="h-4 w-4 text-primary" /> Supermercados pesquisados
         </p>
+        <Button variant="ghost" size="sm" onClick={onFechar}>
+          Fechar
+        </Button>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-[1fr_1.4fr_auto] sm:items-end">
+        <div>
+          <Label htmlFor="mercado-nome" className="label-caps">
+            Nome
+          </Label>
+          <Input
+            id="mercado-nome"
+            value={nome}
+            onChange={(e) => setNome(e.target.value)}
+            placeholder="Ex.: Bahamas"
+          />
+        </div>
+        <div>
+          <Label htmlFor="mercado-url" className="label-caps">
+            Link de busca (opcional)
+          </Label>
+          <Input
+            id="mercado-url"
+            value={url}
+            onChange={(e) => setUrl(e.target.value)}
+            placeholder="Se ficar em branco, o sistema procura na internet"
+          />
+        </div>
+        <Button onClick={adicionar} disabled={criar.isPending}>
+          <Plus className="h-4 w-4" />
+          {criar.isPending ? "Salvando..." : "Adicionar"}
+        </Button>
       </div>
 
       <ul className="grid gap-2 sm:grid-cols-2">
-        {ordem.map((mercado, i) => (
+        {mercados.map((m) => (
           <li
-            key={mercado}
+            key={m.id}
             className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2"
           >
-            <label className="flex items-center gap-2 text-sm font-semibold">
-              <Checkbox
-                checked={selecionados.includes(mercado)}
-                onCheckedChange={(v) => alternar(mercado, v === true)}
-                aria-label={`Incluir ${mercado} no ranking`}
-              />
-              <span className="text-xs text-muted-foreground">{i + 1}º</span>
-              {mercado}
-            </label>
-            <span className="flex gap-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                aria-label={`Subir ${mercado}`}
-                disabled={i === 0}
-                onClick={() => mover(i, -1)}
-              >
-                <ArrowUp className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7"
-                aria-label={`Descer ${mercado}`}
-                disabled={i === ordem.length - 1}
-                onClick={() => mover(i, 1)}
-              >
-                <ArrowDown className="h-3.5 w-3.5" />
-              </Button>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold">{m.nome}</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {m.urlBusca ?? "Sem link — busca pelo nome"}
+              </span>
             </span>
+            <ConfirmDelete
+              description={`Excluir o supermercado ${m.nome} e seus preços pesquisados?`}
+              onConfirm={() => excluir.mutate(m.id)}
+            />
           </li>
         ))}
       </ul>
 
-      <div className="flex flex-wrap items-end gap-3">
-        <div>
-          <Label htmlFor="intervalo-pesquisa" className="label-caps flex items-center gap-1">
-            <Timer className="h-3.5 w-3.5" /> Atualização automática
-          </Label>
-          <Select
-            value={String(minutos)}
-            onValueChange={(v) => setMinutos(Number(v))}
-          >
-            <SelectTrigger id="intervalo-pesquisa" className="mt-1 w-52">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {INTERVALOS.map((min) => (
-                <SelectItem key={min} value={String(min)}>
-                  {rotuloIntervalo(min)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <Button onClick={salvar} disabled={salvando || selecionados.length === 0}>
-          {salvando ? "Salvando..." : "Salvar preferências"}
+      <div className="space-y-2">
+        <Button variant="outline" size="sm" onClick={() => void buscarSugestoes()} disabled={descobrindo}>
+          <Compass className={`h-4 w-4 ${descobrindo ? "animate-spin" : ""}`} />
+          {descobrindo ? "Procurando..." : "Descobrir supermercados de Uberlândia"}
         </Button>
-        {selecionados.length === 0 ? (
-          <p className="text-xs text-destructive">Selecione pelo menos um fornecedor.</p>
+        {sugestoes.length > 0 ? (
+          <ul className="grid gap-2 sm:grid-cols-2">
+            {sugestoes.map((s) => (
+              <li
+                key={s.urlBusca}
+                className="flex items-center justify-between gap-2 rounded-lg border border-dashed border-border px-3 py-2"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold">{s.nome}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {s.urlBusca}
+                  </span>
+                </span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    criar.mutate(
+                      { nome: s.nome, urlBusca: s.urlBusca },
+                      {
+                        onSuccess: () =>
+                          setSugestoes((atual) => atual.filter((x) => x.urlBusca !== s.urlBusca)),
+                      },
+                    )
+                  }
+                >
+                  <Plus className="h-4 w-4" /> Usar
+                </Button>
+              </li>
+            ))}
+          </ul>
         ) : null}
       </div>
     </div>
   );
 }
 
-export function PesquisaPrecos({
-  linhas,
-  ingredientes,
+/* ------------------------------ entrada manual --------------------------- */
+
+function DialogManual({
+  edicao,
+  onFechar,
 }: {
-  linhas: LinhaCesta[];
-  ingredientes: Ingrediente[];
+  edicao: EdicaoManual | null;
+  onFechar: () => void;
 }) {
-  const pesquisar = useServerFn(pesquisarPrecosMercados);
-  const { data: config } = useConfiguracoes();
-  const [mostrarConfig, setMostrarConfig] = useState(false);
+  const [nomeProduto, setNomeProduto] = useState("");
+  const [preco, setPreco] = useState("");
+  const [peso, setPeso] = useState("");
 
-  const mercados = useMemo(
-    () => lerMercadosConfigurados(config?.[CONFIG_MERCADOS]),
-    [config],
-  );
-  const intervalo = lerIntervaloConfigurado(config?.[CONFIG_INTERVALO]);
+  useEffect(() => {
+    setNomeProduto(edicao?.atual?.nomeProduto ?? "");
+    setPreco(edicao?.atual?.preco === null || edicao?.atual?.preco === undefined ? "" : String(edicao.atual.preco));
+    setPeso(edicao?.atual?.peso ?? "");
+  }, [edicao]);
 
-  const salvarConfig = useAppMutation<{ mercados: Mercado[]; intervalo: number }>({
-    mutationFn: async (input) => {
-      await configuracoesApi.set(CONFIG_MERCADOS, JSON.stringify(input.mercados));
-      await configuracoesApi.set(CONFIG_INTERVALO, String(input.intervalo));
-    },
-    invalidate: [keys.configuracoes],
-    successMessage: "Preferências da pesquisa salvas.",
+  const salvar = useAppMutation<{
+    ingredienteId: number;
+    mercadoId: number;
+    nomeProduto: string | null;
+    preco: number | null;
+    peso: string | null;
+  }>({
+    mutationFn: (input) => precosMercadoApi.salvarManual(input),
+    invalidate: [keys.precosMercado],
+    successMessage: "Preço atualizado manualmente.",
+    onSuccess: onFechar,
   });
 
-  /** Todos os ingredientes cadastrados, em ordem alfabética. */
-  const usados = useMemo(
+  if (!edicao) return null;
+
+  const enviar = () => {
+    const numero = preco.trim() === "" ? null : Number(preco.replace(",", "."));
+    if (numero !== null && (!Number.isFinite(numero) || numero < 0)) {
+      toast.error("Informe um preço válido (ex.: 12,50).");
+      return;
+    }
+    salvar.mutate({
+      ingredienteId: edicao.ingrediente.id,
+      mercadoId: edicao.mercado.id,
+      nomeProduto: nomeProduto.trim() ? nomeProduto : null,
+      preco: numero === null ? null : Math.round(numero * 100) / 100,
+      peso: peso.trim() ? peso : null,
+    });
+  };
+
+  return (
+    <Dialog open onOpenChange={(aberto) => (aberto ? null : onFechar())}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="font-display text-primary">
+            {edicao.ingrediente.nome} · {edicao.mercado.nome}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="manual-nome" className="label-caps">
+              Nome do produto
+            </Label>
+            <Input
+              id="manual-nome"
+              value={nomeProduto}
+              onChange={(e) => setNomeProduto(e.target.value)}
+              placeholder="Ex.: Leite condensado Itambé"
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="manual-preco" className="label-caps">
+                Preço (R$)
+              </Label>
+              <Input
+                id="manual-preco"
+                inputMode="decimal"
+                value={preco}
+                onChange={(e) => setPreco(e.target.value)}
+                placeholder="12,50"
+              />
+            </div>
+            <div>
+              <Label htmlFor="manual-peso" className="label-caps">
+                Peso / volume
+              </Label>
+              <Input
+                id="manual-peso"
+                value={peso}
+                onChange={(e) => setPeso(e.target.value)}
+                placeholder="395 g"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Deixe em branco o que você não souber — o sistema não preenche valores estimados.
+          </p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onFechar}>
+            Cancelar
+          </Button>
+          <Button onClick={enviar} disabled={salvar.isPending}>
+            {salvar.isPending ? "Salvando..." : "Salvar"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* --------------------------------- pesquisa ------------------------------- */
+
+export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }) {
+  const buscar = useServerFn(buscarPrecosMercados);
+  const { data: mercados = [] } = useMercados();
+  const { data: precos = [], refetch: recarregarPrecos } = usePrecosMercado();
+  const [mostrarCadastro, setMostrarCadastro] = useState(false);
+  const [edicao, setEdicao] = useState<EdicaoManual | null>(null);
+  const [pesquisando, setPesquisando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [ultima, setUltima] = useState<string | null>(null);
+  const automatico = useRef(false);
+
+  const lista = useMemo(
     () => [...ingredientes].sort((a, b) => a.nome.localeCompare(b.nome)),
     [ingredientes],
   );
+  const indice = useMemo(() => indexarPrecos(precos), [precos]);
 
-  const chave = `${usados.map((i) => i.id).join(",")}|${mercados.join(",")}`;
-
-  const { data, isFetching, dataUpdatedAt, refetch } = useQuery<Pesquisa>({
-    queryKey: ["pesquisa-precos", chave],
-    enabled: usados.length > 0,
-    // Atualiza sempre que a Cesta da produção é aberta e, se configurado,
-    // em intervalos automáticos enquanto a tela permanece aberta.
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: false,
-    refetchInterval: intervalo > 0 ? intervalo * 60_000 : false,
-    refetchIntervalInBackground: false,
-    retry: false,
-    queryFn: () =>
-      pesquisar({
+  const pesquisar = async () => {
+    if (lista.length === 0 || mercados.length === 0) return;
+    setPesquisando(true);
+    setErro(null);
+    try {
+      const r = await buscar({
         data: {
-          ingredientes: usados.map((i) => ({
+          ingredientes: lista.map((i) => ({
             id: i.id,
             nome: i.nome,
-            unidade: i.unidade,
-            unidadeEstoque: i.estoqueUnidade ?? i.unidade,
+            unidade: i.estoqueUnidade ?? i.unidade,
           })),
-          mercados,
+          mercados: mercados.map((m) => ({ id: m.id, nome: m.nome, urlBusca: m.urlBusca })),
         },
-      }),
-  });
+      });
+      if (r.erro) setErro(r.erro);
+      const gravados = await precosMercadoApi.aplicarAchados(r.achados);
+      await recarregarPrecos();
+      setUltima(new Date().toISOString());
+      toast.success(
+        gravados > 0
+          ? `${gravados} preço(s) atualizado(s) — só entram valores novos ou menores.`
+          : "Pesquisa concluída: nenhum preço menor foi encontrado.",
+      );
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Falha na pesquisa de preços.");
+    } finally {
+      setPesquisando(false);
+    }
+  };
 
-  const cotacoes = data?.cotacoes ?? [];
-
-  /* Salva o histórico de cada pesquisa concluída (uma vez por resultado). */
-  const qc = useQueryClient();
-  const registrado = useRef<string>("");
+  /* Pesquisa automática ao abrir a aplicação (uma vez por sessão da tela). */
   useEffect(() => {
-    if (!data || data.cotacoes.length === 0) return;
-    if (registrado.current === data.atualizadoEm) return;
-    registrado.current = data.atualizadoEm;
-    void historicoPrecosApi
-      .registrar(
-        data.cotacoes.map((c) => ({
-          ingredienteId: c.ingredienteId,
-          ingredienteNome: c.ingrediente,
-          mercado: c.mercado,
-          preco: c.preco,
-          fonte: c.fonte,
-        })),
-      )
-      .then(() => qc.invalidateQueries({ queryKey: keys.historicoPrecos }))
-      .catch(() => undefined);
-  }, [data, qc]);
-
-  const comparativo = useMemo(
-    () => compararComEstoque(usados, cotacoes, mercados),
-    [usados, cotacoes, mercados],
-  );
-  const rankings = useMemo(
-    () => rankearReceitas(linhas, cotacoes, mercados),
-    [linhas, cotacoes, mercados],
-  );
-  const comRanking = rankings.filter((r) => r.ranking.length > 0);
-
-  const mercadosComPreco = mercados.filter((m) => cotacoes.some((c) => c.mercado === m));
+    if (automatico.current) return;
+    if (lista.length === 0 || mercados.length === 0) return;
+    automatico.current = true;
+    void pesquisar();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lista.length, mercados.length]);
 
   return (
     <Card>
@@ -290,213 +405,134 @@ export function PesquisaPrecos({
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2 font-display text-xl text-primary">
             <Search className="h-5 w-5" />
-            Pesquisa de preços — Uberlândia
+            Pesquisa de preços — Uberlândia-MG
           </CardTitle>
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setMostrarConfig((v) => !v)}
-            >
-              <Settings2 className="h-4 w-4" />
-              {mostrarConfig ? "Fechar ajustes" : "Ajustar fornecedores"}
+            <Button variant="ghost" size="sm" onClick={() => setMostrarCadastro((v) => !v)}>
+              <Store className="h-4 w-4" />
+              {mostrarCadastro ? "Fechar supermercados" : "Supermercados"}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => void refetch()}
-              disabled={isFetching}
+              onClick={() => void pesquisar()}
+              disabled={pesquisando}
             >
-              <RefreshCw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
-              {isFetching ? "Pesquisando..." : "Atualizar agora"}
+              <RefreshCw className={`h-4 w-4 ${pesquisando ? "animate-spin" : ""}`} />
+              {pesquisando ? "Pesquisando..." : "Atualizar agora"}
             </Button>
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Busca automática nos fornecedores escolhidos ({mercados.join(", ")}) a cada abertura
-          desta tela · atualização automática: {rotuloIntervalo(intervalo).toLowerCase()}. Os
-          valores são aproximados (encartes e lojas online) e servem de referência para
-          comparar com o preço cadastrado no estoque.
+          A pesquisa roda sozinha ao abrir a aplicação e pode ser repetida a qualquer momento.
+          Um preço só é substituído quando estava em branco ou quando o novo valor é menor.
+          Clique em qualquer célula para digitar nome, preço e peso manualmente.
+          {ultima ? ` Última pesquisa: ${dataHora(ultima)}.` : ""}
         </p>
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {mostrarConfig ? (
-          <PainelConfiguracao
-            mercados={mercados}
-            intervalo={intervalo}
-            salvando={salvarConfig.isPending}
-            onSalvar={(input) =>
-              salvarConfig.mutate(input, { onSuccess: () => setMostrarConfig(false) })
-            }
-          />
+        {mostrarCadastro ? (
+          <CadastroMercados mercados={mercados} onFechar={() => setMostrarCadastro(false)} />
         ) : null}
 
-        {isFetching && cotacoes.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-            Pesquisando preços nos mercados de Uberlândia...
-          </p>
-        ) : null}
-
-        {data?.erro ? (
+        {erro ? (
           <p className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-            {data.erro}
+            {erro}
           </p>
         ) : null}
 
-        {!isFetching && cotacoes.length === 0 && !data?.erro ? (
+        {mercados.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-            Nenhum preço público foi encontrado agora para estes ingredientes. Tente atualizar
-            a pesquisa em alguns minutos.
+            Cadastre ao menos um supermercado para comparar preços.
           </p>
-        ) : null}
-
-        {comparativo.length > 0 ? (
-          <div className="space-y-2">
-            <p className="label-caps text-muted-foreground">
-              Preço por g/ml x estoque
-            </p>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ingrediente</TableHead>
-                    <TableHead className="text-right">Estoque</TableHead>
-                    {mercadosComPreco.map((m) => (
-                      <TableHead key={m} className="text-right">
-                        {m}
-                      </TableHead>
-                    ))}
-                    <TableHead className="text-right">Melhor</TableHead>
-                    <TableHead className="text-right">Diferença</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {comparativo.map((c) => {
-                    const medida = medidaPorUnidade(c.unidade);
-                    const valor = (v: number) =>
-                      medida ? brlPreciso(v / medida) : brl(v);
-                    return (
-                      <TableRow key={c.ingredienteId}>
-                        <TableCell className="font-semibold">
-                          {c.nome}
-                          <span className="ml-1 text-xs text-muted-foreground">
-                            /{medida ? rotuloMedida(c.unidade) : c.unidade}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {valor(c.precoEstoque)}
-                        </TableCell>
-                        {mercadosComPreco.map((m) => (
-                          <TableCell
-                            key={m}
-                            className={`text-right ${
-                              c.melhorMercado === m ? "font-semibold text-primary" : ""
-                            }`}
-                          >
-                            {c.precos[m] === undefined ? "—" : valor(c.precos[m]!)}
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Ingrediente</TableHead>
+                  <TableHead className="text-right">Estoque</TableHead>
+                  {mercados.map((m) => (
+                    <TableHead key={m.id} className="text-right">
+                      {m.nome}
+                    </TableHead>
+                  ))}
+                  <TableHead className="text-right">Melhor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {lista.map((ing) => {
+                  const melhor = melhorMercadoDoIngrediente(precos, ing.id);
+                  return (
+                    <TableRow key={ing.id}>
+                      <TableCell className="font-semibold">
+                        {ing.nome}
+                        <span className="ml-1 text-xs text-muted-foreground">
+                          /{ing.estoqueUnidade ?? ing.unidade}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right text-sm">
+                        {brl(ing.custoUnitario)}
+                      </TableCell>
+                      {mercados.map((m) => {
+                        const p = indice.get(`${ing.id}|${m.id}`);
+                        const porMedida = p ? precoPorMedidaDoRegistro(p) : null;
+                        const destaque = melhor?.mercadoId === m.id;
+                        return (
+                          <TableCell key={m.id} className="text-right align-top">
+                            <button
+                              type="button"
+                              className="w-full text-right"
+                              onClick={() => setEdicao({ ingrediente: ing, mercado: m, atual: p })}
+                              aria-label={`Editar ${ing.nome} em ${m.nome}`}
+                            >
+                              <span
+                                className={`block text-sm ${
+                                  destaque ? "font-semibold text-primary" : ""
+                                }`}
+                              >
+                                {p?.preco === null || p?.preco === undefined
+                                  ? "—"
+                                  : brl(p.preco)}
+                                <Pencil className="ml-1 inline h-3 w-3 text-muted-foreground" />
+                              </span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {p?.peso ?? "peso —"}
+                                {porMedida === null ? "" : ` · ${brlPreciso(porMedida)}/un.med.`}
+                              </span>
+                              <span className="block truncate text-xs text-muted-foreground">
+                                {p?.nomeProduto ?? "produto —"}
+                              </span>
+                              <span className="block text-xs text-muted-foreground">
+                                {p ? dataHora(p.atualizadoEm) : "sem pesquisa"}
+                              </span>
+                            </button>
                           </TableCell>
-                        ))}
-                        <TableCell className="text-right font-semibold text-primary">
-                          {c.melhorMercado ?? "—"}
-                        </TableCell>
-                        <TableCell
-                          className={`text-right font-semibold ${
-                            (c.diferenca ?? 0) < 0 ? "text-primary" : "text-destructive"
-                          }`}
-                        >
-                          {c.diferenca === null
-                            ? "—"
-                            : `${c.diferenca < 0 ? "−" : "+"}${valor(
-                                Math.abs(c.diferenca),
-                              )}`}
-                          {c.diferencaPercentual === null ? null : (
-                            <span className="ml-1 text-xs text-muted-foreground">
-                              ({c.diferencaPercentual.toFixed(0)}%)
-                            </span>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Valores por g/ml (preço da embalagem dividido pelo peso/volume). Itens
-              contados por unidade aparecem com o preço da unidade.
-            </p>
+                        );
+                      })}
+                      <TableCell className="text-right text-sm font-semibold text-primary">
+                        {melhor
+                          ? (mercados.find((m) => m.id === melhor.mercadoId)?.nome ?? "—")
+                          : "—"}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           </div>
-        ) : null}
+        )}
 
-
-        {comRanking.length > 0 ? (
-          <div className="space-y-3">
-            <p className="label-caps flex items-center gap-2 text-muted-foreground">
-              <Trophy className="h-4 w-4 text-primary" />
-              Ranking de custo-benefício por receita
-            </p>
-            <div className="grid gap-3 lg:grid-cols-2">
-              {comRanking.map((r) => (
-                <div
-                  key={`${r.tipo}-${r.id}`}
-                  className="rounded-xl border border-border bg-muted/30 p-4"
-                >
-                  <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
-                    <p className="font-display text-lg text-primary">{r.nome}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Custo com o estoque: {brl(r.custoEstoque)}
-                    </p>
-                  </div>
-                  <ul className="space-y-1 text-sm">
-                    {r.ranking.slice(0, 3).map((m, i) => (
-                      <li key={m.mercado} className="flex items-center justify-between gap-2">
-                        <span className="font-semibold">
-                          {MEDALHAS[i]} {m.mercado}
-                          <span className="ml-1 text-xs font-normal text-muted-foreground">
-                            {m.cobertura}/{m.totalItens} itens cotados
-                          </span>
-                        </span>
-                        <span className="text-right">
-                          {brl(m.custo)}
-                          <span
-                            className={`ml-2 text-xs ${
-                              m.economia > 0 ? "text-primary" : "text-destructive"
-                            }`}
-                          >
-                            {m.economia > 0 ? "economia" : "acima"} {brl(Math.abs(m.economia))}
-                          </span>
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        ) : null}
-
-        {data?.semCotacao?.length ? (
-          <p className="text-xs text-muted-foreground">
-            Sem cotação pública nesta pesquisa: {data.semCotacao.join(", ")}. Para esses itens
-            o ranking usa o preço cadastrado no estoque.
-          </p>
-        ) : null}
-
-        {data?.atualizadoEm ? (
-          <p className="text-xs text-muted-foreground">
-            Pesquisa atualizada em {dataHora(data.atualizadoEm)} · {qtd(cotacoes.length)}{" "}
-            cotações encontradas
-            {dataUpdatedAt && intervalo > 0
-              ? ` · próxima atualização automática por volta de ${new Date(
-                  dataUpdatedAt + intervalo * 60_000,
-                ).toLocaleTimeString("pt-BR")}`
-              : ""}
-            .
-          </p>
-        ) : null}
+        <p className="text-xs text-muted-foreground">
+          Preços coletados de páginas públicas dos supermercados (busca que respeita robots.txt).
+          Campos não encontrados ficam em branco, sem estimativas. A coluna “Melhor” usa o preço
+          por g/ml quando o peso está preenchido.
+        </p>
       </CardContent>
+
+      <DialogManual edicao={edicao} onFechar={() => setEdicao(null)} />
     </Card>
   );
 }
