@@ -448,81 +448,146 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
             Cadastre ao menos um supermercado para comparar preços.
           </p>
         ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Ingrediente</TableHead>
-                  <TableHead className="text-right">Estoque</TableHead>
-                  {mercados.map((m) => (
-                    <TableHead key={m.id} className="text-right">
-                      {m.nome}
-                    </TableHead>
-                  ))}
-                  <TableHead className="text-right">Melhor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lista.map((ing) => {
-                  const melhor = melhorMercadoDoIngrediente(precos, ing.id);
-                  return (
-                    <TableRow key={ing.id}>
-                      <TableCell className="font-semibold">
-                        {ing.nome}
-                        <span className="ml-1 text-xs text-muted-foreground">
-                          /{ing.estoqueUnidade ?? ing.unidade}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right text-sm">
-                        {brl(ing.custoUnitario)}
-                      </TableCell>
-                      {mercados.map((m) => {
-                        const p = indice.get(`${ing.id}|${m.id}`);
-                        const porMedida = p ? precoPorMedidaDoRegistro(p) : null;
-                        const destaque = melhor?.mercadoId === m.id;
-                        return (
-                          <TableCell key={m.id} className="text-right align-top">
-                            <button
-                              type="button"
-                              className="w-full text-right"
-                              onClick={() => setEdicao({ ingrediente: ing, mercado: m, atual: p })}
-                              aria-label={`Editar ${ing.nome} em ${m.nome}`}
-                            >
-                              <span
-                                className={`block text-sm ${
-                                  destaque ? "font-semibold text-primary" : ""
-                                }`}
+          <>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="sticky left-0 z-20 bg-card">Ingrediente</TableHead>
+                    <TableHead className="text-right">Estoque</TableHead>
+                    {mercados.map((m) => (
+                      <TableHead key={m.id} className="text-right">
+                        {m.nome}
+                      </TableHead>
+                    ))}
+                    <TableHead className="text-right">Melhor</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {lista.map((ing) => {
+                    const melhor = melhorMercadoDoIngrediente(precos, ing.id);
+                    return (
+                      <TableRow key={ing.id}>
+                        <TableCell className="sticky left-0 z-10 bg-card font-semibold">
+                          {ing.nome}
+                          <span className="ml-1 text-xs text-muted-foreground">
+                            /{ing.estoqueUnidade ?? ing.unidade}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right text-sm">
+                          {brl(ing.custoUnitario)}
+                        </TableCell>
+                        {mercados.map((m) => {
+                          const p = indice.get(`${ing.id}|${m.id}`);
+                          const porMedida = p ? precoPorMedidaDoRegistro(p) : null;
+                          const destaque = melhor?.mercadoId === m.id;
+                          return (
+                            <TableCell key={m.id} className="text-right align-top">
+                              <button
+                                type="button"
+                                className="w-full text-right"
+                                onClick={() => setEdicao({ ingrediente: ing, mercado: m, atual: p })}
+                                aria-label={`Editar ${ing.nome} em ${m.nome}`}
                               >
-                                {p?.preco === null || p?.preco === undefined
-                                  ? "—"
-                                  : brl(p.preco)}
-                                <Pencil className="ml-1 inline h-3 w-3 text-muted-foreground" />
-                              </span>
-                              <span className="block truncate text-xs text-muted-foreground">
-                                {p?.peso ?? "peso —"}
-                                {porMedida === null ? "" : ` · ${brlPreciso(porMedida)}/un.med.`}
-                              </span>
-                              <span className="block truncate text-xs text-muted-foreground">
-                                {p?.nomeProduto ?? "produto —"}
-                              </span>
-                              <span className="block text-xs text-muted-foreground">
-                                {p ? dataHora(p.atualizadoEm) : "sem pesquisa"}
-                              </span>
-                            </button>
-                          </TableCell>
-                        );
-                      })}
-                      <TableCell className="text-right text-sm font-semibold text-primary">
-                        {melhor
-                          ? (mercados.find((m) => m.id === melhor.mercadoId)?.nome ?? "—")
-                          : "—"}
-                      </TableCell>
+                                <span
+                                  className={`block text-sm ${
+                                    destaque ? "font-semibold text-primary" : ""
+                                  }`}
+                                >
+                                  {p?.preco === null || p?.preco === undefined
+                                    ? "—"
+                                    : brl(p.preco)}
+                                  <Pencil className="ml-1 inline h-3 w-3 text-muted-foreground" />
+                                </span>
+                                <span className="block truncate text-xs text-muted-foreground">
+                                  {p?.peso ?? "peso —"}
+                                  {porMedida === null ? "" : ` · ${brlPreciso(porMedida)}/un.med.`}
+                                </span>
+                                <span className="block truncate text-xs text-muted-foreground">
+                                  {p?.nomeProduto ?? "produto —"}
+                                </span>
+                                <span className="block text-xs text-muted-foreground">
+                                  {p ? dataHora(p.atualizadoEm) : "sem pesquisa"}
+                                </span>
+                              </button>
+                            </TableCell>
+                          );
+                        })}
+                        <TableCell className="text-right text-sm font-semibold text-primary">
+                          {melhor
+                            ? (mercados.find((m) => m.id === melhor.mercadoId)?.nome ?? "—")
+                            : "—"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+            </div>
+
+            <div className="space-y-2">
+              <p className="label-caps text-muted-foreground">Preço por g/ml — estoque × supermercados</p>
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="sticky left-0 z-20 bg-card">Ingrediente</TableHead>
+                      <TableHead className="text-right">Estoque</TableHead>
+                      {mercados.map((m) => (
+                        <TableHead key={m.id} className="text-right">
+                          {m.nome}
+                        </TableHead>
+                      ))}
+                      <TableHead className="text-right">Menor</TableHead>
                     </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </div>
+                  </TableHeader>
+                  <TableBody>
+                    {lista.map((ing) => {
+                      const unidade = ing.estoqueUnidade ?? ing.unidade;
+                      const medida = rotuloMedida(unidade);
+                      const estoquePorMedida = precoPorMedida(ing.custoUnitario, unidade);
+                      const porMercado = mercados.map((m) => {
+                        const p = indice.get(`${ing.id}|${m.id}`);
+                        return { id: m.id, valor: p ? precoPorMedidaDoRegistro(p) : null };
+                      });
+                      const validos = porMercado.filter(
+                        (x): x is { id: number; valor: number } => x.valor !== null,
+                      );
+                      const menor = validos.length
+                        ? validos.reduce((a, b) => (b.valor < a.valor ? b : a))
+                        : null;
+                      return (
+                        <TableRow key={ing.id}>
+                          <TableCell className="sticky left-0 z-10 bg-card font-semibold">
+                            {ing.nome}
+                            <span className="ml-1 text-xs text-muted-foreground">/{medida}</span>
+                          </TableCell>
+                          <TableCell className="text-right text-sm">
+                            {estoquePorMedida === null ? "—" : `${brlPreciso(estoquePorMedida)}/${medida}`}
+                          </TableCell>
+                          {porMercado.map((x) => (
+                            <TableCell
+                              key={x.id}
+                              className={`text-right text-sm ${
+                                menor && menor.id === x.id ? "font-semibold text-primary" : ""
+                              }`}
+                            >
+                              {x.valor === null ? "—" : `${brlPreciso(x.valor)}/${medida}`}
+                            </TableCell>
+                          ))}
+                          <TableCell className="text-right text-sm font-semibold text-primary">
+                            {menor
+                              ? (mercados.find((m) => m.id === menor.id)?.nome ?? "—")
+                              : "—"}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          </>
         )}
 
         <p className="text-xs text-muted-foreground">
@@ -530,6 +595,7 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
           Campos não encontrados ficam em branco, sem estimativas. A coluna “Melhor” usa o preço
           por g/ml quando o peso está preenchido.
         </p>
+
       </CardContent>
 
       <DialogManual edicao={edicao} onFechar={() => setEdicao(null)} />
