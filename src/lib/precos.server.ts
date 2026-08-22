@@ -144,11 +144,6 @@ export async function pesquisarPrecos(
     );
     buscas.push(...lote);
   }
-  if (limitados > 0 && cotacoes.length === 0) {
-    erro =
-      erro ??
-      `O provedor limitou ${limitados} consulta(s); os itens sem valor podem ser atualizados em instantes.`;
-  }
 
 
   for (const { ing, resultados } of buscas) {
