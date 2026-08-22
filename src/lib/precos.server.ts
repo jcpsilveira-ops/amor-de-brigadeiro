@@ -116,7 +116,7 @@ async function buscar(query: string): Promise<{ resultados: ResultadoBusca[]; li
 
 
 export async function pesquisarPrecos(
-  ingredientes: { id: number; nome: string; unidade: string }[],
+  ingredientes: { id: number; nome: string; unidade: string; unidadeEstoque?: string }[],
   mercados: readonly Mercado[] = MERCADOS,
 ): Promise<PesquisaPrecos> {
   const alvo = ingredientes;
@@ -131,7 +131,9 @@ export async function pesquisarPrecos(
   for (let i = 0; i < alvo.length; i += LOTE) {
     const lote = await Promise.all(
       alvo.slice(i, i + LOTE).map(async (ing) => {
-        const query = `preço ${ing.nome} ${ing.unidade} Uberlândia ${redes} supermercado`;
+        // Usa exatamente o nome e a unidade cadastrados no estoque.
+        const unidadeBusca = ing.unidadeEstoque ?? ing.unidade;
+        const query = `preço ${ing.nome} ${unidadeBusca} Uberlândia ${redes} supermercado`;
         try {
           const r = await buscar(query);
           if (r.limitado) limitados++;
