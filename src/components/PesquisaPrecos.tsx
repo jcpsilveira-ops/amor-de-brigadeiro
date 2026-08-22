@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/table";
 import { brl, type Ingrediente } from "@/lib/domain";
 import { brlPreciso } from "@/lib/cesta";
-import { precoPorMedida, rotuloMedida } from "@/lib/precos";
+import { medidaPorUnidade, precoPorMedida, rotuloMedida } from "@/lib/precos";
 
 import {
   buscarPrecosMercados,
