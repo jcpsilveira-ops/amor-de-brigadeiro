@@ -116,7 +116,12 @@ async function buscar(query: string): Promise<{ resultados: ResultadoBusca[]; li
 
 
 export async function pesquisarPrecos(
-  ingredientes: { id: number; nome: string; unidade: string; unidadeEstoque?: string }[],
+  ingredientes: {
+    id: number;
+    nome: string;
+    unidade: string;
+    unidadeEstoque?: string | undefined;
+  }[],
   mercados: readonly Mercado[] = MERCADOS,
 ): Promise<PesquisaPrecos> {
   const alvo = ingredientes;
