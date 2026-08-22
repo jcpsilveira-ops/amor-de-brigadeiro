@@ -4,7 +4,6 @@ import { useServerFn } from "@tanstack/react-start";
 import {
   ArrowDown,
   ArrowUp,
-  History,
   RefreshCw,
   Search,
   Settings2,
@@ -46,7 +45,6 @@ import {
   medidaPorUnidade,
   rankearReceitas,
   rotuloMedida,
-  variacoesDoHistorico,
   type Mercado,
   type PesquisaPrecos as Pesquisa,
 } from "@/lib/precos";
@@ -56,7 +54,6 @@ import {
   historicoPrecosApi,
   keys,
   useConfiguracoes,
-  useHistoricoPrecos,
   useAppMutation,
 } from "@/lib/queries";
 
@@ -201,7 +198,6 @@ export function PesquisaPrecos({
 }) {
   const pesquisar = useServerFn(pesquisarPrecosMercados);
   const { data: config } = useConfiguracoes();
-  const { data: historico = [] } = useHistoricoPrecos();
   const [mostrarConfig, setMostrarConfig] = useState(false);
 
   const mercados = useMemo(
@@ -284,11 +280,6 @@ export function PesquisaPrecos({
     [linhas, cotacoes, mercados],
   );
   const comRanking = rankings.filter((r) => r.ranking.length > 0);
-  const variacoes = useMemo(() => variacoesDoHistorico(historico), [historico]);
-  const unidadePorId = useMemo(
-    () => new Map(ingredientes.map((i) => [i.id, i.unidade])),
-    [ingredientes],
-  );
 
   const mercadosComPreco = mercados.filter((m) => cotacoes.some((c) => c.mercado === m));
 
