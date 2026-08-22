@@ -127,12 +127,15 @@ export async function pesquisarPrecos(
   let erro: string | undefined;
 
   const buscas: { ing: (typeof alvo)[number]; resultados: ResultadoBusca[] }[] = [];
+  let limitados = 0;
   for (let i = 0; i < alvo.length; i += LOTE) {
     const lote = await Promise.all(
       alvo.slice(i, i + LOTE).map(async (ing) => {
         const query = `preço ${ing.nome} ${ing.unidade} Uberlândia ${redes} supermercado`;
         try {
-          return { ing, resultados: await buscar(query) };
+          const r = await buscar(query);
+          if (r.limitado) limitados++;
+          return { ing, resultados: r.resultados };
         } catch (e) {
           erro = e instanceof Error ? e.message : "Falha na pesquisa de preços.";
           return { ing, resultados: [] as ResultadoBusca[] };
@@ -140,8 +143,13 @@ export async function pesquisarPrecos(
       }),
     );
     buscas.push(...lote);
-    if (i + LOTE < alvo.length) await espera(600);
   }
+  if (limitados > 0 && cotacoes.length === 0) {
+    erro =
+      erro ??
+      `O provedor limitou ${limitados} consulta(s); os itens sem valor podem ser atualizados em instantes.`;
+  }
+
 
   for (const { ing, resultados } of buscas) {
     let encontrou = false;
