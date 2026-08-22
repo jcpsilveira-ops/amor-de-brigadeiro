@@ -69,7 +69,7 @@ export async function pesquisarPrecos(
   ingredientes: { id: number; nome: string; unidade: string }[],
   mercados: readonly Mercado[] = MERCADOS,
 ): Promise<PesquisaPrecos> {
-  const alvo = ingredientes.slice(0, MAX_INGREDIENTES_PESQUISA);
+  const alvo = ingredientes;
   const selecionados = mercados.length > 0 ? mercados : MERCADOS;
   const redes = selecionados.join(" OR ");
   const cotacoes: Cotacao[] = [];

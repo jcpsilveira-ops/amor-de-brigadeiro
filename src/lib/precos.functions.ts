@@ -12,7 +12,7 @@ const schema = z.object({
         unidade: z.string().trim().max(20),
       }),
     )
-    .max(40),
+    .max(300),
   mercados: z.array(z.enum(MERCADOS)).optional(),
 });
 
