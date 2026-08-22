@@ -32,7 +32,7 @@ import {
   useIngredientes,
   usePedidos,
 } from "@/lib/queries";
-import { dataBR } from "@/lib/domain";
+import { dataBR, limitarPreco } from "@/lib/domain";
 
 export const Route = createFileRoute("/ingredientes")({
   head: () => ({
@@ -179,7 +179,7 @@ function IngredientesPage() {
                   id="custo"
                   inputMode="decimal"
                   value={custo}
-                  onChange={(e) => setCusto(e.target.value.replace(",", "."))}
+                  onChange={(e) => setCusto(limitarPreco(e.target.value))}
                   placeholder="0,00"
                 />
                 <FieldError message={(tocado || custo !== "") ? erros["custoUnitario"] : undefined} />

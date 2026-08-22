@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pencil } from "lucide-react";
-import { brl, dataBR, despesaSchema, hojeISO, type Despesa } from "@/lib/domain";
+import { brl, dataBR, despesaSchema, hojeISO, limitarPreco, type Despesa } from "@/lib/domain";
 import { despesasApi, keys, useAppMutation, useDespesas } from "@/lib/queries";
 
 export const Route = createFileRoute("/despesas")({
@@ -116,7 +116,7 @@ function DespesasPage() {
                   step="0.01"
                   min="0"
                   value={valor}
-                  onChange={(e) => setValor(e.target.value)}
+                  onChange={(e) => setValor(limitarPreco(e.target.value))}
                   placeholder="35,00"
                 />
                 <FieldError message={tocado || valor !== "" ? erros["valor"] : undefined} />

@@ -22,6 +22,7 @@ import {
   calcularCusto,
   dataBR,
   hojeISO,
+  limitarPreco,
   pedidoSchema,
   type Pedido,
 } from "@/lib/domain";
@@ -357,7 +358,7 @@ function PedidosPage() {
                     step="0.01"
                     min="0"
                     value={outrosPreco}
-                    onChange={(e) => setOutrosPreco(e.target.value)}
+                    onChange={(e) => setOutrosPreco(limitarPreco(e.target.value))}
                   />
                   <FieldError message={tocado ? erros["outrosPreco"] : undefined} />
                 </div>

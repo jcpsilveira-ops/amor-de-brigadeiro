@@ -20,6 +20,7 @@ import {
   type Ingrediente,
   type Receita,
   type ReceitaInput,
+  limitarPreco,
 } from "@/lib/domain";
 
 interface Linha {
@@ -118,7 +119,7 @@ export function ReceitaForm({
             id="preco"
             inputMode="decimal"
             value={precoVenda}
-            onChange={(e) => setPrecoVenda(e.target.value.replace(",", "."))}
+            onChange={(e) => setPrecoVenda(limitarPreco(e.target.value))}
             placeholder="0,00"
           />
           <FieldError

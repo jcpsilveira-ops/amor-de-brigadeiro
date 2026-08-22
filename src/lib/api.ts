@@ -27,6 +27,7 @@ import {
   type MovimentacaoInput,
   type ReceitaInput,
   type Unidade,
+  dinheiro,
 } from "./domain";
 
 export class ApiError extends Error {}
@@ -96,7 +97,7 @@ const toIngrediente = (r: IngredienteRow): Ingrediente => ({
   id: r.id,
   nome: r.nome,
   unidade: r.unidade as Unidade,
-  custoUnitario: Number(r.custo_unitario),
+  custoUnitario: dinheiro(Number(r.custo_unitario)),
   estoqueQuantidade: Number(r.estoque_quantidade ?? 0),
   estoqueUnidade: ((r.estoque_unidade ?? r.unidade) as Unidade),
 });
@@ -104,7 +105,7 @@ const toIngrediente = (r: IngredienteRow): Ingrediente => ({
 const toReceita = (r: ReceitaRow): Bolo => ({
   id: r.id,
   nome: r.nome,
-  precoVenda: Number(r.preco_venda),
+  precoVenda: dinheiro(Number(r.preco_venda)),
   criadoEm: r.criado_em,
   itens: (Array.isArray(r.itens) ? r.itens : []) as Bolo["itens"],
 });
@@ -123,7 +124,7 @@ const toPedido = (r: PedidoRow): Pedido => ({
   cursoId: r.curso_id ?? null,
   data: r.data,
   outrosItens: (Array.isArray(r.outros_itens) ? r.outros_itens : []) as Pedido["outrosItens"],
-  outrosPreco: Number(r.outros_preco ?? 0),
+  outrosPreco: dinheiro(Number(r.outros_preco ?? 0)),
 });
 
 
@@ -155,7 +156,7 @@ export const ingredientesApi = {
         .insert({
           nome: input.nome,
           unidade: input.unidade,
-          custo_unitario: input.custoUnitario,
+          custo_unitario: dinheiro(input.custoUnitario),
           estoque_quantidade: input.estoqueQuantidade,
           estoque_unidade: input.estoqueUnidade,
         })
@@ -174,7 +175,7 @@ export const ingredientesApi = {
         .update({
           nome: input.nome,
           unidade: input.unidade,
-          custo_unitario: input.custoUnitario,
+          custo_unitario: dinheiro(input.custoUnitario),
           estoque_quantidade: input.estoqueQuantidade,
           estoque_unidade: input.estoqueUnidade,
         })
@@ -216,7 +217,7 @@ function receitasApi(tabela: "bolos" | "coberturas" | "cursos") {
           .from(tabela)
           .insert({
             nome: input.nome,
-            preco_venda: input.precoVenda,
+            preco_venda: dinheiro(input.precoVenda),
             itens: input.itens,
           })
           .select("*")
@@ -234,7 +235,7 @@ function receitasApi(tabela: "bolos" | "coberturas" | "cursos") {
           .from(tabela)
           .update({
             nome: input.nome,
-            preco_venda: input.precoVenda,
+            preco_venda: dinheiro(input.precoVenda),
             itens: input.itens,
           })
           .eq("id", id)
@@ -311,7 +312,7 @@ const pedidoPayload = (input: PedidoInput) => ({
   curso_id: input.cursoId,
   data: input.data,
   outros_itens: input.outrosItens ?? [],
-  outros_preco: input.outrosPreco ?? 0,
+  outros_preco: dinheiro(input.outrosPreco) ?? 0,
 });
 
 
@@ -367,7 +368,7 @@ const toDespesa = (row: DespesaRow): Despesa => ({
   id: row.id,
   data: String(row.data).slice(0, 10),
   descricao: row.descricao,
-  valor: Number(row.valor),
+  valor: dinheiro(Number(row.valor)),
 });
 
 export const despesasApi = {
@@ -385,7 +386,7 @@ export const despesasApi = {
   create: async (input: DespesaInput): Promise<Despesa> => {
     if (apiBase()) return http("/despesas", { method: "POST", body: JSON.stringify(input) });
     const row = check(
-      await supabase.from("outras_despesas").insert(input).select("*").single(),
+      await supabase.from("outras_despesas").insert({ ...input, valor: dinheiro(input.valor) }).select("*").single(),
     );
     return toDespesa(row as unknown as DespesaRow);
   },
@@ -394,7 +395,7 @@ export const despesasApi = {
       return http(`/despesas/${id}`, { method: "PUT", body: JSON.stringify(input) });
     }
     const row = check(
-      await supabase.from("outras_despesas").update(input).eq("id", id).select("*").single(),
+      await supabase.from("outras_despesas").update({ ...input, valor: dinheiro(input.valor) }).eq("id", id).select("*").single(),
     );
     return toDespesa(row as unknown as DespesaRow);
   },
@@ -422,7 +423,7 @@ export const receitasAvulsasApi = {
   create: async (input: DespesaInput): Promise<Despesa> => {
     if (apiBase()) return http("/outras-receitas", { method: "POST", body: JSON.stringify(input) });
     const row = check(
-      await supabase.from("outras_receitas").insert(input).select("*").single(),
+      await supabase.from("outras_receitas").insert({ ...input, valor: dinheiro(input.valor) }).select("*").single(),
     );
     return toDespesa(row as unknown as DespesaRow);
   },
@@ -431,7 +432,7 @@ export const receitasAvulsasApi = {
       return http(`/outras-receitas/${id}`, { method: "PUT", body: JSON.stringify(input) });
     }
     const row = check(
-      await supabase.from("outras_receitas").update(input).eq("id", id).select("*").single(),
+      await supabase.from("outras_receitas").update({ ...input, valor: dinheiro(input.valor) }).eq("id", id).select("*").single(),
     );
     return toDespesa(row as unknown as DespesaRow);
   },
@@ -468,9 +469,9 @@ const toMovimentacao = (r: MovimentacaoRow): MovimentacaoEstoque => ({
   unidade: r.unidade as Unidade,
   quantidadeAnterior: Number(r.quantidade_anterior),
   quantidadeNova: Number(r.quantidade_nova),
-  custoUnitario: Number(r.custo_unitario),
-  valor: Number(r.valor),
-  custoReposicao: Number(r.custo_reposicao),
+  custoUnitario: dinheiro(Number(r.custo_unitario)),
+  valor: dinheiro(Number(r.valor)),
+  custoReposicao: dinheiro(Number(r.custo_reposicao)),
   observacao: r.observacao ?? null,
 });
 
@@ -501,9 +502,9 @@ export const movimentacoesApi = {
           unidade: input.unidade,
           quantidade_anterior: input.quantidadeAnterior,
           quantidade_nova: input.quantidadeNova,
-          custo_unitario: input.custoUnitario,
-          valor: input.valor,
-          custo_reposicao: input.custoReposicao,
+          custo_unitario: dinheiro(input.custoUnitario),
+          valor: dinheiro(input.valor),
+          custo_reposicao: dinheiro(input.custoReposicao),
           observacao: input.observacao ?? null,
         })
         .select("*")
