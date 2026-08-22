@@ -565,8 +565,15 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                       const validos = porMercado.filter(
                         (x): x is { id: number; valor: number } => x.valor !== null,
                       );
-                      const menor = validos.length
-                        ? validos.reduce((a, b) => (b.valor < a.valor ? b : a))
+                      const candidatos: { nome: string; valor: number }[] = validos.map((x) => ({
+                        nome: mercados.find((m) => m.id === x.id)?.nome ?? "—",
+                        valor: x.valor,
+                      }));
+                      if (estoqueValor !== null && estoqueValor !== undefined) {
+                        candidatos.push({ nome: "Estoque", valor: estoqueValor });
+                      }
+                      const menor = candidatos.length
+                        ? candidatos.reduce((a, b) => (b.valor < a.valor ? b : a))
                         : null;
                       return (
                         <TableRow key={ing.id}>
