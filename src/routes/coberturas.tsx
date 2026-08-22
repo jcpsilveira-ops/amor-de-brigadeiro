@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pencil } from "lucide-react";
 import { brl, calcularCusto, dataBR, margem, type Receita, type ReceitaInput } from "@/lib/domain";
-import { coberturasApi, keys, useAppMutation, useCoberturas, useIngredientes } from "@/lib/queries";
+import { coberturasApi, keys, useAppMutation, useCoberturas, useIngredientes, useMercados, usePrecosMercado } from "@/lib/queries";
+import { aplicarMenoresPrecos } from "@/lib/precos-mercado";
 
 export const Route = createFileRoute("/coberturas")({
   head: () => ({
@@ -31,7 +32,11 @@ export const Route = createFileRoute("/coberturas")({
 
 function CoberturasPage() {
   const { data: coberturas = [], isLoading } = useCoberturas();
-  const { data: ingredientes = [] } = useIngredientes();
+  const { data: ingredientesBase = [] } = useIngredientes();
+  const { data: mercados = [] } = useMercados();
+  const { data: precosMercado = [] } = usePrecosMercado();
+  // O custo da receita usa o MENOR preço encontrado (estoque × supermercados).
+  const { ingredientes, origens } = aplicarMenoresPrecos(ingredientesBase, precosMercado, mercados);
   const [editando, setEditando] = useState<Receita | null>(null);
   const [chave, setChave] = useState(0);
 
@@ -105,6 +110,9 @@ function CoberturasPage() {
                           <p className="font-semibold">{c.nome}</p>
                           <p className="text-xs text-muted-foreground">
                             {c.itens.length} ingrediente(s) · criada em {dataBR(c.criadoEm)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Menor preço: {[...new Set(c.itens.map((i) => origens.get(i.ingredienteId)?.origem ?? "Estoque"))].join(", ")}
                           </p>
                         </TableCell>
                         <TableCell>{brl(custo)}</TableCell>

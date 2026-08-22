@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Pencil } from "lucide-react";
 import { brl, calcularCusto, dataBR, margem, type Receita, type ReceitaInput } from "@/lib/domain";
-import { bolosApi, keys, useAppMutation, useBolos, useIngredientes } from "@/lib/queries";
+import { bolosApi, keys, useAppMutation, useBolos, useIngredientes, useMercados, usePrecosMercado } from "@/lib/queries";
+import { aplicarMenoresPrecos } from "@/lib/precos-mercado";
 
 export const Route = createFileRoute("/bolos")({
   head: () => ({
@@ -31,7 +32,11 @@ export const Route = createFileRoute("/bolos")({
 
 function BolosPage() {
   const { data: bolos = [], isLoading } = useBolos();
-  const { data: ingredientes = [] } = useIngredientes();
+  const { data: ingredientesBase = [] } = useIngredientes();
+  const { data: mercados = [] } = useMercados();
+  const { data: precosMercado = [] } = usePrecosMercado();
+  // O custo da receita usa o MENOR preço encontrado (estoque × supermercados).
+  const { ingredientes, origens } = aplicarMenoresPrecos(ingredientesBase, precosMercado, mercados);
   const [editando, setEditando] = useState<Receita | null>(null);
   const [chave, setChave] = useState(0);
 
@@ -105,6 +110,9 @@ function BolosPage() {
                           <p className="font-semibold">{b.nome}</p>
                           <p className="text-xs text-muted-foreground">
                             {b.itens.length} ingrediente(s) · criado em {dataBR(b.criadoEm)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Menor preço: {[...new Set(b.itens.map((i) => origens.get(i.ingredienteId)?.origem ?? "Estoque"))].join(", ")}
                           </p>
                         </TableCell>
                         <TableCell>{brl(custo)}</TableCell>
