@@ -27,6 +27,7 @@ import {
   type MovimentacaoInput,
   type ReceitaInput,
   type Unidade,
+  dinheiro,
 } from "./domain";
 
 export class ApiError extends Error {}
@@ -277,7 +278,7 @@ export const clientesApi = {
   },
   create: async (input: ClienteInput): Promise<Cliente> => {
     if (apiBase()) return http("/clientes", { method: "POST", body: JSON.stringify(input) });
-    const row = check(await supabase.from("clientes").insert({ ...input, valor: dinheiro(input.valor) }).select("*").single());
+    const row = check(await supabase.from("clientes").insert(input).select("*").single());
     return toCliente(row as unknown as ClienteRow);
   },
   update: async (id: number, input: ClienteInput): Promise<Cliente> => {
@@ -285,7 +286,7 @@ export const clientesApi = {
       return http(`/clientes/${id}`, { method: "PUT", body: JSON.stringify(input) });
     }
     const row = check(
-      await supabase.from("clientes").update({ ...input, valor: dinheiro(input.valor) }).eq("id", id).select("*").single(),
+      await supabase.from("clientes").update(input).eq("id", id).select("*").single(),
     );
     return toCliente(row as unknown as ClienteRow);
   },
