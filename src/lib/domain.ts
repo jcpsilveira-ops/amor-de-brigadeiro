@@ -109,10 +109,7 @@ export const itemReceitaSchema = z.object({
 
 export const receitaSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome").max(80),
-  precoVenda: z.coerce
-    .number({ invalid_type_error: "Informe um número" })
-    .nonnegative("O preço não pode ser negativo")
-    .max(1_000_000),
+  precoVenda: precoField({ msg: "O preço não pode ser negativo" }),
   itens: z
     .array(itemReceitaSchema)
     .min(1, "Adicione pelo menos 1 ingrediente")
@@ -150,11 +147,7 @@ export const pedidoSchema = z
         "Não repita o mesmo item",
       )
       .default([]),
-    outrosPreco: z.coerce
-      .number({ invalid_type_error: "Informe um número" })
-      .nonnegative("O preço não pode ser negativo")
-      .max(1_000_000)
-      .default(0),
+    outrosPreco: precoField({ msg: "O preço não pode ser negativo" }).default(0),
   })
   .refine((p) => p.boloId !== null || p.cursoId !== null || p.outrosItens.length > 0, {
     message: "Selecione um bolo, um curso ou outros itens",
@@ -166,10 +159,7 @@ export type PedidoInput = z.infer<typeof pedidoSchema>;
 export const despesaSchema = z.object({
   data: z.string().min(4, "Informe a data da despesa"),
   descricao: z.string().trim().min(2, "Informe a descrição").max(120),
-  valor: z.coerce
-    .number({ invalid_type_error: "Informe um número" })
-    .nonnegative("O valor não pode ser negativo")
-    .max(1_000_000),
+  valor: precoField({ msg: "O valor não pode ser negativo" }),
 });
 export type DespesaInput = z.infer<typeof despesaSchema>;
 
