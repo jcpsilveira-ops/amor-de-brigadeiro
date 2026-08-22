@@ -224,6 +224,9 @@ export function resumirIngredientes(
 export const qtd = (v: number) =>
   v.toLocaleString("pt-BR", { maximumFractionDigits: 3 });
 
-/** Formata valores muito pequenos (custo por grama) com 4 decimais. */
+/** Formata valores de preço com 2 casas decimais. */
 export const brlPreciso = (v: number) =>
-  `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`;
+  `R$ ${v.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;

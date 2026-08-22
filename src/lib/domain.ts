@@ -171,7 +171,12 @@ export function margem(precoVenda: number, custo: number) {
 }
 
 export const brl = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  v.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 export const dataBR = (iso: string) => {
   const d = new Date(iso.length <= 10 ? `${iso}T12:00:00` : iso);
