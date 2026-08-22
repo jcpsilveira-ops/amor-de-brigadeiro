@@ -118,7 +118,7 @@ export function ReceitaForm({
             id="preco"
             inputMode="decimal"
             value={precoVenda}
-            onChange={(e) => setPrecoVenda(e.target.value.replace(",", "."))}
+            onChange={(e) => setPrecoVenda(limitarPreco(e.target.value))}
             placeholder="0,00"
           />
           <FieldError

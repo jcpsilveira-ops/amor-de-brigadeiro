@@ -248,3 +248,11 @@ export const dashboardUrlSchema = z.object({
       "Informe uma URL completa começando com https://",
     ),
 });
+
+/** Normaliza a digitação de um preço: vírgula → ponto e no máximo 2 casas. */
+export const limitarPreco = (texto: string): string => {
+  const limpo = texto.replace(",", ".").replace(/[^\d.]/g, "");
+  const [inteiro, ...resto] = limpo.split(".");
+  if (resto.length === 0) return inteiro ?? "";
+  return `${inteiro}.${resto.join("").slice(0, 2)}`;
+};
