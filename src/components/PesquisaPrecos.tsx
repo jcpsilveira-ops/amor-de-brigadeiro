@@ -506,44 +506,68 @@ export function PesquisaPrecos({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {variacoes.slice(0, 40).map((v) => (
-                    <TableRow key={`${v.ingredienteId}-${v.mercado}`}>
-                      <TableCell className="font-semibold">{v.ingrediente}</TableCell>
-                      <TableCell>{v.mercado}</TableCell>
-                      <TableCell className="text-right">{brl(v.precoAtual)}</TableCell>
-                      <TableCell className="text-right">
-                        {v.precoAnterior === null ? "—" : brl(v.precoAnterior)}
-                      </TableCell>
-                      <TableCell
-                        className={`text-right font-semibold ${
-                          (v.variacao ?? 0) > 0
-                            ? "text-destructive"
-                            : (v.variacao ?? 0) < 0
-                              ? "text-primary"
-                              : ""
-                        }`}
-                      >
-                        {v.variacao === null
-                          ? "—"
-                          : `${v.variacao > 0 ? "+" : "−"}${brl(Math.abs(v.variacao))}`}
-                        {v.variacaoPercentual === null ? null : (
+                  {variacoes.slice(0, 40).map((v) => {
+                    const unidade = unidadePorId.get(v.ingredienteId) ?? "";
+                    const medida = medidaPorUnidade(unidade);
+                    const valor = (x: number) =>
+                      medida ? brlPreciso(x / medida) : brl(x);
+                    const rotulo = medida
+                      ? `/${rotuloMedida(unidade)}`
+                      : unidade
+                        ? `/${unidade}`
+                        : "";
+                    return (
+                      <TableRow key={`${v.ingredienteId}-${v.mercado}`}>
+                        <TableCell className="font-semibold">
+                          {v.ingrediente}
                           <span className="ml-1 text-xs text-muted-foreground">
-                            ({v.variacaoPercentual.toFixed(0)}%)
+                            {rotulo}
                           </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {brl(v.menor)} / {brl(v.maior)}
-                      </TableCell>
-                      <TableCell className="text-right">{v.medicoes}</TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground">
-                        {dataHora(v.atualizadoEm)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                        </TableCell>
+                        <TableCell>{v.mercado}</TableCell>
+                        <TableCell className="text-right">
+                          {valor(v.precoAtual)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {v.precoAnterior === null ? "—" : valor(v.precoAnterior)}
+                        </TableCell>
+                        <TableCell
+                          className={`text-right font-semibold ${
+                            (v.variacao ?? 0) > 0
+                              ? "text-destructive"
+                              : (v.variacao ?? 0) < 0
+                                ? "text-primary"
+                                : ""
+                          }`}
+                        >
+                          {v.variacao === null
+                            ? "—"
+                            : `${v.variacao > 0 ? "+" : "−"}${valor(
+                                Math.abs(v.variacao),
+                              )}`}
+                          {v.variacaoPercentual === null ? null : (
+                            <span className="ml-1 text-xs text-muted-foreground">
+                              ({v.variacaoPercentual.toFixed(0)}%)
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {valor(v.menor)} / {valor(v.maior)}
+                        </TableCell>
+                        <TableCell className="text-right">{v.medicoes}</TableCell>
+                        <TableCell className="text-right text-xs text-muted-foreground">
+                          {dataHora(v.atualizadoEm)}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
+            <p className="text-xs text-muted-foreground">
+              Valores por g/ml (preço da embalagem dividido pelo peso/volume). Itens
+              contados por unidade aparecem com o preço da unidade.
+            </p>
           </div>
         ) : null}
 
