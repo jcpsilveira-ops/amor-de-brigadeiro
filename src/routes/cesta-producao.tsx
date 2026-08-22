@@ -29,7 +29,7 @@ import {
   type LinhaCesta,
 } from "@/lib/cesta";
 import { PesquisaPrecos } from "@/components/PesquisaPrecos";
-import { useBolos, useCoberturas, useIngredientes } from "@/lib/queries";
+import { useBolos, useCoberturas, useIngredientes, usePedidos } from "@/lib/queries";
 
 export const Route = createFileRoute("/cesta-producao")({
   head: () => ({
