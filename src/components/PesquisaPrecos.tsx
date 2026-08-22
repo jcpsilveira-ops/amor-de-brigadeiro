@@ -7,7 +7,6 @@ import {
   RefreshCw,
   Search,
   Store,
-  Trash2,
   TriangleAlert,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -181,13 +180,9 @@ function CadastroMercados({
               </span>
             </span>
             <ConfirmDelete
-              descricao={`o supermercado ${m.nome}`}
+              description={`Excluir o supermercado ${m.nome} e seus preços pesquisados?`}
               onConfirm={() => excluir.mutate(m.id)}
-            >
-              <Button variant="ghost" size="icon" aria-label={`Excluir ${m.nome}`}>
-                <Trash2 className="h-4 w-4 text-destructive" />
-              </Button>
-            </ConfirmDelete>
+            />
           </li>
         ))}
       </ul>

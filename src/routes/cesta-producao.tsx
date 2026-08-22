@@ -399,7 +399,7 @@ function CestaProducao() {
             </CardContent>
           </Card>
 
-          <PesquisaPrecos linhas={linhas} ingredientes={ingredientes} />
+          <PesquisaPrecos ingredientes={ingredientes} />
 
 
           {linhas.map((linha) => (
