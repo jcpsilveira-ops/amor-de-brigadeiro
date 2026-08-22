@@ -15,10 +15,9 @@ import {
 
 
 const GATEWAY = "https://connector-gateway.lovable.dev/firecrawl/v2";
-/** Limite de ingredientes por pesquisa para manter a tela rápida. */
-const MAX_INGREDIENTES_PESQUISA = 12;
 /** Buscas simultâneas (o provedor limita rajadas). */
-const LOTE = 3;
+const LOTE = 4;
+
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 interface ResultadoBusca {
