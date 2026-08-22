@@ -242,6 +242,7 @@ export function PesquisaPrecos({
             id: i.id,
             nome: i.nome,
             unidade: i.unidade,
+            unidadeEstoque: i.estoqueUnidade ?? i.unidade,
           })),
           mercados,
         },
