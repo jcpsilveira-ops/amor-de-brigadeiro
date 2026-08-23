@@ -83,7 +83,13 @@ const Kpi = ({
   </Card>
 );
 
-function CartaoReceita({ linha }: { linha: LinhaCesta }) {
+function CartaoReceita({
+  linha,
+  origens,
+}: {
+  linha: LinhaCesta;
+  origens: Map<number, MenorPreco>;
+}) {
   return (
     <Card>
       <CardHeader className="pb-3">
