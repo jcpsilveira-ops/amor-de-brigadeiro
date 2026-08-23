@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell, EmptyState } from "@/components/PageShell";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
+import { ItensMenorPreco } from "@/components/ItensMenorPreco";
 import { ReceitaForm } from "@/components/ReceitaForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
