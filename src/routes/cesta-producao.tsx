@@ -425,7 +425,7 @@ function CestaProducao() {
 
 
           {linhas.map((linha) => (
-            <CartaoReceita key={`${linha.tipo}-${linha.id}`} linha={linha} />
+            <CartaoReceita key={`${linha.tipo}-${linha.id}`} linha={linha} origens={origens} />
           ))}
         </div>
       )}
