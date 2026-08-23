@@ -31,11 +31,17 @@ import {
 import { PesquisaPrecos } from "@/components/PesquisaPrecos";
 import { consumoDoPedido } from "@/lib/consumo-pedido";
 import {
+  aplicarMenoresPrecos,
+  type MenorPreco,
+} from "@/lib/precos-mercado";
+import {
   useBolos,
   useCoberturas,
   useCursos,
   useIngredientes,
+  useMercados,
   usePedidos,
+  usePrecosMercado,
 } from "@/lib/queries";
 
 export const Route = createFileRoute("/cesta-producao")({
