@@ -112,9 +112,7 @@ function BolosPage() {
                           <p className="text-xs text-muted-foreground">
                             {b.itens.length} ingrediente(s) · criado em {dataBR(b.criadoEm)}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            Menor preço: {[...new Set(b.itens.map((i) => origens.get(i.ingredienteId)?.origem ?? "Estoque"))].join(", ")}
-                          </p>
+                          <ItensMenorPreco itens={b.itens} ingredientes={ingredientes} origens={origens} />
                         </TableCell>
                         <TableCell>{brl(custo)}</TableCell>
                         <TableCell>{brl(b.precoVenda)}</TableCell>
