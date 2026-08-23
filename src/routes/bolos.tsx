@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { PageShell, EmptyState } from "@/components/PageShell";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
+import { ItensMenorPreco } from "@/components/ItensMenorPreco";
 import { ReceitaForm } from "@/components/ReceitaForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -111,9 +112,7 @@ function BolosPage() {
                           <p className="text-xs text-muted-foreground">
                             {b.itens.length} ingrediente(s) · criado em {dataBR(b.criadoEm)}
                           </p>
-                          <p className="text-xs text-muted-foreground">
-                            Menor preço: {[...new Set(b.itens.map((i) => origens.get(i.ingredienteId)?.origem ?? "Estoque"))].join(", ")}
-                          </p>
+                          <ItensMenorPreco itens={b.itens} ingredientes={ingredientes} origens={origens} />
                         </TableCell>
                         <TableCell>{brl(custo)}</TableCell>
                         <TableCell>{brl(b.precoVenda)}</TableCell>
