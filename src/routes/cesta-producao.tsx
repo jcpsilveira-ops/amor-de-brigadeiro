@@ -190,8 +190,15 @@ function CestaProducao() {
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
   const { data: cursos = [] } = useCursos();
-  const { data: ingredientes = [] } = useIngredientes();
+  const { data: ingredientesBase = [] } = useIngredientes();
+  const { data: mercados = [] } = useMercados();
+  const { data: precosMercado = [] } = usePrecosMercado();
   const { data: pedidos = [] } = usePedidos();
+  // Usa o MENOR valor por ingrediente (estoque × supermercados) nos custos.
+  const { ingredientes, origens } = useMemo(
+    () => aplicarMenoresPrecos(ingredientesBase, precosMercado, mercados),
+    [ingredientesBase, precosMercado, mercados],
+  );
   const [tipo, setTipo] = useState<"todos" | "bolos" | "coberturas">("todos");
   const [mes, setMes] = useState<string>("todos");
 
