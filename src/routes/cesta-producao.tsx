@@ -31,11 +31,17 @@ import {
 import { PesquisaPrecos } from "@/components/PesquisaPrecos";
 import { consumoDoPedido } from "@/lib/consumo-pedido";
 import {
+  aplicarMenoresPrecos,
+  type MenorPreco,
+} from "@/lib/precos-mercado";
+import {
   useBolos,
   useCoberturas,
   useCursos,
   useIngredientes,
+  useMercados,
   usePedidos,
+  usePrecosMercado,
 } from "@/lib/queries";
 
 export const Route = createFileRoute("/cesta-producao")({
@@ -83,7 +89,13 @@ const Kpi = ({
   </Card>
 );
 
-function CartaoReceita({ linha }: { linha: LinhaCesta }) {
+function CartaoReceita({
+  linha,
+  origens,
+}: {
+  linha: LinhaCesta;
+  origens: Map<number, MenorPreco>;
+}) {
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -109,7 +121,7 @@ function CartaoReceita({ linha }: { linha: LinhaCesta }) {
               <TableRow>
                 <TableHead>Ingrediente</TableHead>
                 <TableHead className="text-right">Qtde</TableHead>
-                <TableHead className="text-right">Preço de compra</TableHead>
+                <TableHead className="text-right">Menor valor</TableHead>
                 <TableHead className="text-right">Custo na receita</TableHead>
                 <TableHead className="text-right">Custo por g/ml</TableHead>
                 <TableHead className="text-right">Peso no custo</TableHead>
@@ -124,6 +136,9 @@ function CartaoReceita({ linha }: { linha: LinhaCesta }) {
                   </TableCell>
                   <TableCell className="text-right">
                     {brl(item.precoCompra)}/{item.unidade}
+                    <span className="block text-xs text-muted-foreground">
+                      {origens.get(item.ingredienteId)?.origem ?? "Estoque"}
+                    </span>
                   </TableCell>
                   <TableCell className="text-right">{brl(item.custo)}</TableCell>
                   <TableCell className="text-right">
@@ -175,8 +190,15 @@ function CestaProducao() {
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
   const { data: cursos = [] } = useCursos();
-  const { data: ingredientes = [] } = useIngredientes();
+  const { data: ingredientesBase = [] } = useIngredientes();
+  const { data: mercados = [] } = useMercados();
+  const { data: precosMercado = [] } = usePrecosMercado();
   const { data: pedidos = [] } = usePedidos();
+  // Usa o MENOR valor por ingrediente (estoque × supermercados) nos custos.
+  const { ingredientes, origens } = useMemo(
+    () => aplicarMenoresPrecos(ingredientesBase, precosMercado, mercados),
+    [ingredientesBase, precosMercado, mercados],
+  );
   const [tipo, setTipo] = useState<"todos" | "bolos" | "coberturas">("todos");
   const [mes, setMes] = useState<string>("todos");
 
@@ -403,7 +425,7 @@ function CestaProducao() {
 
 
           {linhas.map((linha) => (
-            <CartaoReceita key={`${linha.tipo}-${linha.id}`} linha={linha} />
+            <CartaoReceita key={`${linha.tipo}-${linha.id}`} linha={linha} origens={origens} />
           ))}
         </div>
       )}
