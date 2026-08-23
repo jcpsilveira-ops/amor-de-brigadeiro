@@ -421,7 +421,8 @@ function CestaProducao() {
             </CardContent>
           </Card>
 
-          <PesquisaPrecos ingredientes={ingredientes} />
+          {/* Comparativo usa os valores ORIGINais do estoque, não o menor preço aplicado. */}
+          <PesquisaPrecos ingredientes={ingredientesBase} />
 
 
           {linhas.map((linha) => (
