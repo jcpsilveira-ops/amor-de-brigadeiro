@@ -267,6 +267,34 @@ function CestaProducao() {
   );
   const totalReposicao = cesta.reduce((a, i) => a + i.custoReposicao, 0);
 
+  /** Comparativo: custo pelos preços do estoque × custo pelo menor preço encontrado. */
+  const comparativo = useMemo(() => {
+    const porEstoque = new Map(
+      [
+        ...montarCesta(bolos, "Bolo", ingredientesBase),
+        ...montarCesta(coberturas, "Cobertura", ingredientesBase),
+      ].map((l) => [`${l.tipo}-${l.id}`, l.custoReceita]),
+    );
+    return linhas.map((l) => {
+      const chave = `${l.tipo}-${l.id}`;
+      const custoEstoque = porEstoque.get(chave) ?? l.custoReceita;
+      const economia = custoEstoque - l.custoReceita;
+      return {
+        chave,
+        nome: l.nome,
+        tipo: l.tipo,
+        custoEstoque,
+        custoMenor: l.custoReceita,
+        economia,
+        percentual: custoEstoque > 0 ? (economia / custoEstoque) * 100 : 0,
+      };
+    });
+  }, [linhas, bolos, coberturas, ingredientesBase]);
+  const totalEstoque = comparativo.reduce((a, c) => a + c.custoEstoque, 0);
+  const totalMenor = comparativo.reduce((a, c) => a + c.custoMenor, 0);
+  const totalEconomia = totalEstoque - totalMenor;
+
+
 
   const custoTotal = linhas.reduce((a, l) => a + l.custoReceita, 0);
   const custoPorGramaMedio = (() => {
