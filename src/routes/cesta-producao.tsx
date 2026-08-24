@@ -267,6 +267,34 @@ function CestaProducao() {
   );
   const totalReposicao = cesta.reduce((a, i) => a + i.custoReposicao, 0);
 
+  /** Comparativo: custo pelos preços do estoque × custo pelo menor preço encontrado. */
+  const comparativo = useMemo(() => {
+    const porEstoque = new Map(
+      [
+        ...montarCesta(bolos, "Bolo", ingredientesBase),
+        ...montarCesta(coberturas, "Cobertura", ingredientesBase),
+      ].map((l) => [`${l.tipo}-${l.id}`, l.custoReceita]),
+    );
+    return linhas.map((l) => {
+      const chave = `${l.tipo}-${l.id}`;
+      const custoEstoque = porEstoque.get(chave) ?? l.custoReceita;
+      const economia = custoEstoque - l.custoReceita;
+      return {
+        chave,
+        nome: l.nome,
+        tipo: l.tipo,
+        custoEstoque,
+        custoMenor: l.custoReceita,
+        economia,
+        percentual: custoEstoque > 0 ? (economia / custoEstoque) * 100 : 0,
+      };
+    });
+  }, [linhas, bolos, coberturas, ingredientesBase]);
+  const totalEstoque = comparativo.reduce((a, c) => a + c.custoEstoque, 0);
+  const totalMenor = comparativo.reduce((a, c) => a + c.custoMenor, 0);
+  const totalEconomia = totalEstoque - totalMenor;
+
+
 
   const custoTotal = linhas.reduce((a, l) => a + l.custoReceita, 0);
   const custoPorGramaMedio = (() => {
@@ -421,8 +449,57 @@ function CestaProducao() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-xl text-primary">
+                Economia por receita — estoque × menor preço
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Custo de cada receita usando os preços do estoque, comparado ao custo usando o
+                menor preço encontrado (estoque ou supermercados).
+              </p>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Receita</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Custo (estoque)</TableHead>
+                    <TableHead className="text-right">Custo (menor preço)</TableHead>
+                    <TableHead className="text-right">Economia</TableHead>
+                    <TableHead className="text-right">Economia %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {comparativo.map((c) => (
+                    <TableRow key={c.chave}>
+                      <TableCell className="font-semibold">{c.nome}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.tipo}</TableCell>
+                      <TableCell className="text-right">{brl(c.custoEstoque)}</TableCell>
+                      <TableCell className="text-right">{brl(c.custoMenor)}</TableCell>
+                      <TableCell
+                        className={`text-right font-semibold ${
+                          c.economia > 0 ? "text-primary" : "text-muted-foreground"
+                        }`}
+                      >
+                        {brl(c.economia)}
+                      </TableCell>
+                      <TableCell className="text-right">{c.percentual.toFixed(1)}%</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <p className="mt-4 text-right text-sm font-semibold text-primary">
+                Total estoque: {brl(totalEstoque)} · Total menor preço: {brl(totalMenor)} ·
+                Economia: {brl(totalEconomia)}
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Comparativo usa os valores ORIGINais do estoque, não o menor preço aplicado. */}
           <PesquisaPrecos ingredientes={ingredientesBase} />
+
 
 
           {linhas.map((linha) => (
