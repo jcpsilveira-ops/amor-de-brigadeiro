@@ -449,8 +449,57 @@ function CestaProducao() {
             </CardContent>
           </Card>
 
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-display text-xl text-primary">
+                Economia por receita — estoque × menor preço
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Custo de cada receita usando os preços do estoque, comparado ao custo usando o
+                menor preço encontrado (estoque ou supermercados).
+              </p>
+            </CardHeader>
+            <CardContent className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Receita</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Custo (estoque)</TableHead>
+                    <TableHead className="text-right">Custo (menor preço)</TableHead>
+                    <TableHead className="text-right">Economia</TableHead>
+                    <TableHead className="text-right">Economia %</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {comparativo.map((c) => (
+                    <TableRow key={c.chave}>
+                      <TableCell className="font-semibold">{c.nome}</TableCell>
+                      <TableCell className="text-muted-foreground">{c.tipo}</TableCell>
+                      <TableCell className="text-right">{brl(c.custoEstoque)}</TableCell>
+                      <TableCell className="text-right">{brl(c.custoMenor)}</TableCell>
+                      <TableCell
+                        className={`text-right font-semibold ${
+                          c.economia > 0 ? "text-primary" : "text-muted-foreground"
+                        }`}
+                      >
+                        {brl(c.economia)}
+                      </TableCell>
+                      <TableCell className="text-right">{c.percentual.toFixed(1)}%</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <p className="mt-4 text-right text-sm font-semibold text-primary">
+                Total estoque: {brl(totalEstoque)} · Total menor preço: {brl(totalMenor)} ·
+                Economia: {brl(totalEconomia)}
+              </p>
+            </CardContent>
+          </Card>
+
           {/* Comparativo usa os valores ORIGINais do estoque, não o menor preço aplicado. */}
           <PesquisaPrecos ingredientes={ingredientesBase} />
+
 
 
           {linhas.map((linha) => (
