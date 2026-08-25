@@ -314,7 +314,7 @@ function IngredientesPage() {
 
 
               <div className="flex gap-2">
-                <Button type="submit" disabled={salvar.isPending}>
+                <Button type="submit" disabled={salvar.isPending || bloqueado}>
                   {editando ? "Salvar alterações" : "Cadastrar"}
                 </Button>
                 {editando ? (
