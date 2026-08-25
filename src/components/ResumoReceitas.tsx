@@ -227,7 +227,7 @@ export function ResumoReceitas({ tipoFiltro = "todos" }: { tipoFiltro?: "todos" 
                     <span className="truncate">
                       {item.nome}
                       <span className="ml-1 text-xs text-muted-foreground">
-                        {item.quantidade} {item.unidade} · menor preço: {item.origem}
+                        {item.quantidade} {item.unidade} · valor do Estoque
                       </span>
                     </span>
                     <span className="font-semibold">{brl(item.custo)}</span>
