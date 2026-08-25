@@ -78,15 +78,10 @@ const Kpi = ({
 export function ResumoReceitas({ tipoFiltro = "todos" }: { tipoFiltro?: "todos" | "bolos" | "coberturas" }) {
   const { data: bolos = [] } = useBolos();
   const { data: coberturas = [] } = useCoberturas();
-  const { data: ingredientesBase = [] } = useIngredientes();
-  const { data: mercados = [] } = useMercados();
-  const { data: precos = [] } = usePrecosMercado();
+  const { data: ingredientes = [] } = useIngredientes();
 
-  // Nas receitas o custo usa o MENOR preço encontrado (estoque × supermercados).
-  const { ingredientes, origens } = useMemo(
-    () => aplicarMenoresPrecos(ingredientesBase, precos, mercados),
-    [ingredientesBase, precos, mercados],
-  );
+  // No Painel de receitas o custo usa o custo unitário cadastrado no Estoque.
+  const origens = useMemo(() => new Map<number, MenorPreco>(), []);
 
   const linhas = useMemo(() => {
     const todas = [
