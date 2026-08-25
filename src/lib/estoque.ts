@@ -45,17 +45,69 @@ const FATOR: Record<
 };
 
 
-/** Converte uma quantidade entre unidades compatíveis. Retorna null se incompatíveis. */
+/** Unidades genéricas de embalagem: não têm fator confiável para peso/volume/contagem. */
+const UNIDADES_GENERICAS: readonly string[] = ["cartela", "fardo"];
+
+export type StatusConversao = "ok" | "ambigua" | "incompativel";
+
+export interface AvaliacaoConversao {
+  status: StatusConversao;
+  motivo?: string;
+}
+
+/** Primeira palavra da unidade ("cartela de 10 unidades" -> "cartela"). */
+function familia(u: Unidade): string {
+  return String(u).split(" ")[0]!;
+}
+
+/**
+ * Avalia se a conversão entre duas unidades tem fator confiável.
+ * - "ok": mesma base física e fatores explícitos.
+ * - "ambigua": mesmo nome/família mas sem fator confiável (ex.: cartela x cartela de 10 unidades)
+ *   ou envolve unidade genérica de embalagem — exige ajuste manual confirmado.
+ * - "incompativel": bases diferentes (ex.: kg x unidade).
+ */
+export function avaliarConversao(de: Unidade, para: Unidade): AvaliacaoConversao {
+  if (de === para) return { status: "ok" };
+  const a = FATOR[de];
+  const b = FATOR[para];
+  if (!a || !b) return { status: "incompativel", motivo: "Unidade sem mapeamento conhecido." };
+
+  const generica = UNIDADES_GENERICAS.includes(de) || UNIDADES_GENERICAS.includes(para);
+  if (generica) {
+    return {
+      status: "ambigua",
+      motivo: `“${UNIDADES_GENERICAS.includes(de) ? de : para}” é uma embalagem genérica, sem quantidade definida.`,
+    };
+  }
+
+  if (a.base !== b.base) {
+    // Mesmo nome de família (ex.: cartela x cartela de 10 unidades) indica ambiguidade, não incompatibilidade.
+    if (familia(de) === familia(para)) {
+      return {
+        status: "ambigua",
+        motivo: "Unidades com o mesmo nome, mas sem fator de conversão confiável.",
+      };
+    }
+    return { status: "incompativel", motivo: "Unidades de grandezas diferentes (peso, volume ou contagem)." };
+  }
+
+  return { status: "ok" };
+}
+
+/** Converte uma quantidade entre unidades compatíveis. Retorna null se incompatíveis ou ambíguas. */
 export function converterQuantidade(
   quantidade: number,
   de: Unidade,
   para: Unidade,
 ): number | null {
+  if (avaliarConversao(de, para).status !== "ok") return null;
   const a = FATOR[de];
   const b = FATOR[para];
   if (!a || !b || a.base !== b.base) return null;
   return (quantidade * a.fator) / b.fator;
 }
+
 
 export interface NecessidadeIngrediente {
   /** Quantidade necessária, na unidade de compra do ingrediente. */
