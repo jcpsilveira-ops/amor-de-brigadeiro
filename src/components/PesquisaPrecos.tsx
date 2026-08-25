@@ -292,12 +292,13 @@ function DialogManual({
       toast.error("Informe um preço válido (ex.: 12,50).");
       return;
     }
+    const quantidadeLimpa = quantidade.trim();
     salvar.mutate({
       ingredienteId: edicao.ingrediente.id,
       mercadoId: edicao.mercado.id,
       nomeProduto: nomeProduto.trim() ? nomeProduto : null,
       preco: numero === null ? null : Math.round(numero * 100) / 100,
-      peso: unidade ? `${quantidade.trim() || "1"} ${unidade}`.trim() : null,
+      peso: quantidadeLimpa && unidade ? `${quantidadeLimpa} ${unidade}` : null,
     });
   };
 
