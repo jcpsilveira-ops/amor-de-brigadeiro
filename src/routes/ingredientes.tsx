@@ -79,6 +79,23 @@ function IngredientesPage() {
 
   const analise = analisarEstoqueProximoPedido(ingredientes, pedidos, bolos, coberturas);
 
+  // Aviso automático: trocar a unidade de um ingrediente muda o custo das receitas que o usam.
+  const unidadeAlterada = Boolean(editando) && unidade !== "" && unidade !== editando?.unidade;
+  const receitasImpactadas = unidadeAlterada
+    ? [
+        ...bolos.map((r) => ({ ...r, tipo: "Bolo" as const })),
+        ...coberturas.map((r) => ({ ...r, tipo: "Cobertura" as const })),
+      ]
+        .map((r) => ({
+          tipo: r.tipo,
+          nome: r.nome,
+          id: r.id,
+          quantidade: r.itens.find((it) => it.ingredienteId === editando!.id)?.quantidade ?? null,
+        }))
+        .filter((r) => r.quantidade !== null)
+    : [];
+
+
   function limpar() {
     setEditando(null);
     setNome("");
