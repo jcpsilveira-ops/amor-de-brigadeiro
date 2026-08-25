@@ -22,7 +22,7 @@ import {
   type Ingrediente,
   type Unidade,
 } from "@/lib/domain";
-import { analisarEstoqueProximoPedido, converterQuantidade, qtd } from "@/lib/estoque";
+import { analisarEstoqueProximoPedido, avaliarConversao, converterQuantidade, qtd } from "@/lib/estoque";
 import {
   bolosApi,
   coberturasApi,
