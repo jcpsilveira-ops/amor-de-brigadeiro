@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Compass,
@@ -353,7 +353,7 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
   const [pesquisando, setPesquisando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ultima, setUltima] = useState<string | null>(null);
-  const automatico = useRef(false);
+  
 
   const lista = useMemo(
     () => [...ingredientes].sort((a, b) => a.nome.localeCompare(b.nome)),
@@ -392,14 +392,9 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
     }
   };
 
-  /* Pesquisa automática ao abrir a aplicação (uma vez por sessão da tela). */
-  useEffect(() => {
-    if (automatico.current) return;
-    if (lista.length === 0 || mercados.length === 0) return;
-    automatico.current = true;
-    void pesquisar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lista.length, mercados.length]);
+  /* A pesquisa é sempre manual (botão "Pesquisar preços"). */
+
+
 
   return (
     <Card>
