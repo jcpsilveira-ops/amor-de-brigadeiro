@@ -124,6 +124,7 @@ function IngredientesPage() {
     setCusto("");
     setTocado(false);
     setAjustarReceitas(true);
+    setConfirmarManual(false);
   }
 
 
