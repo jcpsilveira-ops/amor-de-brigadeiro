@@ -498,6 +498,8 @@ function CestaProducao() {
             </CardContent>
           </Card>
 
+          <ListasCompras cesta={cesta} origens={origens} />
+
           {/* Comparativo usa os valores ORIGINais do estoque, não o menor preço aplicado. */}
           <PesquisaPrecos ingredientes={ingredientesBase} />
 
