@@ -38,6 +38,9 @@ export const UNIDADES = [
   "sachê de 200 ml",
   "sachê de 500 ml",
   "saco de 1 l",
+  "saco de 1 kg",
+  "saco de 2 kg",
+  "saco de 5 kg",
 ] as const;
 
 export type Unidade = (typeof UNIDADES)[number];
