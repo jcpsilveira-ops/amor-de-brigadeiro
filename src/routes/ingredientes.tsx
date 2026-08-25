@@ -250,32 +250,38 @@ function IngredientesPage() {
                     ) : (
                       <>
                         <p className="text-muted-foreground">
-                          {receitasImpactadas.length} receita(s) usam este ingrediente e terão o custo
-                          recalculado na nova unidade. Revise as quantidades:
+                          {receitasImpactadas.length} receita(s) usam este ingrediente. O assistente pode
+                          converter as quantidades para manter o mesmo peso/volume total:
                         </p>
                         <ul className="list-inside list-disc text-muted-foreground">
-                          {receitasImpactadas.map((r) => {
-                            const equivalente = converterQuantidade(
-                              r.quantidade!,
-                              editando!.unidade,
-                              unidade as Unidade,
-                            );
-
-                            return (
-                              <li key={`${r.tipo}-${r.id}`}>
-                                <span className="font-medium text-foreground">
-                                  {r.tipo}: {r.nome}
-                                </span>{" "}
-                                — {qtd(r.quantidade!)} {editando?.unidade}
-                                {equivalente !== null
-                                  ? ` ≈ ${qtd(equivalente)} ${unidade}`
-                                  : " (sem equivalência automática entre as unidades)"}
-                              </li>
-                            );
-                          })}
+                          {receitasImpactadas.map((r) => (
+                            <li key={`${r.tipo}-${r.id}`}>
+                              <span className="font-medium text-foreground">
+                                {r.tipo}: {r.nome}
+                              </span>{" "}
+                              — {qtd(r.quantidade!)} {editando?.unidade}
+                              {r.equivalente !== null
+                                ? ` → ${qtd(r.equivalente)} ${unidade}`
+                                : " (sem equivalência automática — ajuste manualmente)"}
+                            </li>
+                          ))}
                         </ul>
+                        {ajustaveis.length > 0 ? (
+                          <label className="mt-2 flex items-start gap-2 text-xs">
+                            <Checkbox
+                              checked={ajustarReceitas}
+                              onCheckedChange={(v) => setAjustarReceitas(v === true)}
+                              aria-label="Ajustar quantidades das receitas automaticamente"
+                            />
+                            <span>
+                              Ajustar automaticamente {ajustaveis.length} receita(s) ao salvar, mantendo o
+                              mesmo peso/volume total.
+                            </span>
+                          </label>
+                        ) : null}
                       </>
                     )}
+
                   </div>
                 </div>
               ) : null}
