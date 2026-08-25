@@ -201,6 +201,7 @@ function IngredientesPage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 setTocado(true);
+                if (bloqueado) return;
                 if (parsed.success) salvar.mutate(undefined as never);
               }}
             >
