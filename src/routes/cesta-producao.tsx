@@ -29,6 +29,7 @@ import {
   type LinhaCesta,
 } from "@/lib/cesta";
 import { PesquisaPrecos } from "@/components/PesquisaPrecos";
+import { ListasCompras } from "@/components/ListasCompras";
 import { consumoDoPedido } from "@/lib/consumo-pedido";
 import {
   aplicarMenoresPrecos,
@@ -496,6 +497,8 @@ function CestaProducao() {
               </p>
             </CardContent>
           </Card>
+
+          <ListasCompras cesta={cesta} origens={origens} />
 
           {/* Comparativo usa os valores ORIGINais do estoque, não o menor preço aplicado. */}
           <PesquisaPrecos ingredientes={ingredientesBase} />
