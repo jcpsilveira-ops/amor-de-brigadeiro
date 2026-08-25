@@ -270,7 +270,11 @@ function IngredientesPage() {
                               — {qtd(r.quantidade!)} {editando?.unidade}
                               {r.equivalente !== null
                                 ? ` → ${qtd(r.equivalente)} ${unidade}`
-                                : " (sem equivalência automática — ajuste manualmente)"}
+                                : ` — ${
+                                    r.avaliacao.status === "ambigua"
+                                      ? `conversão ambígua: ${r.avaliacao.motivo ?? ""}`
+                                      : `sem equivalência automática: ${r.avaliacao.motivo ?? ""}`
+                                  } Ajuste manualmente.`}
                             </li>
                           ))}
                         </ul>
@@ -287,6 +291,20 @@ function IngredientesPage() {
                             </span>
                           </label>
                         ) : null}
+                        {exigeConfirmacao ? (
+                          <label className="mt-2 flex items-start gap-2 text-xs font-medium text-destructive">
+                            <Checkbox
+                              checked={confirmarManual}
+                              onCheckedChange={(v) => setConfirmarManual(v === true)}
+                              aria-label="Confirmo que ajustarei manualmente as receitas sem conversão confiável"
+                            />
+                            <span>
+                              Confirmo que ajustarei manualmente {manuais.length} receita(s) sem fator de
+                              conversão confiável.
+                            </span>
+                          </label>
+                        ) : null}
+
                       </>
                     )}
 
