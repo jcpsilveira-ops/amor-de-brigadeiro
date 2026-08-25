@@ -39,6 +39,9 @@ const FATOR: Record<
   "sachê de 200 ml": { base: "volume", fator: 200 },
   "sachê de 500 ml": { base: "volume", fator: 500 },
   "saco de 1 l": { base: "volume", fator: 1000 },
+  "saco de 1 kg": { base: "massa", fator: 1000 },
+  "saco de 2 kg": { base: "massa", fator: 2000 },
+  "saco de 5 kg": { base: "massa", fator: 5000 },
 };
 
 
