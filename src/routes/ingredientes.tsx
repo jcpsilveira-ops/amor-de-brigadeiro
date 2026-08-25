@@ -22,7 +22,7 @@ import {
   type Ingrediente,
   type Unidade,
 } from "@/lib/domain";
-import { analisarEstoqueProximoPedido, converterQuantidade, qtd } from "@/lib/estoque";
+import { analisarEstoqueProximoPedido, avaliarConversao, converterQuantidade, qtd } from "@/lib/estoque";
 import {
   bolosApi,
   coberturasApi,
@@ -92,6 +92,7 @@ function IngredientesPage() {
       ]
         .map((r) => {
           const quantidade = r.itens.find((it) => it.ingredienteId === editando!.id)?.quantidade ?? null;
+          const avaliacao = avaliarConversao(editando!.unidade, unidade as Unidade);
           return {
             tipo: r.tipo,
             nome: r.nome,
@@ -100,8 +101,9 @@ function IngredientesPage() {
             precoVenda: r.precoVenda,
             api: r.api,
             quantidade,
+            avaliacao,
             equivalente:
-              quantidade === null
+              quantidade === null || avaliacao.status !== "ok"
                 ? null
                 : converterQuantidade(quantidade, editando!.unidade, unidade as Unidade),
           };
@@ -109,7 +111,11 @@ function IngredientesPage() {
         .filter((r) => r.quantidade !== null)
     : [];
   const ajustaveis = receitasImpactadas.filter((r) => r.equivalente !== null);
+  const manuais = receitasImpactadas.filter((r) => r.equivalente === null);
   const [ajustarReceitas, setAjustarReceitas] = useState(true);
+  const [confirmarManual, setConfirmarManual] = useState(false);
+  const exigeConfirmacao = manuais.length > 0;
+  const bloqueado = exigeConfirmacao && !confirmarManual;
 
   function limpar() {
     setEditando(null);
@@ -118,6 +124,7 @@ function IngredientesPage() {
     setCusto("");
     setTocado(false);
     setAjustarReceitas(true);
+    setConfirmarManual(false);
   }
 
 
@@ -194,6 +201,7 @@ function IngredientesPage() {
               onSubmit={(e) => {
                 e.preventDefault();
                 setTocado(true);
+                if (bloqueado) return;
                 if (parsed.success) salvar.mutate(undefined as never);
               }}
             >
@@ -262,7 +270,11 @@ function IngredientesPage() {
                               — {qtd(r.quantidade!)} {editando?.unidade}
                               {r.equivalente !== null
                                 ? ` → ${qtd(r.equivalente)} ${unidade}`
-                                : " (sem equivalência automática — ajuste manualmente)"}
+                                : ` — ${
+                                    r.avaliacao.status === "ambigua"
+                                      ? `conversão ambígua: ${r.avaliacao.motivo ?? ""}`
+                                      : `sem equivalência automática: ${r.avaliacao.motivo ?? ""}`
+                                  } Ajuste manualmente.`}
                             </li>
                           ))}
                         </ul>
@@ -279,6 +291,20 @@ function IngredientesPage() {
                             </span>
                           </label>
                         ) : null}
+                        {exigeConfirmacao ? (
+                          <label className="mt-2 flex items-start gap-2 text-xs font-medium text-destructive">
+                            <Checkbox
+                              checked={confirmarManual}
+                              onCheckedChange={(v) => setConfirmarManual(v === true)}
+                              aria-label="Confirmo que ajustarei manualmente as receitas sem conversão confiável"
+                            />
+                            <span>
+                              Confirmo que ajustarei manualmente {manuais.length} receita(s) sem fator de
+                              conversão confiável.
+                            </span>
+                          </label>
+                        ) : null}
+
                       </>
                     )}
 
@@ -288,7 +314,7 @@ function IngredientesPage() {
 
 
               <div className="flex gap-2">
-                <Button type="submit" disabled={salvar.isPending}>
+                <Button type="submit" disabled={salvar.isPending || bloqueado}>
                   {editando ? "Salvar alterações" : "Cadastrar"}
                 </Button>
                 {editando ? (
