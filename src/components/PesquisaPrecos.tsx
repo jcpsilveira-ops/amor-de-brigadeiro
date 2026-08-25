@@ -242,13 +242,26 @@ function DialogManual({
 }) {
   const [nomeProduto, setNomeProduto] = useState("");
   const [preco, setPreco] = useState("");
-  const [peso, setPeso] = useState("");
+  const [quantidade, setQuantidade] = useState("");
+  const [unidade, setUnidade] = useState<string>("");
 
   useEffect(() => {
     setNomeProduto(edicao?.atual?.nomeProduto ?? "");
     setPreco(edicao?.atual?.preco === null || edicao?.atual?.preco === undefined ? "" : String(edicao.atual.preco));
-    setPeso(edicao?.atual?.peso ?? "");
+    const bruto = (edicao?.atual?.peso ?? "").trim();
+    // Tenta separar "500 g" em quantidade + unidade da tabela de ingredientes.
+    const achada = [...UNIDADES]
+      .sort((a, b) => b.length - a.length)
+      .find((u) => bruto.toLowerCase().endsWith(u.toLowerCase()));
+    if (achada) {
+      setQuantidade(bruto.slice(0, bruto.length - achada.length).trim());
+      setUnidade(achada);
+    } else {
+      setQuantidade(bruto);
+      setUnidade(edicao?.ingrediente.unidade ?? "");
+    }
   }, [edicao]);
+
 
   const salvar = useAppMutation<{
     ingredienteId: number;
