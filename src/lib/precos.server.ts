@@ -16,13 +16,13 @@ import {
 
 const GATEWAY = "https://connector-gateway.lovable.dev/firecrawl/v2";
 /** Buscas simultâneas (o provedor limita rajadas). */
-const LOTE = 2;
+const LOTE = 1;
 /** Intervalo mínimo entre chamadas ao provedor (ms). */
-const INTERVALO_MIN = 400;
+const INTERVALO_MIN = 7000;
 /** Validade do cache de resultados por consulta (ms). */
-const CACHE_TTL = 6 * 60 * 60 * 1000;
+const CACHE_TTL = 24 * 60 * 60 * 1000;
 /** Tentativas por consulta antes de desistir daquele ingrediente. */
-const MAX_TENTATIVAS = 5;
+const MAX_TENTATIVAS = 2;
 
 const espera = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
@@ -72,7 +72,7 @@ async function chamarProvedor(query: string): Promise<ResultadoBusca[] | "limita
     console.error(`Firecrawl search limitado [${res.status}]: ${corpo.slice(0, 300)}`);
     const retry = Number(res.headers.get("retry-after"));
     // Desacelera globalmente e informa ao chamador para tentar de novo.
-    atraso = Math.min(8000, Math.max(atraso * 2, Number.isFinite(retry) && retry > 0 ? retry * 1000 : 1000));
+    atraso = Math.min(60000, Math.max(atraso * 2, Number.isFinite(retry) && retry > 0 ? retry * 1000 : INTERVALO_MIN));
     return "limitado";
   }
 

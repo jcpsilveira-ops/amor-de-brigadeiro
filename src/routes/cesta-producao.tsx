@@ -263,8 +263,8 @@ function CestaProducao() {
   }, [bolos, coberturas, ingredientes, tipo, receitasDoMes]);
 
   const cesta = useMemo(
-    () => resumirIngredientes(linhas, ingredientes, consumoPeriodo),
-    [linhas, ingredientes, consumoPeriodo],
+    () => resumirIngredientes(linhas, ingredientesBase, consumoPeriodo),
+    [linhas, ingredientesBase, consumoPeriodo],
   );
   const totalReposicao = cesta.reduce((a, i) => a + i.custoReposicao, 0);
 

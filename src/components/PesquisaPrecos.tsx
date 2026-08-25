@@ -292,12 +292,13 @@ function DialogManual({
       toast.error("Informe um preço válido (ex.: 12,50).");
       return;
     }
+    const quantidadeLimpa = quantidade.trim();
     salvar.mutate({
       ingredienteId: edicao.ingrediente.id,
       mercadoId: edicao.mercado.id,
       nomeProduto: nomeProduto.trim() ? nomeProduto : null,
       preco: numero === null ? null : Math.round(numero * 100) / 100,
-      peso: unidade ? `${quantidade.trim() || "1"} ${unidade}`.trim() : null,
+      peso: quantidadeLimpa && unidade ? `${quantidadeLimpa} ${unidade}` : null,
     });
   };
 
@@ -461,9 +462,9 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          A pesquisa roda sozinha ao abrir a aplicação e pode ser repetida a qualquer momento.
+          A pesquisa é manual e pode ser repetida a qualquer momento.
           Um preço só é substituído quando estava em branco ou quando o novo valor é menor.
-          Clique em qualquer célula para digitar nome, preço e peso manualmente.
+          Clique em qualquer célula para digitar nome, preço, quantidade e unidade manualmente.
           {ultima ? ` Última pesquisa: ${dataHora(ultima)}.` : ""}
         </p>
       </CardHeader>

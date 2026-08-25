@@ -64,6 +64,7 @@ export function ListasCompras({
     const mapa = new Map<string, ItemLista[]>();
 
     for (const item of cesta) {
+      if (item.quantidadeTotal <= 0) continue;
       const menor = origens.get(item.ingredienteId);
       if (!menor || menor.origem === "Estoque") continue;
 

@@ -9,8 +9,8 @@ import { extrairEmbalagem, extrairPrecos } from "./precos";
 import { buscar, type ResultadoBusca } from "./precos.server";
 import type { AchadoPreco, SugestaoMercado } from "./precos-mercado";
 
-/** Pares processados simultaneamente (o provedor limita rajadas). */
-const LOTE = 3;
+/** Ingredientes processados por vez (o provedor limita rajadas). */
+const LOTE = 1;
 
 /** Palavras-chave do nome do mercado, para reconhecer o resultado certo. */
 function tokens(nome: string): string[] {
@@ -69,45 +69,47 @@ export async function buscarPrecosPorMercado(
   ingredientes: { id: number; nome: string; unidade: string }[],
   mercados: { id: number; nome: string; urlBusca?: string | null | undefined }[],
 ): Promise<{ achados: AchadoPreco[]; semResultado: number; erro?: string }> {
-  const pares: { ing: (typeof ingredientes)[number]; merc: (typeof mercados)[number] }[] = [];
-  for (const ing of ingredientes) for (const merc of mercados) pares.push({ ing, merc });
-
-  const achados: AchadoPreco[] = [];
-  let semResultado = 0;
+  const achadosPorChave = new Map<string, AchadoPreco>();
   let erro: string | undefined;
+  let limitados = 0;
 
-  for (let i = 0; i < pares.length; i += LOTE) {
+  for (let i = 0; i < ingredientes.length; i += LOTE) {
     const lote = await Promise.all(
-      pares.slice(i, i + LOTE).map(async ({ ing, merc }) => {
-        const alvo = merc.urlBusca ? ` site:${hostDe(merc.urlBusca)}` : "";
-        const query = `${ing.nome} preço ${merc.nome} supermercado Uberlândia${alvo}`;
+      ingredientes.slice(i, i + LOTE).map(async (ing) => {
+        const nomesMercados = mercados.map((m) => m.nome).join(" OR ");
+        const query = `${ing.nome} preço supermercado Uberlândia ${nomesMercados}`;
         try {
-          const { resultados } = await buscar(query);
+          const { resultados, limitado } = await buscar(query);
+          if (limitado) limitados++;
           for (const r of resultados) {
-            if (!alvo && !combina(r, merc.nome, merc.urlBusca ?? null)) continue;
+            const merc = mercados.find((m) => combina(r, m.nome, m.urlBusca ?? null));
+            if (!merc) continue;
             const dados = extrair(r);
             if (dados.preco === null) continue;
-            return {
+            const achado = {
               ingredienteId: ing.id,
               mercadoId: merc.id,
               ...dados,
               fonte: r.url ?? null,
             } satisfies AchadoPreco;
+            const chave = `${achado.ingredienteId}|${achado.mercadoId}`;
+            const atual = achadosPorChave.get(chave);
+            if (!atual || (achado.preco ?? Infinity) < (atual.preco ?? Infinity)) {
+              achadosPorChave.set(chave, achado);
+            }
           }
-          return null;
         } catch (e) {
           erro = e instanceof Error ? e.message : "Falha na pesquisa de preços.";
-          return null;
         }
       }),
     );
-    for (const r of lote) {
-      if (r) achados.push(r);
-      else semResultado++;
-    }
+    void lote;
   }
 
-  return { achados, semResultado, ...(erro ? { erro } : {}) };
+  const achados = [...achadosPorChave.values()];
+  const semResultado = Math.max(0, ingredientes.length * mercados.length - achados.length);
+  const erroFinal = erro ?? (limitados > 0 ? `O provedor limitou ${limitados} consulta(s); mantivemos os preços já salvos e tente novamente mais tarde.` : undefined);
+  return { achados, semResultado, ...(erroFinal ? { erro: erroFinal } : {}) };
 }
 
 function hostDe(url: string): string {

@@ -3,30 +3,32 @@ import { z } from "zod";
 
 import type { AchadoPreco, SugestaoMercado } from "./precos-mercado";
 
-const buscaSchema = z.object({
-  ingredientes: z
-    .array(
-      z.object({
-        id: z.coerce.number().int().positive(),
-        nome: z.string().trim().min(1).max(120),
-        unidade: z.string().trim().max(20),
-      }),
-    )
-    .max(300),
-  mercados: z
-    .array(
-      z.object({
-        id: z.coerce.number().int().positive(),
-        nome: z.string().trim().min(1).max(80),
-        urlBusca: z.string().trim().max(300).nullable().optional(),
-      }),
-    )
-    .max(40),
-});
-
 /** Busca preços de cada ingrediente em cada mercado cadastrado. */
 export const buscarPrecosMercados = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => buscaSchema.parse(data))
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        ingredientes: z
+          .array(
+            z.object({
+              id: z.coerce.number().int().positive(),
+              nome: z.string().trim().min(1).max(120),
+              unidade: z.string().trim().max(40),
+            }),
+          )
+          .max(300),
+        mercados: z
+          .array(
+            z.object({
+              id: z.coerce.number().int().positive(),
+              nome: z.string().trim().min(1).max(80),
+              urlBusca: z.string().trim().max(300).nullable().optional(),
+            }),
+          )
+          .max(40),
+      })
+      .parse(data),
+  )
   .handler(
     async ({
       data,
