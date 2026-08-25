@@ -29,6 +29,7 @@ import {
   type LinhaCesta,
 } from "@/lib/cesta";
 import { PesquisaPrecos } from "@/components/PesquisaPrecos";
+import { ListasCompras } from "@/components/ListasCompras";
 import { consumoDoPedido } from "@/lib/consumo-pedido";
 import {
   aplicarMenoresPrecos,
