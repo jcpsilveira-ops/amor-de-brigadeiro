@@ -24,6 +24,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -31,7 +38,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { brl, type Ingrediente } from "@/lib/domain";
+import { brl, UNIDADES, type Ingrediente } from "@/lib/domain";
+
 import { brlPreciso } from "@/lib/cesta";
 import { medidaPorUnidade, precoPorMedida, rotuloMedida } from "@/lib/precos";
 
@@ -242,13 +250,26 @@ function DialogManual({
 }) {
   const [nomeProduto, setNomeProduto] = useState("");
   const [preco, setPreco] = useState("");
-  const [peso, setPeso] = useState("");
+  const [quantidade, setQuantidade] = useState("");
+  const [unidade, setUnidade] = useState<string>("");
 
   useEffect(() => {
     setNomeProduto(edicao?.atual?.nomeProduto ?? "");
     setPreco(edicao?.atual?.preco === null || edicao?.atual?.preco === undefined ? "" : String(edicao.atual.preco));
-    setPeso(edicao?.atual?.peso ?? "");
+    const bruto = (edicao?.atual?.peso ?? "").trim();
+    // Tenta separar "500 g" em quantidade + unidade da tabela de ingredientes.
+    const achada = [...UNIDADES]
+      .sort((a, b) => b.length - a.length)
+      .find((u) => bruto.toLowerCase().endsWith(u.toLowerCase()));
+    if (achada) {
+      setQuantidade(bruto.slice(0, bruto.length - achada.length).trim());
+      setUnidade(achada);
+    } else {
+      setQuantidade(bruto);
+      setUnidade(edicao?.ingrediente.unidade ?? "");
+    }
   }, [edicao]);
+
 
   const salvar = useAppMutation<{
     ingredienteId: number;
@@ -276,7 +297,7 @@ function DialogManual({
       mercadoId: edicao.mercado.id,
       nomeProduto: nomeProduto.trim() ? nomeProduto : null,
       preco: numero === null ? null : Math.round(numero * 100) / 100,
-      peso: peso.trim() ? peso : null,
+      peso: unidade ? `${quantidade.trim() || "1"} ${unidade}`.trim() : null,
     });
   };
 
@@ -300,7 +321,7 @@ function DialogManual({
               placeholder="Ex.: Leite condensado Itambé"
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <Label htmlFor="manual-preco" className="label-caps">
                 Preço (R$)
@@ -314,17 +335,36 @@ function DialogManual({
               />
             </div>
             <div>
-              <Label htmlFor="manual-peso" className="label-caps">
-                Peso / volume
+              <Label htmlFor="manual-qtde" className="label-caps">
+                Quantidade
               </Label>
               <Input
-                id="manual-peso"
-                value={peso}
-                onChange={(e) => setPeso(e.target.value)}
-                placeholder="395 g"
+                id="manual-qtde"
+                inputMode="decimal"
+                value={quantidade}
+                onChange={(e) => setQuantidade(e.target.value)}
+                placeholder="395"
               />
             </div>
+            <div>
+              <Label htmlFor="manual-unidade" className="label-caps">
+                Unidade
+              </Label>
+              <Select value={unidade} onValueChange={setUnidade}>
+                <SelectTrigger id="manual-unidade">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNIDADES.map((u) => (
+                    <SelectItem key={u} value={u}>
+                      {u}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
           <p className="text-xs text-muted-foreground">
             Deixe em branco o que você não souber — o sistema não preenche valores estimados.
           </p>
