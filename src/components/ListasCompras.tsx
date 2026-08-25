@@ -14,13 +14,26 @@ import {
 } from "@/components/ui/table";
 import { brl } from "@/lib/domain";
 import { qtd, type ResumoIngredienteCesta } from "@/lib/cesta";
-import type { MenorPreco } from "@/lib/precos-mercado";
+import { medidaPorUnidade } from "@/lib/precos";
+import {
+  pesoEmMedida,
+  type MenorPreco,
+  type MercadoCadastro,
+  type PrecoMercado,
+} from "@/lib/precos-mercado";
 
 interface ItemLista {
   nome: string;
-  unidade: string;
-  quantidade: number;
-  precoUnitario: number;
+  /** Nome do produto como aparece na pesquisa. */
+  produto: string;
+  /** Peso/volume/unidade da embalagem encontrada na pesquisa. */
+  embalagem: string;
+  /** Preço da embalagem encontrado na pesquisa. */
+  precoEmbalagem: number;
+  /** Quantidade necessária (na unidade cadastrada). */
+  necessario: string;
+  /** Quantas embalagens comprar. */
+  embalagens: number;
   subtotal: number;
 }
 
@@ -31,56 +44,92 @@ interface ListaMercado {
 }
 
 /**
- * Listas de compras por supermercado: cada mercado que aparece na pesquisa
- * como o de menor preço recebe a lista dos ingredientes correspondentes,
- * com o valor encontrado e o total da lista. Exportável para Excel.
+ * Listas de compras por supermercado. Usa o preço e o peso/volume/unidade
+ * exatamente como encontrados na pesquisa de preços: para cada ingrediente
+ * calcula quantas embalagens são necessárias e o subtotal correspondente.
  */
 export function ListasCompras({
   cesta,
   origens,
+  precos,
+  mercados,
 }: {
   cesta: ResumoIngredienteCesta[];
   origens: Map<number, MenorPreco>;
+  precos: PrecoMercado[];
+  mercados: MercadoCadastro[];
 }) {
   const listas = useMemo<ListaMercado[]>(() => {
+    const nomePorId = new Map(mercados.map((m) => [m.id, m.nome]));
     const mapa = new Map<string, ItemLista[]>();
+
     for (const item of cesta) {
       const menor = origens.get(item.ingredienteId);
       if (!menor || menor.origem === "Estoque") continue;
-      const quantidade = item.quantidadeTotal;
-      const subtotal = Math.round(menor.valor * quantidade * 100) / 100;
+
+      // Registro exato da pesquisa que originou o menor preço.
+      const registro = precos
+        .filter(
+          (p) =>
+            p.ingredienteId === item.ingredienteId &&
+            p.preco !== null &&
+            nomePorId.get(p.mercadoId) === menor.origem,
+        )
+        .sort((a, b) => (a.preco ?? 0) - (b.preco ?? 0))[0];
+      if (!registro || registro.preco === null) continue;
+
+      const fator = medidaPorUnidade(item.unidade);
+      const medidaEmbalagem = pesoEmMedida(registro.peso);
+      const necessarioMedida = fator !== null ? item.quantidadeTotal * fator : null;
+      const embalagens =
+        necessarioMedida !== null && medidaEmbalagem !== null && medidaEmbalagem > 0
+          ? Math.max(1, Math.ceil(necessarioMedida / medidaEmbalagem))
+          : Math.max(1, Math.ceil(item.quantidadeTotal));
+      const subtotal = Math.round(registro.preco * embalagens * 100) / 100;
+
       const lista = mapa.get(menor.origem) ?? [];
       lista.push({
         nome: item.nome,
-        unidade: item.unidade,
-        quantidade,
-        precoUnitario: menor.valor,
+        produto: registro.nomeProduto ?? item.nome,
+        embalagem:
+          registro.peso ??
+          (fator === null ? "1 unidade" : `${qtd(item.quantidadeTotal)} ${item.unidade}`),
+        precoEmbalagem: registro.preco,
+        necessario: `${qtd(item.quantidadeTotal)} ${item.unidade}`,
+        embalagens,
         subtotal,
       });
       mapa.set(menor.origem, lista);
     }
+
     return [...mapa.entries()]
       .map(([mercado, itens]) => ({
         mercado,
-        itens: itens.sort((a, b) => b.subtotal - a.subtotal || a.nome.localeCompare(b.nome, "pt-BR")),
+        itens: itens.sort(
+          (a, b) => b.subtotal - a.subtotal || a.nome.localeCompare(b.nome, "pt-BR"),
+        ),
         total: Math.round(itens.reduce((a, i) => a + i.subtotal, 0) * 100) / 100,
       }))
       .sort((a, b) => b.total - a.total);
-  }, [cesta, origens]);
+  }, [cesta, origens, precos, mercados]);
 
   const linhasPlanilha = (lista: ListaMercado) => [
     ...lista.itens.map((i) => ({
       Ingrediente: i.nome,
-      Unidade: i.unidade,
-      Quantidade: i.quantidade,
-      "Menor valor (R$/unidade)": i.precoUnitario,
+      "Produto (pesquisa)": i.produto,
+      "Embalagem (pesquisa)": i.embalagem,
+      "Preço da embalagem (R$)": i.precoEmbalagem,
+      "Necessário": i.necessario,
+      Embalagens: i.embalagens,
       "Subtotal (R$)": i.subtotal,
     })),
     {
       Ingrediente: "TOTAL DA LISTA",
-      Unidade: "",
-      Quantidade: "",
-      "Menor valor (R$/unidade)": "",
+      "Produto (pesquisa)": "",
+      "Embalagem (pesquisa)": "",
+      "Preço da embalagem (R$)": "",
+      "Necessário": "",
+      Embalagens: "",
       "Subtotal (R$)": lista.total,
     },
   ];
@@ -116,8 +165,8 @@ export function ListasCompras({
               Listas de compras por supermercado
             </CardTitle>
             <p className="text-xs text-muted-foreground">
-              Ingredientes cujo menor preço foi encontrado em um supermercado, com o valor
-              encontrado e o total de cada lista.
+              Preço e embalagem (peso/volume/unidade) exatamente como encontrados na pesquisa de
+              preços, com a quantidade de embalagens necessária.
             </p>
           </div>
           {listas.length > 0 ? (
@@ -149,21 +198,26 @@ export function ListasCompras({
                   <TableHeader>
                     <TableRow>
                       <TableHead>Ingrediente</TableHead>
-                      <TableHead className="text-right">Quantidade</TableHead>
-                      <TableHead className="text-right">Menor valor</TableHead>
+                      <TableHead>Embalagem</TableHead>
+                      <TableHead className="text-right">Preço da embalagem</TableHead>
+                      <TableHead className="text-right">Necessário</TableHead>
+                      <TableHead className="text-right">Embalagens</TableHead>
                       <TableHead className="text-right">Subtotal</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {lista.itens.map((i) => (
                       <TableRow key={`${lista.mercado}-${i.nome}`}>
-                        <TableCell className="font-semibold">{i.nome}</TableCell>
-                        <TableCell className="text-right">
-                          {qtd(i.quantidade)} {i.unidade}
+                        <TableCell className="font-semibold">
+                          {i.nome}
+                          <span className="block text-xs font-normal text-muted-foreground">
+                            {i.produto}
+                          </span>
                         </TableCell>
-                        <TableCell className="text-right">
-                          {brl(i.precoUnitario)}/{i.unidade || "un."}
-                        </TableCell>
+                        <TableCell>{i.embalagem}</TableCell>
+                        <TableCell className="text-right">{brl(i.precoEmbalagem)}</TableCell>
+                        <TableCell className="text-right">{i.necessario}</TableCell>
+                        <TableCell className="text-right">{i.embalagens}</TableCell>
                         <TableCell className="text-right">{brl(i.subtotal)}</TableCell>
                       </TableRow>
                     ))}
