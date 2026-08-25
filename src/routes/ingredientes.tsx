@@ -227,10 +227,12 @@ function IngredientesPage() {
                         </p>
                         <ul className="list-inside list-disc text-muted-foreground">
                           {receitasImpactadas.map((r) => {
-                            const equivalente =
-                              unidade === ""
-                                ? null
-                                : converterQuantidade(r.quantidade!, editando!.unidade, unidade);
+                            const equivalente = converterQuantidade(
+                              r.quantidade!,
+                              editando!.unidade,
+                              unidade as Unidade,
+                            );
+
                             return (
                               <li key={`${r.tipo}-${r.id}`}>
                                 <span className="font-medium text-foreground">
