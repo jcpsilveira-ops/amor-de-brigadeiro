@@ -24,6 +24,8 @@ import {
 } from "@/lib/domain";
 import { analisarEstoqueProximoPedido, converterQuantidade, qtd } from "@/lib/estoque";
 import {
+  bolosApi,
+  coberturasApi,
   ingredientesApi,
   keys,
   useAppMutation,
@@ -32,6 +34,8 @@ import {
   useIngredientes,
   usePedidos,
 } from "@/lib/queries";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { dataBR, limitarPreco } from "@/lib/domain";
 
 export const Route = createFileRoute("/ingredientes")({
@@ -83,18 +87,29 @@ function IngredientesPage() {
   const unidadeAlterada = Boolean(editando) && unidade !== "" && unidade !== editando?.unidade;
   const receitasImpactadas = unidadeAlterada
     ? [
-        ...bolos.map((r) => ({ ...r, tipo: "Bolo" as const })),
-        ...coberturas.map((r) => ({ ...r, tipo: "Cobertura" as const })),
+        ...bolos.map((r) => ({ ...r, tipo: "Bolo" as const, api: bolosApi })),
+        ...coberturas.map((r) => ({ ...r, tipo: "Cobertura" as const, api: coberturasApi })),
       ]
-        .map((r) => ({
-          tipo: r.tipo,
-          nome: r.nome,
-          id: r.id,
-          quantidade: r.itens.find((it) => it.ingredienteId === editando!.id)?.quantidade ?? null,
-        }))
+        .map((r) => {
+          const quantidade = r.itens.find((it) => it.ingredienteId === editando!.id)?.quantidade ?? null;
+          return {
+            tipo: r.tipo,
+            nome: r.nome,
+            id: r.id,
+            itens: r.itens,
+            precoVenda: r.precoVenda,
+            api: r.api,
+            quantidade,
+            equivalente:
+              quantidade === null
+                ? null
+                : converterQuantidade(quantidade, editando!.unidade, unidade as Unidade),
+          };
+        })
         .filter((r) => r.quantidade !== null)
     : [];
-
+  const ajustaveis = receitasImpactadas.filter((r) => r.equivalente !== null);
+  const [ajustarReceitas, setAjustarReceitas] = useState(true);
 
   function limpar() {
     setEditando(null);
@@ -102,20 +117,33 @@ function IngredientesPage() {
     setUnidade("");
     setCusto("");
     setTocado(false);
+    setAjustarReceitas(true);
   }
 
 
   const salvar = useAppMutation({
     mutationFn: async () => {
       if (!parsed.success) return;
-      return editando
-        ? ingredientesApi.update(editando.id, parsed.data)
-        : ingredientesApi.create(parsed.data);
+      if (!editando) return ingredientesApi.create(parsed.data);
+      // Assistente de unidade: converte as quantidades das receitas para manter o mesmo peso/volume.
+      const paraAjustar = unidadeAlterada && ajustarReceitas ? ajustaveis : [];
+      const atualizado = await ingredientesApi.update(editando.id, parsed.data);
+      for (const r of paraAjustar) {
+        await r.api.update(r.id, {
+          nome: r.nome,
+          precoVenda: r.precoVenda,
+          itens: r.itens.map((it) =>
+            it.ingredienteId === editando.id ? { ...it, quantidade: r.equivalente! } : it,
+          ),
+        });
+      }
+      return atualizado;
     },
     invalidate: [keys.ingredientes, keys.bolos, keys.coberturas],
     successMessage: editando ? "Ingrediente atualizado!" : "Ingrediente cadastrado!",
     onSuccess: limpar,
   });
+
 
   const excluir = useAppMutation({
     mutationFn: (id: number) => ingredientesApi.remove(id),
@@ -222,32 +250,38 @@ function IngredientesPage() {
                     ) : (
                       <>
                         <p className="text-muted-foreground">
-                          {receitasImpactadas.length} receita(s) usam este ingrediente e terão o custo
-                          recalculado na nova unidade. Revise as quantidades:
+                          {receitasImpactadas.length} receita(s) usam este ingrediente. O assistente pode
+                          converter as quantidades para manter o mesmo peso/volume total:
                         </p>
                         <ul className="list-inside list-disc text-muted-foreground">
-                          {receitasImpactadas.map((r) => {
-                            const equivalente = converterQuantidade(
-                              r.quantidade!,
-                              editando!.unidade,
-                              unidade as Unidade,
-                            );
-
-                            return (
-                              <li key={`${r.tipo}-${r.id}`}>
-                                <span className="font-medium text-foreground">
-                                  {r.tipo}: {r.nome}
-                                </span>{" "}
-                                — {qtd(r.quantidade!)} {editando?.unidade}
-                                {equivalente !== null
-                                  ? ` ≈ ${qtd(equivalente)} ${unidade}`
-                                  : " (sem equivalência automática entre as unidades)"}
-                              </li>
-                            );
-                          })}
+                          {receitasImpactadas.map((r) => (
+                            <li key={`${r.tipo}-${r.id}`}>
+                              <span className="font-medium text-foreground">
+                                {r.tipo}: {r.nome}
+                              </span>{" "}
+                              — {qtd(r.quantidade!)} {editando?.unidade}
+                              {r.equivalente !== null
+                                ? ` → ${qtd(r.equivalente)} ${unidade}`
+                                : " (sem equivalência automática — ajuste manualmente)"}
+                            </li>
+                          ))}
                         </ul>
+                        {ajustaveis.length > 0 ? (
+                          <label className="mt-2 flex items-start gap-2 text-xs">
+                            <Checkbox
+                              checked={ajustarReceitas}
+                              onCheckedChange={(v) => setAjustarReceitas(v === true)}
+                              aria-label="Ajustar quantidades das receitas automaticamente"
+                            />
+                            <span>
+                              Ajustar automaticamente {ajustaveis.length} receita(s) ao salvar, mantendo o
+                              mesmo peso/volume total.
+                            </span>
+                          </label>
+                        ) : null}
                       </>
                     )}
+
                   </div>
                 </div>
               ) : null}
