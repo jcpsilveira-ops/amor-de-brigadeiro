@@ -313,7 +313,7 @@ function DialogManual({
               placeholder="Ex.: Leite condensado Itambé"
             />
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <Label htmlFor="manual-preco" className="label-caps">
                 Preço (R$)
@@ -327,17 +327,36 @@ function DialogManual({
               />
             </div>
             <div>
-              <Label htmlFor="manual-peso" className="label-caps">
-                Peso / volume
+              <Label htmlFor="manual-qtde" className="label-caps">
+                Quantidade
               </Label>
               <Input
-                id="manual-peso"
-                value={peso}
-                onChange={(e) => setPeso(e.target.value)}
-                placeholder="395 g"
+                id="manual-qtde"
+                inputMode="decimal"
+                value={quantidade}
+                onChange={(e) => setQuantidade(e.target.value)}
+                placeholder="395"
               />
             </div>
+            <div>
+              <Label htmlFor="manual-unidade" className="label-caps">
+                Unidade
+              </Label>
+              <Select value={unidade} onValueChange={setUnidade}>
+                <SelectTrigger id="manual-unidade">
+                  <SelectValue placeholder="Selecione" />
+                </SelectTrigger>
+                <SelectContent>
+                  {UNIDADES.map((u) => (
+                    <SelectItem key={u} value={u}>
+                      {u}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
+
           <p className="text-xs text-muted-foreground">
             Deixe em branco o que você não souber — o sistema não preenche valores estimados.
           </p>
