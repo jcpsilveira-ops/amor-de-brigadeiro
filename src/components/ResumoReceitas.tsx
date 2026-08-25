@@ -5,8 +5,8 @@ import { hapticTap } from "@/hooks/use-mobile-shell";
 import { Cake, Layers, Percent, Wheat } from "lucide-react";
 
 import { brl, calcularCusto, margem, type Ingrediente, type Receita } from "@/lib/domain";
-import { useBolos, useCoberturas, useIngredientes, useMercados, usePrecosMercado } from "@/lib/queries";
-import { aplicarMenoresPrecos, type MenorPreco } from "@/lib/precos-mercado";
+import { useBolos, useCoberturas, useIngredientes } from "@/lib/queries";
+import { type MenorPreco } from "@/lib/precos-mercado";
 
 type LinhaReceita = {
   id: number;
