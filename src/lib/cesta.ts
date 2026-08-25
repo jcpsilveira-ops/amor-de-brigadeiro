@@ -44,10 +44,12 @@ export interface LinhaCesta {
 function emGramas(quantidade: number, unidade: Ingrediente["unidade"]): number | null {
   if (unidade === "unidade") return null;
   return (
-    converterQuantidade(quantidade, unidade, unidade === "l" || unidade === "ml" ? "ml" : "g") ??
+    converterQuantidade(quantidade, unidade, "ml") ??
+    converterQuantidade(quantidade, unidade, "g") ??
     null
   );
 }
+
 
 /**
  * Cesta da produção: cruza os ingredientes das receitas e calcula
