@@ -3,7 +3,16 @@ import { z } from "zod";
 /** Limite de negócio: máximo de ingredientes por receita (bolo/cobertura). */
 export const MAX_INGREDIENTES = 20;
 
-export const UNIDADES = ["kg", "g", "l", "ml", "unidade"] as const;
+export const UNIDADES = [
+  "kg",
+  "g",
+  "l",
+  "ml",
+  "unidade",
+  "dúzia",
+  "cartela",
+  "fardo",
+] as const;
 export type Unidade = (typeof UNIDADES)[number];
 
 export interface Ingrediente {

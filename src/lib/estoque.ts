@@ -1,12 +1,18 @@
 import type { Ingrediente, Pedido, Receita, Unidade } from "./domain";
 
-/** Fator de conversão para a unidade base (g, ml ou unidade). */
-const FATOR: Record<Unidade, { base: "massa" | "volume" | "unidade"; fator: number }> = {
+/** Fator de conversão para a unidade base (g, ml, unidade, cartela ou fardo). */
+const FATOR: Record<
+  Unidade,
+  { base: "massa" | "volume" | "unidade" | "cartela" | "fardo"; fator: number }
+> = {
   kg: { base: "massa", fator: 1000 },
   g: { base: "massa", fator: 1 },
   l: { base: "volume", fator: 1000 },
   ml: { base: "volume", fator: 1 },
   unidade: { base: "unidade", fator: 1 },
+  dúzia: { base: "unidade", fator: 12 },
+  cartela: { base: "cartela", fator: 1 },
+  fardo: { base: "fardo", fator: 1 },
 };
 
 /** Converte uma quantidade entre unidades compatíveis. Retorna null se incompatíveis. */
