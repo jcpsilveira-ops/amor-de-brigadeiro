@@ -205,6 +205,52 @@ function IngredientesPage() {
                 As quantidades em estoque são gerenciadas na tela Estoque.
               </p>
 
+              {unidadeAlterada ? (
+                <div
+                  role="alert"
+                  className="flex gap-3 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3"
+                >
+                  <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+                  <div className="space-y-1 text-xs">
+                    <p className="text-sm font-semibold">
+                      Você mudou a unidade de “{editando?.unidade}” para “{unidade}”
+                    </p>
+                    {receitasImpactadas.length === 0 ? (
+                      <p className="text-muted-foreground">
+                        Nenhum bolo ou cobertura usa este ingrediente — nada será impactado.
+                      </p>
+                    ) : (
+                      <>
+                        <p className="text-muted-foreground">
+                          {receitasImpactadas.length} receita(s) usam este ingrediente e terão o custo
+                          recalculado na nova unidade. Revise as quantidades:
+                        </p>
+                        <ul className="list-inside list-disc text-muted-foreground">
+                          {receitasImpactadas.map((r) => {
+                            const equivalente =
+                              unidade === ""
+                                ? null
+                                : converterQuantidade(r.quantidade!, editando!.unidade, unidade);
+                            return (
+                              <li key={`${r.tipo}-${r.id}`}>
+                                <span className="font-medium text-foreground">
+                                  {r.tipo}: {r.nome}
+                                </span>{" "}
+                                — {qtd(r.quantidade!)} {editando?.unidade}
+                                {equivalente !== null
+                                  ? ` ≈ ${qtd(equivalente)} ${unidade}`
+                                  : " (sem equivalência automática entre as unidades)"}
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ) : null}
+
+
               <div className="flex gap-2">
                 <Button type="submit" disabled={salvar.isPending}>
                   {editando ? "Salvar alterações" : "Cadastrar"}
