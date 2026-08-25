@@ -92,6 +92,7 @@ function IngredientesPage() {
       ]
         .map((r) => {
           const quantidade = r.itens.find((it) => it.ingredienteId === editando!.id)?.quantidade ?? null;
+          const avaliacao = avaliarConversao(editando!.unidade, unidade as Unidade);
           return {
             tipo: r.tipo,
             nome: r.nome,
@@ -100,8 +101,9 @@ function IngredientesPage() {
             precoVenda: r.precoVenda,
             api: r.api,
             quantidade,
+            avaliacao,
             equivalente:
-              quantidade === null
+              quantidade === null || avaliacao.status !== "ok"
                 ? null
                 : converterQuantidade(quantidade, editando!.unidade, unidade as Unidade),
           };
@@ -109,7 +111,11 @@ function IngredientesPage() {
         .filter((r) => r.quantidade !== null)
     : [];
   const ajustaveis = receitasImpactadas.filter((r) => r.equivalente !== null);
+  const manuais = receitasImpactadas.filter((r) => r.equivalente === null);
   const [ajustarReceitas, setAjustarReceitas] = useState(true);
+  const [confirmarManual, setConfirmarManual] = useState(false);
+  const exigeConfirmacao = manuais.length > 0;
+  const bloqueado = exigeConfirmacao && !confirmarManual;
 
   function limpar() {
     setEditando(null);
