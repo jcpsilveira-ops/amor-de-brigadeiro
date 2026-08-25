@@ -297,7 +297,7 @@ function DialogManual({
       mercadoId: edicao.mercado.id,
       nomeProduto: nomeProduto.trim() ? nomeProduto : null,
       preco: numero === null ? null : Math.round(numero * 100) / 100,
-      peso: peso.trim() ? peso : null,
+      peso: unidade ? `${quantidade.trim() || "1"} ${unidade}`.trim() : null,
     });
   };
 
