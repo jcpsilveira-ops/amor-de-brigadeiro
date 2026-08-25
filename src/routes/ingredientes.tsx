@@ -24,6 +24,8 @@ import {
 } from "@/lib/domain";
 import { analisarEstoqueProximoPedido, converterQuantidade, qtd } from "@/lib/estoque";
 import {
+  bolosApi,
+  coberturasApi,
   ingredientesApi,
   keys,
   useAppMutation,
@@ -32,6 +34,8 @@ import {
   useIngredientes,
   usePedidos,
 } from "@/lib/queries";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import { dataBR, limitarPreco } from "@/lib/domain";
 
 export const Route = createFileRoute("/ingredientes")({
