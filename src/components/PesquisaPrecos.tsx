@@ -668,18 +668,40 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
               <p className="label-caps text-muted-foreground">
                 Preço comparativo — estoque × supermercados (por unidade ou por g/ml)
               </p>
-              <div className="overflow-auto max-h-[60vh]">
+              <div
+                ref={refB}
+                onScroll={() => espelhar(refB.current, refA.current)}
+                className="overflow-auto max-h-[60vh]"
+              >
                 <Table>
                   <TableHeader>
                     <TableRow className="sticky top-0 z-40 bg-card">
-                      <TableHead className="sticky left-0 top-0 z-50 bg-card">Ingrediente</TableHead>
-                      <TableHead className="sticky top-0 z-40 bg-card text-right">Estoque</TableHead>
+                      <CabecalhoOrdenavel
+                        rotulo="Ingrediente"
+                        chave="nome"
+                        ordem={ordem}
+                        onOrdenar={ordenar}
+                        className="sticky left-0 top-0 z-50 bg-card"
+                      />
+                      <CabecalhoOrdenavel
+                        rotulo="Estoque"
+                        chave="estoque"
+                        ordem={ordem}
+                        onOrdenar={ordenar}
+                        className="sticky top-0 z-40 bg-card text-right"
+                      />
                       {mercados.map((m) => (
-                        <TableHead key={m.id} className="sticky top-0 z-40 bg-card text-right">
-                          {m.nome}
-                        </TableHead>
+                        <CabecalhoOrdenavel
+                          key={m.id}
+                          rotulo={m.nome}
+                          chave={`m:${m.id}`}
+                          ordem={ordem}
+                          onOrdenar={ordenar}
+                          className="sticky top-0 z-40 bg-card text-right"
+                        />
                       ))}
                       <TableHead className="sticky top-0 z-40 bg-card text-right">Menor</TableHead>
+
                     </TableRow>
                   </TableHeader>
                   <TableBody>
