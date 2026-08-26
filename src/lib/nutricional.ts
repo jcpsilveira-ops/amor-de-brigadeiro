@@ -130,23 +130,29 @@ export const ehNaoAlimentar = (nome: string) =>
 export const nutrientesDoIngrediente = (nome: string): Nutrientes | undefined =>
   buscar(TABELA, nome)?.valores;
 
-/** Converte a quantidade cadastrada (na unidade do ingrediente) para gramas. */
+/**
+ * Converte a quantidade cadastrada (na unidade do ingrediente) para gramas,
+ * usando os fatores de conversão do sistema/cadastro: peso direto, volume pela
+ * densidade do ingrediente e contagem pelo peso médio da unidade.
+ */
 export function paraGramas(ingrediente: Ingrediente, quantidade: number): number {
-  switch (ingrediente.unidade) {
-    case "kg":
-      return quantidade * 1000;
-    case "g":
-      return quantidade;
-    case "ml":
-      return (quantidade * (buscar(DENSIDADE_POR_LITRO, ingrediente.nome)?.gramas ?? 1000)) / 1000;
-    case "l":
-      return quantidade * (buscar(DENSIDADE_POR_LITRO, ingrediente.nome)?.gramas ?? 1000);
-    case "unidade":
-      return quantidade * (buscar(GRAMAS_POR_UNIDADE, ingrediente.nome)?.gramas ?? 0);
-    default:
-      return 0;
+  const emGramas = converterQuantidade(quantidade, ingrediente.unidade, "g");
+  if (emGramas !== null) return emGramas;
+
+  const emMl = converterQuantidade(quantidade, ingrediente.unidade, "ml");
+  if (emMl !== null) {
+    const densidade = buscar(DENSIDADE_POR_LITRO, ingrediente.nome)?.gramas ?? 1000;
+    return (emMl * densidade) / 1000;
   }
+
+  const emUnidades = converterQuantidade(quantidade, ingrediente.unidade, "unidade");
+  if (emUnidades !== null) {
+    return emUnidades * (buscar(GRAMAS_POR_UNIDADE, ingrediente.nome)?.gramas ?? 0);
+  }
+
+  return 0;
 }
+
 
 export interface CalculoNutricional {
   pesoTotal: number;
