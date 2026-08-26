@@ -571,7 +571,7 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
               onScroll={() => espelhar(refA.current, refB.current)}
               className="overflow-auto max-h-[60vh]"
             >
-              <table className="w-full caption-bottom border-separate border-spacing-0 text-sm">
+              <table className="w-full caption-bottom border-separate border-spacing-0 text-sm [&_tbody_td]:border-b [&_thead_th]:border-b">
                 <TableHeader>
                   <TableRow className="sticky top-0 z-40 bg-card">
                     <CabecalhoOrdenavel
@@ -673,7 +673,7 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                 onScroll={() => espelhar(refB.current, refA.current)}
                 className="overflow-auto max-h-[60vh]"
               >
-                <table className="w-full caption-bottom border-separate border-spacing-0 text-sm">
+                <table className="w-full caption-bottom border-separate border-spacing-0 text-sm [&_tbody_td]:border-b [&_thead_th]:border-b">
                   <TableHeader>
                     <TableRow className="sticky top-0 z-40 bg-card">
                       <CabecalhoOrdenavel
