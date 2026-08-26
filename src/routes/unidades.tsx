@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { AlertTriangle, Pencil, Ruler, Save, X } from "lucide-react";
 
@@ -39,6 +39,7 @@ import {
   type BaseGrandeza,
 } from "@/lib/estoque";
 import { fatoresConversaoApi, keys, useFatoresConversao, useAppMutation } from "@/lib/queries";
+import { AUTOR_PADRAO, lerAutor, salvarAutor } from "@/lib/autor";
 
 export const Route = createFileRoute("/unidades")({
   head: () => ({
@@ -129,6 +130,9 @@ function UnidadesPage() {
   const [fator, setFator] = useState("1");
   const [observacao, setObservacao] = useState("");
   const [erros, setErros] = useState<Record<string, string>>({});
+  const [autor, setAutor] = useState(AUTOR_PADRAO);
+
+  useEffect(() => setAutor(lerAutor()), []);
 
   const alertas = useMemo(() => calcularAlertas(fatores), [fatores]);
   const ambiguas = alertas.filter((a) => a.tipo === "ambigua");
@@ -168,14 +172,14 @@ function UnidadesPage() {
         ? fatoresConversaoApi.update(editando.id, parsed.data)
         : fatoresConversaoApi.create(parsed.data);
     },
-    invalidate: [keys.fatoresConversao, keys.ingredientes, keys.movimentacoes],
+    invalidate: [keys.fatoresConversao, keys.historicoFatores, keys.ingredientes, keys.movimentacoes],
     successMessage: editando ? "Fator atualizado!" : "Fator cadastrado!",
     onSuccess: limpar,
   });
 
   const excluir = useAppMutation({
     mutationFn: (id: number) => fatoresConversaoApi.remove(id),
-    invalidate: [keys.fatoresConversao, keys.ingredientes, keys.movimentacoes],
+    invalidate: [keys.fatoresConversao, keys.historicoFatores, keys.ingredientes, keys.movimentacoes],
     successMessage: "Fator removido — o padrão do sistema volta a valer.",
   });
 
@@ -256,6 +260,22 @@ function UnidadesPage() {
                 placeholder="Ex.: cartela do fornecedor com 30 ovos"
               />
               <FieldError message={erros["observacao"]} />
+            </div>
+            <div>
+              <Label htmlFor="autor">Quem está alterando</Label>
+              <Input
+                id="autor"
+                value={autor === AUTOR_PADRAO ? "" : autor}
+                placeholder="Seu nome (fica registrado na auditoria)"
+                onChange={(e) => {
+                  const nome = e.target.value;
+                  setAutor(nome.trim() === "" ? AUTOR_PADRAO : nome);
+                  salvarAutor(nome);
+                }}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Este nome acompanha cada versão registrada na auditoria.
+              </p>
             </div>
             <div className="flex gap-2">
               <Button type="button" onClick={() => salvar.mutate(undefined)} disabled={salvar.isPending}>

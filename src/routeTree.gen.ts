@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuditoriaUnidadesRouteImport } from './routes/auditoria-unidades'
 import { Route as BolosRouteImport } from './routes/bolos'
 import { Route as CestaProducaoRouteImport } from './routes/cesta-producao'
 import { Route as ClientesRouteImport } from './routes/clientes'
@@ -37,6 +38,11 @@ import { Route as ReceitaTipoIdRouteImport } from './routes/receita.$tipo.$id'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditoriaUnidadesRoute = AuditoriaUnidadesRouteImport.update({
+  id: '/auditoria-unidades',
+  path: '/auditoria-unidades',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BolosRoute = BolosRouteImport.update({
@@ -160,6 +166,7 @@ const ReceitaTipoIdRoute = ReceitaTipoIdRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auditoria-unidades': typeof AuditoriaUnidadesRoute
   '/bolos': typeof BolosRoute
   '/cesta-producao': typeof CestaProducaoRoute
   '/clientes': typeof ClientesRoute
@@ -186,6 +193,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auditoria-unidades': typeof AuditoriaUnidadesRoute
   '/bolos': typeof BolosRoute
   '/cesta-producao': typeof CestaProducaoRoute
   '/clientes': typeof ClientesRoute
@@ -213,6 +221,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auditoria-unidades': typeof AuditoriaUnidadesRoute
   '/bolos': typeof BolosRoute
   '/cesta-producao': typeof CestaProducaoRoute
   '/clientes': typeof ClientesRoute
@@ -241,6 +250,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auditoria-unidades'
     | '/bolos'
     | '/cesta-producao'
     | '/clientes'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auditoria-unidades'
     | '/bolos'
     | '/cesta-producao'
     | '/clientes'
@@ -293,6 +304,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/auditoria-unidades'
     | '/bolos'
     | '/cesta-producao'
     | '/clientes'
@@ -320,6 +332,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuditoriaUnidadesRoute: typeof AuditoriaUnidadesRoute
   BolosRoute: typeof BolosRoute
   CestaProducaoRoute: typeof CestaProducaoRoute
   ClientesRoute: typeof ClientesRoute
@@ -352,6 +365,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditoria-unidades': {
+      id: '/auditoria-unidades'
+      path: '/auditoria-unidades'
+      fullPath: '/auditoria-unidades'
+      preLoaderRoute: typeof AuditoriaUnidadesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bolos': {
@@ -520,6 +540,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuditoriaUnidadesRoute: AuditoriaUnidadesRoute,
   BolosRoute: BolosRoute,
   CestaProducaoRoute: CestaProducaoRoute,
   ClientesRoute: ClientesRoute,

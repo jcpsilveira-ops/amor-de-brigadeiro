@@ -37,6 +37,7 @@ export const keys = {
   mercados: ["mercados"] as QueryKey,
   precosMercado: ["precos_mercado"] as QueryKey,
   fatoresConversao: ["fatores_conversao"] as QueryKey,
+  historicoFatores: ["fatores_conversao_historico"] as QueryKey,
 };
 
 export const useIngredientes = () =>
@@ -63,6 +64,8 @@ export const usePrecosMercado = () =>
   useQuery({ queryKey: keys.precosMercado, queryFn: precosMercadoApi.list });
 export const useFatoresConversao = () =>
   useQuery({ queryKey: keys.fatoresConversao, queryFn: fatoresConversaoApi.list });
+export const useHistoricoFatores = () =>
+  useQuery({ queryKey: keys.historicoFatores, queryFn: fatoresConversaoApi.historico });
 export const useReceitasAvulsas = () =>
   useQuery({ queryKey: keys.receitasAvulsas, queryFn: receitasAvulsasApi.list });
 

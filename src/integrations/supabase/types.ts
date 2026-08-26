@@ -155,6 +155,45 @@ export type Database = {
         }
         Relationships: []
       }
+      fatores_conversao_historico: {
+        Row: {
+          acao: string
+          autor: string
+          base: string
+          criado_em: string
+          fator: number
+          fator_id: number | null
+          id: number
+          observacao: string | null
+          unidade: string
+          versao: number
+        }
+        Insert: {
+          acao?: string
+          autor?: string
+          base: string
+          criado_em?: string
+          fator?: number
+          fator_id?: number | null
+          id?: never
+          observacao?: string | null
+          unidade: string
+          versao?: number
+        }
+        Update: {
+          acao?: string
+          autor?: string
+          base?: string
+          criado_em?: string
+          fator?: number
+          fator_id?: number | null
+          id?: never
+          observacao?: string | null
+          unidade?: string
+          versao?: number
+        }
+        Relationships: []
+      }
       historico_precos: {
         Row: {
           criado_em: string

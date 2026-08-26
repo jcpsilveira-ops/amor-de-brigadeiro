@@ -198,6 +198,20 @@ export const fatorConversaoSchema = z.object({
 });
 export type FatorConversaoInput = z.infer<typeof fatorConversaoSchema>;
 
+/** Uma versão registrada do fator de conversão (auditoria). */
+export interface HistoricoFator {
+  id: number;
+  fatorId: number | null;
+  unidade: Unidade;
+  base: string;
+  fator: number;
+  observacao: string | null;
+  acao: "criado" | "alterado" | "removido";
+  versao: number;
+  autor: string;
+  criadoEm: string;
+}
+
 
 export const pedidoSchema = z
   .object({
