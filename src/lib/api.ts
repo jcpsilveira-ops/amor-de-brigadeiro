@@ -402,6 +402,63 @@ const toFator = (row: FatorRow): FatorConversao => ({
   observacao: row.observacao ?? null,
 });
 
+type HistoricoFatorRow = {
+  id: number;
+  fator_id: number | null;
+  unidade: string;
+  base: string;
+  fator: number | string;
+  observacao: string | null;
+  acao: string;
+  versao: number;
+  autor: string;
+  criado_em: string;
+};
+
+const toHistoricoFator = (row: HistoricoFatorRow): HistoricoFator => ({
+  id: row.id,
+  fatorId: row.fator_id ?? null,
+  unidade: row.unidade as Unidade,
+  base: row.base,
+  fator: Number(row.fator),
+  observacao: row.observacao ?? null,
+  acao: (row.acao as HistoricoFator["acao"]) ?? "alterado",
+  versao: Number(row.versao),
+  autor: row.autor,
+  criadoEm: row.criado_em,
+});
+
+/** Registra uma versão no histórico de auditoria dos fatores de conversão. */
+async function registrarHistoricoFator(
+  dados: {
+    fatorId: number | null;
+    unidade: string;
+    base: string;
+    fator: number;
+    observacao: string | null;
+  },
+  acao: HistoricoFator["acao"],
+): Promise<void> {
+  const ultima = await supabase
+    .from("fatores_conversao_historico")
+    .select("versao")
+    .eq("unidade", dados.unidade)
+    .order("versao", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const versao = Number((ultima.data as { versao?: number } | null)?.versao ?? 0) + 1;
+  await supabase.from("fatores_conversao_historico").insert({
+    fator_id: dados.fatorId,
+    unidade: dados.unidade,
+    base: dados.base,
+    fator: dados.fator,
+    observacao: dados.observacao,
+    acao,
+    versao,
+    autor: lerAutor(),
+  });
+}
+
 export const fatoresConversaoApi = {
   list: async (): Promise<FatorConversao[]> => {
     if (apiBase()) return http("/fatores-conversao");
@@ -410,6 +467,17 @@ export const fatoresConversaoApi = {
     );
     return (rows as unknown as FatorRow[]).map(toFator);
   },
+  historico: async (): Promise<HistoricoFator[]> => {
+    if (apiBase()) return http("/fatores-conversao/historico");
+    const rows = check(
+      await supabase
+        .from("fatores_conversao_historico")
+        .select("*")
+        .order("criado_em", { ascending: false })
+        .order("id", { ascending: false }),
+    );
+    return (rows as unknown as HistoricoFatorRow[]).map(toHistoricoFator);
+  },
   create: async (input: FatorConversaoInput): Promise<FatorConversao> => {
     if (apiBase()) {
       return http("/fatores-conversao", { method: "POST", body: JSON.stringify(input) });
@@ -417,7 +485,9 @@ export const fatoresConversaoApi = {
     const row = check(
       await supabase.from("fatores_conversao").insert(input).select("*").single(),
     );
-    return toFator(row as unknown as FatorRow);
+    const salvo = toFator(row as unknown as FatorRow);
+    await registrarHistoricoFator({ ...salvo, fatorId: salvo.id }, "criado");
+    return salvo;
   },
   update: async (id: number, input: FatorConversaoInput): Promise<FatorConversao> => {
     if (apiBase()) {
@@ -426,14 +496,27 @@ export const fatoresConversaoApi = {
     const row = check(
       await supabase.from("fatores_conversao").update(input).eq("id", id).select("*").single(),
     );
-    return toFator(row as unknown as FatorRow);
+    const salvo = toFator(row as unknown as FatorRow);
+    await registrarHistoricoFator({ ...salvo, fatorId: salvo.id }, "alterado");
+    return salvo;
   },
   remove: async (id: number): Promise<void> => {
     if (apiBase()) return http(`/fatores-conversao/${id}`, { method: "DELETE" });
+    const anterior = await supabase
+      .from("fatores_conversao")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
     const { error } = await supabase.from("fatores_conversao").delete().eq("id", id);
     if (error) throw new ApiError(error.message);
+    const linha = anterior.data as unknown as FatorRow | null;
+    if (linha) {
+      const antigo = toFator(linha);
+      await registrarHistoricoFator({ ...antigo, fatorId: null }, "removido");
+    }
   },
 };
+
 
 export const despesasApi = {
 
