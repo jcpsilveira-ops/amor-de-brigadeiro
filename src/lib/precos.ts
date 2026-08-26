@@ -2,7 +2,9 @@
  * Pesquisa de preços nos mercados de Uberlândia e ranking de custo-benefício.
  * Helpers puros (usados no servidor e na tela).
  */
-import type { Ingrediente } from "./domain";
+import type { Ingrediente, Unidade } from "./domain";
+import { fatorDe } from "./estoque";
+
 import type { LinhaCesta } from "./cesta";
 
 export const MERCADOS = [
