@@ -16,6 +16,7 @@ import {
   PackageCheck,
 
   PiggyBank,
+  Ruler,
   ShoppingBag,
   Users,
   Wallet,
@@ -43,6 +44,7 @@ const links = [
   { to: "/painel-receitas", label: "Painel de receitas", icon: NotebookText },
   { to: "/cesta-producao", label: "Cesta da produção", icon: ShoppingBasket },
 
+  { to: "/unidades", label: "Unidades", icon: Ruler },
   { to: "/relatorio", label: "Relatório", icon: FileText },
   { to: "/configuracoes", label: "Configurações", icon: Settings },
 ] as const;
