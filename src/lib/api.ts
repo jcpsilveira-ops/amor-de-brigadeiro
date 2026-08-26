@@ -14,6 +14,9 @@ import {
   calcularCusto,
   type Bolo,
   type Cliente,
+  type FatorConversao,
+  type FatorConversaoInput,
+
   type Cobertura,
   type Curso,
   type Ingrediente,
@@ -381,7 +384,59 @@ const toDespesa = (row: DespesaRow): Despesa => ({
   valor: dinheiro(Number(row.valor)),
 });
 
+/* --------------------------- fatores de conversão -------------------------- */
+
+type FatorRow = {
+  id: number;
+  unidade: string;
+  base: string;
+  fator: number | string;
+  observacao: string | null;
+};
+
+const toFator = (row: FatorRow): FatorConversao => ({
+  id: row.id,
+  unidade: row.unidade as Unidade,
+  base: row.base,
+  fator: Number(row.fator),
+  observacao: row.observacao ?? null,
+});
+
+export const fatoresConversaoApi = {
+  list: async (): Promise<FatorConversao[]> => {
+    if (apiBase()) return http("/fatores-conversao");
+    const rows = check(
+      await supabase.from("fatores_conversao").select("*").order("unidade", { ascending: true }),
+    );
+    return (rows as unknown as FatorRow[]).map(toFator);
+  },
+  create: async (input: FatorConversaoInput): Promise<FatorConversao> => {
+    if (apiBase()) {
+      return http("/fatores-conversao", { method: "POST", body: JSON.stringify(input) });
+    }
+    const row = check(
+      await supabase.from("fatores_conversao").insert(input).select("*").single(),
+    );
+    return toFator(row as unknown as FatorRow);
+  },
+  update: async (id: number, input: FatorConversaoInput): Promise<FatorConversao> => {
+    if (apiBase()) {
+      return http(`/fatores-conversao/${id}`, { method: "PUT", body: JSON.stringify(input) });
+    }
+    const row = check(
+      await supabase.from("fatores_conversao").update(input).eq("id", id).select("*").single(),
+    );
+    return toFator(row as unknown as FatorRow);
+  },
+  remove: async (id: number): Promise<void> => {
+    if (apiBase()) return http(`/fatores-conversao/${id}`, { method: "DELETE" });
+    const { error } = await supabase.from("fatores_conversao").delete().eq("id", id);
+    if (error) throw new ApiError(error.message);
+  },
+};
+
 export const despesasApi = {
+
   list: async (): Promise<Despesa[]> => {
     if (apiBase()) return http("/despesas");
     const rows = check(

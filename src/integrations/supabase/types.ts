@@ -128,6 +128,33 @@ export type Database = {
         }
         Relationships: []
       }
+      fatores_conversao: {
+        Row: {
+          base: string
+          criado_em: string
+          fator: number
+          id: number
+          observacao: string | null
+          unidade: string
+        }
+        Insert: {
+          base: string
+          criado_em?: string
+          fator?: number
+          id?: never
+          observacao?: string | null
+          unidade: string
+        }
+        Update: {
+          base?: string
+          criado_em?: string
+          fator?: number
+          id?: never
+          observacao?: string | null
+          unidade?: string
+        }
+        Relationships: []
+      }
       historico_precos: {
         Row: {
           criado_em: string

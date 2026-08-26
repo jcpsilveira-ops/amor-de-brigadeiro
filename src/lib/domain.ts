@@ -175,6 +175,30 @@ export const clienteSchema = z.object({
 });
 export type ClienteInput = z.infer<typeof clienteSchema>;
 
+/* --------------------------- fatores de conversão -------------------------- */
+
+export interface FatorConversao {
+  id: number;
+  unidade: Unidade;
+  base: string;
+  fator: number;
+  observacao: string | null;
+}
+
+export const fatorConversaoSchema = z.object({
+  unidade: z.enum(UNIDADES, { errorMap: () => ({ message: "Selecione a unidade" }) }),
+  base: z.enum(["massa", "volume", "unidade", "cartela", "fardo"], {
+    errorMap: () => ({ message: "Selecione a grandeza de referência" }),
+  }),
+  fator: z.coerce
+    .number({ invalid_type_error: "Informe um número" })
+    .positive("O fator deve ser maior que zero")
+    .max(1_000_000),
+  observacao: z.string().trim().max(200).nullable().default(null),
+});
+export type FatorConversaoInput = z.infer<typeof fatorConversaoSchema>;
+
+
 export const pedidoSchema = z
   .object({
     clienteId: z.coerce.number().int().positive("Selecione um cliente"),
