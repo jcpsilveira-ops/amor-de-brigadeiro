@@ -613,7 +613,7 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                         : null;
                       return (
                         <TableRow key={ing.id}>
-                          <TableCell className="sticky left-0 z-10 bg-card font-semibold">
+                          <TableCell className="sticky left-0 z-30 bg-card font-semibold">
                             {ing.nome}
                             <span className="ml-1 text-xs text-muted-foreground">/{rotulo}</span>
                           </TableCell>
