@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   Compass,
   Pencil,
   Plus,
@@ -9,6 +12,7 @@ import {
   Store,
   TriangleAlert,
 } from "lucide-react";
+
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -385,6 +389,41 @@ function DialogManual({
 
 /* --------------------------------- pesquisa ------------------------------- */
 
+/** Chave de ordenação: nome do ingrediente, preço do estoque ou preço de um mercado. */
+type Ordenacao = { chave: "nome" | "estoque" | `m:${number}`; asc: boolean };
+
+function CabecalhoOrdenavel({
+  rotulo,
+  chave,
+  ordem,
+  onOrdenar,
+  className,
+}: {
+  rotulo: string;
+  chave: Ordenacao["chave"];
+  ordem: Ordenacao;
+  onOrdenar: (chave: Ordenacao["chave"]) => void;
+  className?: string;
+}) {
+  const ativo = ordem.chave === chave;
+  const Icone = !ativo ? ArrowUpDown : ordem.asc ? ArrowUp : ArrowDown;
+  return (
+    <TableHead className={className}>
+      <button
+        type="button"
+        onClick={() => onOrdenar(chave)}
+        aria-label={`Ordenar por ${rotulo}`}
+        className={`inline-flex w-full items-center gap-1 whitespace-nowrap ${
+          className?.includes("text-right") ? "justify-end" : ""
+        } ${ativo ? "text-primary" : ""}`}
+      >
+        {rotulo}
+        <Icone className="h-3 w-3 opacity-70" />
+      </button>
+    </TableHead>
+  );
+}
+
 export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }) {
   const buscar = useServerFn(buscarPrecosMercados);
   const { data: mercados = [] } = useMercados();
@@ -394,13 +433,53 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
   const [pesquisando, setPesquisando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [ultima, setUltima] = useState<string | null>(null);
-  
+  const [ordem, setOrdem] = useState<Ordenacao>({ chave: "nome", asc: true });
 
-  const lista = useMemo(
-    () => [...ingredientes].sort((a, b) => a.nome.localeCompare(b.nome)),
-    [ingredientes],
+  const ordenar = (chave: Ordenacao["chave"]) =>
+    setOrdem((o) => (o.chave === chave ? { chave, asc: !o.asc } : { chave, asc: true }));
+
+  /* Rolagem espelhada entre as duas tabelas (horizontal e vertical). */
+  const refA = useRef<HTMLDivElement | null>(null);
+  const refB = useRef<HTMLDivElement | null>(null);
+  const sincronizando = useRef(false);
+  const espelhar = useCallback(
+    (origem: HTMLDivElement | null, destino: HTMLDivElement | null) => {
+      if (!origem || !destino || sincronizando.current) return;
+      sincronizando.current = true;
+      destino.scrollLeft = origem.scrollLeft;
+      requestAnimationFrame(() => {
+        sincronizando.current = false;
+      });
+    },
+    [],
   );
+
   const indice = useMemo(() => indexarPrecos(precos), [precos]);
+
+  const lista = useMemo(() => {
+    const base = [...ingredientes];
+    const valor = (i: Ingrediente): number | null => {
+      if (ordem.chave === "estoque") return i.custoUnitario ?? null;
+      if (ordem.chave === "nome") return null;
+      const mercadoId = Number(ordem.chave.slice(2));
+      return indice.get(`${i.id}|${mercadoId}`)?.preco ?? null;
+    };
+    base.sort((a, b) => {
+      if (ordem.chave === "nome") {
+        const c = a.nome.localeCompare(b.nome);
+        return ordem.asc ? c : -c;
+      }
+      const va = valor(a);
+      const vb = valor(b);
+      // Itens sem preço vão sempre para o fim da lista.
+      if (va === null && vb === null) return a.nome.localeCompare(b.nome);
+      if (va === null) return 1;
+      if (vb === null) return -1;
+      return ordem.asc ? va - vb : vb - va;
+    });
+    return base;
+  }, [ingredientes, ordem, indice]);
+
 
   const pesquisar = async () => {
     if (lista.length === 0 || mercados.length === 0) return;
@@ -487,18 +566,40 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
           </p>
         ) : (
           <>
-            <div className="overflow-auto max-h-[60vh]">
+            <div
+              ref={refA}
+              onScroll={() => espelhar(refA.current, refB.current)}
+              className="overflow-auto max-h-[60vh]"
+            >
               <Table>
                 <TableHeader>
                   <TableRow className="sticky top-0 z-40 bg-card">
-                    <TableHead className="sticky left-0 top-0 z-50 bg-card">Ingrediente</TableHead>
-                    <TableHead className="sticky top-0 z-40 bg-card text-right">Estoque</TableHead>
+                    <CabecalhoOrdenavel
+                      rotulo="Ingrediente"
+                      chave="nome"
+                      ordem={ordem}
+                      onOrdenar={ordenar}
+                      className="sticky left-0 top-0 z-50 bg-card"
+                    />
+                    <CabecalhoOrdenavel
+                      rotulo="Estoque"
+                      chave="estoque"
+                      ordem={ordem}
+                      onOrdenar={ordenar}
+                      className="sticky top-0 z-40 bg-card text-right"
+                    />
                     {mercados.map((m) => (
-                      <TableHead key={m.id} className="sticky top-0 z-40 bg-card text-right">
-                        {m.nome}
-                      </TableHead>
+                      <CabecalhoOrdenavel
+                        key={m.id}
+                        rotulo={m.nome}
+                        chave={`m:${m.id}`}
+                        ordem={ordem}
+                        onOrdenar={ordenar}
+                        className="sticky top-0 z-40 bg-card text-right"
+                      />
                     ))}
                     <TableHead className="sticky top-0 z-40 bg-card text-right">Melhor</TableHead>
+
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -567,18 +668,40 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
               <p className="label-caps text-muted-foreground">
                 Preço comparativo — estoque × supermercados (por unidade ou por g/ml)
               </p>
-              <div className="overflow-auto max-h-[60vh]">
+              <div
+                ref={refB}
+                onScroll={() => espelhar(refB.current, refA.current)}
+                className="overflow-auto max-h-[60vh]"
+              >
                 <Table>
                   <TableHeader>
                     <TableRow className="sticky top-0 z-40 bg-card">
-                      <TableHead className="sticky left-0 top-0 z-50 bg-card">Ingrediente</TableHead>
-                      <TableHead className="sticky top-0 z-40 bg-card text-right">Estoque</TableHead>
+                      <CabecalhoOrdenavel
+                        rotulo="Ingrediente"
+                        chave="nome"
+                        ordem={ordem}
+                        onOrdenar={ordenar}
+                        className="sticky left-0 top-0 z-50 bg-card"
+                      />
+                      <CabecalhoOrdenavel
+                        rotulo="Estoque"
+                        chave="estoque"
+                        ordem={ordem}
+                        onOrdenar={ordenar}
+                        className="sticky top-0 z-40 bg-card text-right"
+                      />
                       {mercados.map((m) => (
-                        <TableHead key={m.id} className="sticky top-0 z-40 bg-card text-right">
-                          {m.nome}
-                        </TableHead>
+                        <CabecalhoOrdenavel
+                          key={m.id}
+                          rotulo={m.nome}
+                          chave={`m:${m.id}`}
+                          ordem={ordem}
+                          onOrdenar={ordenar}
+                          className="sticky top-0 z-40 bg-card text-right"
+                        />
                       ))}
                       <TableHead className="sticky top-0 z-40 bg-card text-right">Menor</TableHead>
+
                     </TableRow>
                   </TableHeader>
                   <TableBody>
