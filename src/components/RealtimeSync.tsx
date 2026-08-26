@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { supabase } from "@/integrations/supabase/client";
 
-const TABELAS = ["ingredientes", "bolos", "coberturas", "cursos", "clientes", "pedidos", "outras_despesas", "outras_receitas", "movimentacoes_estoque"] as const;
+const TABELAS = ["ingredientes", "bolos", "coberturas", "cursos", "clientes", "pedidos", "outras_despesas", "outras_receitas", "movimentacoes_estoque", "fatores_conversao", "configuracoes"] as const;
 
 /**
  * Mantém a tela sincronizada em tempo real: quando qualquer pessoa altera algo
