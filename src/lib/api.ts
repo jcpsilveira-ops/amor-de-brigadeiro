@@ -16,6 +16,7 @@ import {
   type Cliente,
   type FatorConversao,
   type FatorConversaoInput,
+  type HistoricoFator,
 
   type Cobertura,
   type Curso,
@@ -32,6 +33,7 @@ import {
   type Unidade,
   dinheiro,
 } from "./domain";
+import { lerAutor } from "./autor";
 
 import {
   deveAtualizar,
