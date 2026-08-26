@@ -487,18 +487,18 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
           </p>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            <div className="overflow-auto max-h-[60vh]">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead className="sticky left-0 z-20 bg-card">Ingrediente</TableHead>
-                    <TableHead className="text-right">Estoque</TableHead>
+                  <TableRow className="sticky top-0 z-40 bg-card">
+                    <TableHead className="sticky left-0 top-0 z-50 bg-card">Ingrediente</TableHead>
+                    <TableHead className="sticky top-0 z-40 bg-card text-right">Estoque</TableHead>
                     {mercados.map((m) => (
-                      <TableHead key={m.id} className="text-right">
+                      <TableHead key={m.id} className="sticky top-0 z-40 bg-card text-right">
                         {m.nome}
                       </TableHead>
                     ))}
-                    <TableHead className="text-right">Melhor</TableHead>
+                    <TableHead className="sticky top-0 z-40 bg-card text-right">Melhor</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -506,7 +506,7 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                     const melhor = melhorMercadoDoIngrediente(precos, ing.id);
                     return (
                       <TableRow key={ing.id}>
-                        <TableCell className="sticky left-0 z-10 bg-card font-semibold">
+                        <TableCell className="sticky left-0 z-30 bg-card font-semibold">
                           {ing.nome}
                           <span className="ml-1 text-xs text-muted-foreground">
                             /{ing.estoqueUnidade ?? ing.unidade}
@@ -567,18 +567,18 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
               <p className="label-caps text-muted-foreground">
                 Preço comparativo — estoque × supermercados (por unidade ou por g/ml)
               </p>
-              <div className="overflow-x-auto">
+              <div className="overflow-auto max-h-[60vh]">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead className="sticky left-0 z-20 bg-card">Ingrediente</TableHead>
-                      <TableHead className="text-right">Estoque</TableHead>
+                    <TableRow className="sticky top-0 z-40 bg-card">
+                      <TableHead className="sticky left-0 top-0 z-50 bg-card">Ingrediente</TableHead>
+                      <TableHead className="sticky top-0 z-40 bg-card text-right">Estoque</TableHead>
                       {mercados.map((m) => (
-                        <TableHead key={m.id} className="text-right">
+                        <TableHead key={m.id} className="sticky top-0 z-40 bg-card text-right">
                           {m.nome}
                         </TableHead>
                       ))}
-                      <TableHead className="text-right">Menor</TableHead>
+                      <TableHead className="sticky top-0 z-40 bg-card text-right">Menor</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -613,7 +613,7 @@ export function PesquisaPrecos({ ingredientes }: { ingredientes: Ingrediente[] }
                         : null;
                       return (
                         <TableRow key={ing.id}>
-                          <TableCell className="sticky left-0 z-10 bg-card font-semibold">
+                          <TableCell className="sticky left-0 z-30 bg-card font-semibold">
                             {ing.nome}
                             <span className="ml-1 text-xs text-muted-foreground">/{rotulo}</span>
                           </TableCell>
