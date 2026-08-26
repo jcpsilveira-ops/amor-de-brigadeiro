@@ -16,6 +16,8 @@ import { MobileChrome } from "../components/MobileChrome";
 import { MobileTransition } from "../components/MobileTransition";
 import { Toaster } from "../components/ui/sonner";
 import { RealtimeSync } from "../components/RealtimeSync";
+import { SincronizarFatores } from "../components/SincronizarFatores";
+
 
 function NotFoundComponent() {
   return (
@@ -131,6 +133,8 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <RealtimeSync />
+      <SincronizarFatores />
+
       <MobileChrome />
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <MobileTransition>

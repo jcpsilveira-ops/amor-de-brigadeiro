@@ -1,10 +1,31 @@
 import type { Ingrediente, Pedido, Receita, Unidade } from "./domain";
 
+export type BaseGrandeza = "massa" | "volume" | "unidade" | "cartela" | "fardo";
+
+export const BASES: readonly BaseGrandeza[] = [
+  "massa",
+  "volume",
+  "unidade",
+  "cartela",
+  "fardo",
+];
+
+export const NOME_BASE: Record<BaseGrandeza, string> = {
+  massa: "Peso (g)",
+  volume: "Volume (ml)",
+  unidade: "Contagem (unidades)",
+  cartela: "Cartela (genérica)",
+  fardo: "Fardo (genérico)",
+};
+
+export interface FatorUnidade {
+  base: BaseGrandeza;
+  fator: number;
+}
+
 /** Fator de conversão para a unidade base (g, ml, unidade, cartela ou fardo). */
-const FATOR: Record<
-  Unidade,
-  { base: "massa" | "volume" | "unidade" | "cartela" | "fardo"; fator: number }
-> = {
+const FATOR: Record<Unidade, FatorUnidade> = {
+
   kg: { base: "massa", fator: 1000 },
   g: { base: "massa", fator: 1 },
   l: { base: "volume", fator: 1000 },
@@ -48,9 +69,44 @@ const FATOR: Record<
   "saco de 5 kg": { base: "massa", fator: 5000 },
 };
 
+/** Fatores padrão do sistema (usados quando não há cadastro personalizado). */
+export const FATORES_PADRAO: Readonly<Record<Unidade, FatorUnidade>> = FATOR;
+
+/** Fatores cadastrados pela usuária, aplicados sobre os padrões. */
+let personalizados: Partial<Record<Unidade, FatorUnidade>> = {};
+
+/** Substitui os fatores personalizados em uso (chamado quando o cadastro carrega). */
+export function aplicarFatoresPersonalizados(
+  lista: { unidade: string; base: string; fator: number }[],
+): void {
+  const proximos: Partial<Record<Unidade, FatorUnidade>> = {};
+  for (const f of lista) {
+    if (!BASES.includes(f.base as BaseGrandeza)) continue;
+    if (!Number.isFinite(f.fator) || f.fator <= 0) continue;
+    proximos[f.unidade as Unidade] = { base: f.base as BaseGrandeza, fator: f.fator };
+  }
+  personalizados = proximos;
+}
+
+/** Fator em uso para a unidade (personalizado quando houver, senão o padrão). */
+export function fatorDe(u: Unidade): FatorUnidade | undefined {
+  return personalizados[u] ?? FATOR[u];
+}
+
+/** true quando a unidade tem fator cadastrado manualmente. */
+export function temFatorPersonalizado(u: Unidade): boolean {
+  return personalizados[u] !== undefined;
+}
 
 /** Unidades genéricas de embalagem: não têm fator confiável para peso/volume/contagem. */
 const UNIDADES_GENERICAS: readonly string[] = ["cartela", "fardo"];
+
+/** Genérica apenas enquanto não houver um fator confiável cadastrado. */
+function ehGenerica(u: Unidade): boolean {
+  if (!UNIDADES_GENERICAS.includes(String(u))) return false;
+  const p = personalizados[u];
+  return !p || p.base === "cartela" || p.base === "fardo";
+}
 
 export type StatusConversao = "ok" | "ambigua" | "incompativel";
 
@@ -73,15 +129,14 @@ function familia(u: Unidade): string {
  */
 export function avaliarConversao(de: Unidade, para: Unidade): AvaliacaoConversao {
   if (de === para) return { status: "ok" };
-  const a = FATOR[de];
-  const b = FATOR[para];
+  const a = fatorDe(de);
+  const b = fatorDe(para);
   if (!a || !b) return { status: "incompativel", motivo: "Unidade sem mapeamento conhecido." };
 
-  const generica = UNIDADES_GENERICAS.includes(de) || UNIDADES_GENERICAS.includes(para);
-  if (generica) {
+  if (ehGenerica(de) || ehGenerica(para)) {
     return {
       status: "ambigua",
-      motivo: `“${UNIDADES_GENERICAS.includes(de) ? de : para}” é uma embalagem genérica, sem quantidade definida.`,
+      motivo: `“${ehGenerica(de) ? de : para}” é uma embalagem genérica, sem quantidade definida. Cadastre o fator de conversão para usá-la.`,
     };
   }
 
@@ -106,11 +161,13 @@ export function converterQuantidade(
   para: Unidade,
 ): number | null {
   if (avaliarConversao(de, para).status !== "ok") return null;
-  const a = FATOR[de];
-  const b = FATOR[para];
+  const a = fatorDe(de);
+  const b = fatorDe(para);
   if (!a || !b || a.base !== b.base) return null;
   return (quantidade * a.fator) / b.fator;
 }
+
+
 
 
 export interface NecessidadeIngrediente {

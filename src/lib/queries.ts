@@ -12,6 +12,7 @@ import {
   coberturasApi,
   cursosApi,
   despesasApi,
+  fatoresConversaoApi,
   historicoPrecosApi,
   ingredientesApi,
   movimentacoesApi,
@@ -35,6 +36,7 @@ export const keys = {
   historicoPrecos: ["historico_precos"] as QueryKey,
   mercados: ["mercados"] as QueryKey,
   precosMercado: ["precos_mercado"] as QueryKey,
+  fatoresConversao: ["fatores_conversao"] as QueryKey,
 };
 
 export const useIngredientes = () =>
@@ -59,6 +61,8 @@ export const useMercados = () =>
   useQuery({ queryKey: keys.mercados, queryFn: mercadosApi.list });
 export const usePrecosMercado = () =>
   useQuery({ queryKey: keys.precosMercado, queryFn: precosMercadoApi.list });
+export const useFatoresConversao = () =>
+  useQuery({ queryKey: keys.fatoresConversao, queryFn: fatoresConversaoApi.list });
 export const useReceitasAvulsas = () =>
   useQuery({ queryKey: keys.receitasAvulsas, queryFn: receitasAvulsasApi.list });
 
@@ -90,6 +94,7 @@ export {
   coberturasApi,
   cursosApi,
   despesasApi,
+  fatoresConversaoApi,
   historicoPrecosApi,
   ingredientesApi,
   movimentacoesApi,
