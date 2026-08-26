@@ -1,4 +1,6 @@
 import type { Ingrediente, ItemReceita, Receita } from "./domain";
+import { converterQuantidade } from "./estoque";
+
 
 /** Valores por 100 g: kcal, carboidratos, açúcares, gorduras, saturadas, proteínas, sódio (mg). */
 export interface Nutrientes {
