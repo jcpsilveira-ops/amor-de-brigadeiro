@@ -80,8 +80,9 @@ export interface PesquisaPrecos {
 
 /** Quantos g/ml existem em uma unidade cadastrada (null = item contado). */
 export function medidaPorUnidade(unidade: string): number | null {
-  const fator: Record<string, number> = { kg: 1000, l: 1000, g: 1, ml: 1 };
-  return fator[unidade] ?? null;
+  const f = fatorDe(unidade as Unidade);
+  if (!f) return null;
+  return f.base === "massa" || f.base === "volume" ? f.fator : null;
 }
 
 /** Converte um preço por unidade cadastrada em preço por g/ml. */
@@ -92,8 +93,9 @@ export function precoPorMedida(preco: number, unidade: string): number | null {
 
 /** Rótulo da medida usada nas comparações (g para massa, ml para volume). */
 export function rotuloMedida(unidade: string): string {
-  return unidade === "l" || unidade === "ml" ? "ml" : "g";
+  return fatorDe(unidade as Unidade)?.base === "volume" ? "ml" : "g";
 }
+
 
 /** Extrai o tamanho da embalagem citado em um texto, em g/ml. */
 export function extrairEmbalagem(texto: string): number | null {
