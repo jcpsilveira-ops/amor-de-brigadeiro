@@ -36,7 +36,7 @@ import {
 } from "@/lib/queries";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { dataBR, limitarPreco } from "@/lib/domain";
+import { dataBR, dinheiro, limitarPreco } from "@/lib/domain";
 
 export const Route = createFileRoute("/ingredientes")({
   head: () => ({
@@ -212,7 +212,24 @@ function IngredientesPage() {
               </div>
               <div>
                 <Label htmlFor="unidade">Unidade</Label>
-                <Select value={unidade} onValueChange={(v) => setUnidade(v as Unidade)}>
+                <Select
+                  value={unidade}
+                  onValueChange={(v) => {
+                    const nova = v as Unidade;
+                    setUnidade(nova);
+                    // Trocar a unidade converte também o custo unitário, senão o custo
+                    // das receitas seria multiplicado pelo fator de conversão.
+                    if (editando && nova !== editando.unidade) {
+                      const equivale = converterQuantidade(1, editando.unidade, nova);
+                      if (equivale !== null && equivale > 0) {
+                        setCusto(limitarPreco(String(dinheiro(editando.custoUnitario / equivale))));
+                      }
+                    } else if (editando) {
+                      setCusto(String(editando.custoUnitario));
+                    }
+                  }}
+                >
+
                   <SelectTrigger id="unidade">
                     <SelectValue placeholder="Selecione a unidade" />
                   </SelectTrigger>
