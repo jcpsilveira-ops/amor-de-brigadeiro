@@ -36,7 +36,7 @@ import {
 } from "@/lib/queries";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { dataBR, limitarPreco } from "@/lib/domain";
+import { dataBR, dinheiro, limitarPreco } from "@/lib/domain";
 
 export const Route = createFileRoute("/ingredientes")({
   head: () => ({
