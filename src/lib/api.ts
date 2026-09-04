@@ -32,6 +32,7 @@ import {
   type ReceitaInput,
   type Unidade,
   dinheiro,
+  dinheiro4,
 } from "./domain";
 import { lerAutor } from "./autor";
 
@@ -112,7 +113,7 @@ const toIngrediente = (r: IngredienteRow): Ingrediente => ({
   id: r.id,
   nome: r.nome,
   unidade: r.unidade as Unidade,
-  custoUnitario: dinheiro(Number(r.custo_unitario)),
+  custoUnitario: dinheiro4(Number(r.custo_unitario)),
   estoqueQuantidade: Number(r.estoque_quantidade ?? 0),
   estoqueUnidade: ((r.estoque_unidade ?? r.unidade) as Unidade),
 });
@@ -171,7 +172,7 @@ export const ingredientesApi = {
         .insert({
           nome: input.nome,
           unidade: input.unidade,
-          custo_unitario: dinheiro(input.custoUnitario),
+          custo_unitario: dinheiro4(input.custoUnitario),
           estoque_quantidade: input.estoqueQuantidade,
           estoque_unidade: input.estoqueUnidade,
         })
@@ -190,7 +191,7 @@ export const ingredientesApi = {
         .update({
           nome: input.nome,
           unidade: input.unidade,
-          custo_unitario: dinheiro(input.custoUnitario),
+          custo_unitario: dinheiro4(input.custoUnitario),
           estoque_quantidade: input.estoqueQuantidade,
           estoque_unidade: input.estoqueUnidade,
         })
@@ -619,7 +620,7 @@ const toMovimentacao = (r: MovimentacaoRow): MovimentacaoEstoque => ({
   unidade: r.unidade as Unidade,
   quantidadeAnterior: Number(r.quantidade_anterior),
   quantidadeNova: Number(r.quantidade_nova),
-  custoUnitario: dinheiro(Number(r.custo_unitario)),
+  custoUnitario: dinheiro4(Number(r.custo_unitario)),
   valor: dinheiro(Number(r.valor)),
   custoReposicao: dinheiro(Number(r.custo_reposicao)),
   observacao: r.observacao ?? null,
@@ -652,7 +653,7 @@ export const movimentacoesApi = {
           unidade: input.unidade,
           quantidade_anterior: input.quantidadeAnterior,
           quantidade_nova: input.quantidadeNova,
-          custo_unitario: dinheiro(input.custoUnitario),
+          custo_unitario: dinheiro4(input.custoUnitario),
           valor: dinheiro(input.valor),
           custo_reposicao: dinheiro(input.custoReposicao),
           observacao: input.observacao ?? null,
