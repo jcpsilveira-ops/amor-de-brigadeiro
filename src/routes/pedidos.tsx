@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageShell, EmptyState, FieldError } from "@/components/PageShell";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,16 @@ export const Route = createFileRoute("/pedidos")({
 const SEM_COBERTURA = "sem";
 const SEM_BOLO = "sem-bolo";
 const SEM_CURSO = "sem-curso";
+const TODOS = "todos";
+
+const nomeMes = (chave: string) => {
+  const [ano, mes] = chave.split("-");
+  const rotulo = new Date(Number(ano), Number(mes) - 1, 1).toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
+  return rotulo.charAt(0).toUpperCase() + rotulo.slice(1);
+};
 
 function PedidosPage() {
   const { data: pedidos = [], isLoading } = usePedidos();
@@ -80,6 +90,30 @@ function PedidosPage() {
   );
   const [outrosPreco, setOutrosPreco] = useState("0");
   const [tocado, setTocado] = useState(false);
+  const [mes, setMes] = useState<string>(TODOS);
+
+  const mesesDisponiveis = useMemo(
+    () =>
+      Array.from(new Set(pedidos.map((p) => p.data.slice(0, 7)))).sort((a, b) =>
+        b.localeCompare(a),
+      ),
+    [pedidos],
+  );
+
+  const pedidosFiltrados = useMemo(
+    () => (mes === TODOS ? pedidos : pedidos.filter((p) => p.data.startsWith(mes))),
+    [pedidos, mes],
+  );
+
+  const grupos = useMemo(() => {
+    const mapa = new Map<string, typeof pedidos>();
+    for (const p of pedidosFiltrados) {
+      const chave = p.data.slice(0, 7);
+      if (!mapa.has(chave)) mapa.set(chave, []);
+      mapa.get(chave)!.push(p);
+    }
+    return Array.from(mapa.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [pedidosFiltrados]);
 
   const outrosLimpos = outrosItens.filter((i) => i.ingredienteId !== "");
 
@@ -385,32 +419,78 @@ function PedidosPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Pedidos registrados ({pedidos.length})</CardTitle>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <CardTitle>Pedidos registrados ({pedidosFiltrados.length})</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="mes" className="text-xs text-muted-foreground">
+                  Mês de referência
+                </Label>
+                <Select value={mes} onValueChange={setMes}>
+                  <SelectTrigger id="mes" className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={TODOS}>Todos os meses</SelectItem>
+                    {mesesDisponiveis.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {nomeMes(m)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <EmptyState message="Carregando..." />
             ) : pedidos.length === 0 ? (
               <EmptyState message="Nenhum pedido registrado ainda." />
+            ) : pedidosFiltrados.length === 0 ? (
+              <EmptyState message="Nenhum pedido no mês selecionado." />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Bolo / Cobertura / Curso / Outros</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Custo</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pedidos.map((p) => {
-                    const cliente = clientes.find((c) => c.id === p.clienteId);
+              <div className="space-y-6">
+                {grupos.map(([chaveMes, lista]) => {
+                  const totalMes = lista.reduce((acc, p) => {
                     const bolo = bolos.find((b) => b.id === p.boloId);
                     const cobertura = coberturas.find((c) => c.id === p.coberturaId);
                     const curso = cursos.find((c) => c.id === p.cursoId);
+                    return (
+                      acc +
+                      (bolo?.precoVenda ?? 0) +
+                      (cobertura?.precoVenda ?? 0) +
+                      (curso?.precoVenda ?? 0) +
+                      (p.outrosPreco ?? 0)
+                    );
+                  }, 0);
+                  return (
+                    <div key={chaveMes}>
+                      <div className="mb-2 flex items-baseline justify-between border-b pb-1">
+                        <h3 className="text-sm font-semibold text-muted-foreground">
+                          {nomeMes(chaveMes)}
+                        </h3>
+                        <span className="text-xs text-muted-foreground">
+                          {lista.length} pedido{lista.length === 1 ? "" : "s"} · {brl(totalMes)}
+                        </span>
+                      </div>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>#</TableHead>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead>Bolo / Cobertura / Curso / Outros</TableHead>
+                            <TableHead>Data</TableHead>
+                            <TableHead>Custo</TableHead>
+                            <TableHead>Total</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {lista.map((p) => {
+                            const cliente = clientes.find((c) => c.id === p.clienteId);
+                            const bolo = bolos.find((b) => b.id === p.boloId);
+                            const cobertura = coberturas.find((c) => c.id === p.coberturaId);
+                            const curso = cursos.find((c) => c.id === p.cursoId);
                     const custo =
                       (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
                       (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
@@ -479,8 +559,12 @@ function PedidosPage() {
                       </TableRow>
                     );
                   })}
-                </TableBody>
-              </Table>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
