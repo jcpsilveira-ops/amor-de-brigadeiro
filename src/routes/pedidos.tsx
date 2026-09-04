@@ -419,32 +419,78 @@ function PedidosPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Pedidos registrados ({pedidos.length})</CardTitle>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <CardTitle>Pedidos registrados ({pedidosFiltrados.length})</CardTitle>
+              <div className="flex items-center gap-2">
+                <Label htmlFor="mes" className="text-xs text-muted-foreground">
+                  Mês de referência
+                </Label>
+                <Select value={mes} onValueChange={setMes}>
+                  <SelectTrigger id="mes" className="w-[180px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={TODOS}>Todos os meses</SelectItem>
+                    {mesesDisponiveis.map((m) => (
+                      <SelectItem key={m} value={m}>
+                        {nomeMes(m)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (
               <EmptyState message="Carregando..." />
             ) : pedidos.length === 0 ? (
               <EmptyState message="Nenhum pedido registrado ainda." />
+            ) : pedidosFiltrados.length === 0 ? (
+              <EmptyState message="Nenhum pedido no mês selecionado." />
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Bolo / Cobertura / Curso / Outros</TableHead>
-                    <TableHead>Data</TableHead>
-                    <TableHead>Custo</TableHead>
-                    <TableHead>Total</TableHead>
-                    <TableHead className="text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pedidos.map((p) => {
-                    const cliente = clientes.find((c) => c.id === p.clienteId);
+              <div className="space-y-6">
+                {grupos.map(([chaveMes, lista]) => {
+                  const totalMes = lista.reduce((acc, p) => {
                     const bolo = bolos.find((b) => b.id === p.boloId);
                     const cobertura = coberturas.find((c) => c.id === p.coberturaId);
                     const curso = cursos.find((c) => c.id === p.cursoId);
+                    return (
+                      acc +
+                      (bolo?.precoVenda ?? 0) +
+                      (cobertura?.precoVenda ?? 0) +
+                      (curso?.precoVenda ?? 0) +
+                      (p.outrosPreco ?? 0)
+                    );
+                  }, 0);
+                  return (
+                    <div key={chaveMes}>
+                      <div className="mb-2 flex items-baseline justify-between border-b pb-1">
+                        <h3 className="text-sm font-semibold text-muted-foreground">
+                          {nomeMes(chaveMes)}
+                        </h3>
+                        <span className="text-xs text-muted-foreground">
+                          {lista.length} pedido{lista.length === 1 ? "" : "s"} · {brl(totalMes)}
+                        </span>
+                      </div>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>#</TableHead>
+                            <TableHead>Cliente</TableHead>
+                            <TableHead>Bolo / Cobertura / Curso / Outros</TableHead>
+                            <TableHead>Data</TableHead>
+                            <TableHead>Custo</TableHead>
+                            <TableHead>Total</TableHead>
+                            <TableHead className="text-right">Ações</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {lista.map((p) => {
+                            const cliente = clientes.find((c) => c.id === p.clienteId);
+                            const bolo = bolos.find((b) => b.id === p.boloId);
+                            const cobertura = coberturas.find((c) => c.id === p.coberturaId);
+                            const curso = cursos.find((c) => c.id === p.cursoId);
                     const custo =
                       (bolo ? calcularCusto(bolo.itens, ingredientes) : 0) +
                       (cobertura ? calcularCusto(cobertura.itens, ingredientes) : 0) +
