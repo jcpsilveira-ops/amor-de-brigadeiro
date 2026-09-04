@@ -90,6 +90,30 @@ function PedidosPage() {
   );
   const [outrosPreco, setOutrosPreco] = useState("0");
   const [tocado, setTocado] = useState(false);
+  const [mes, setMes] = useState<string>(TODOS);
+
+  const mesesDisponiveis = useMemo(
+    () =>
+      Array.from(new Set(pedidos.map((p) => p.data.slice(0, 7)))).sort((a, b) =>
+        b.localeCompare(a),
+      ),
+    [pedidos],
+  );
+
+  const pedidosFiltrados = useMemo(
+    () => (mes === TODOS ? pedidos : pedidos.filter((p) => p.data.startsWith(mes))),
+    [pedidos, mes],
+  );
+
+  const grupos = useMemo(() => {
+    const mapa = new Map<string, typeof pedidos>();
+    for (const p of pedidosFiltrados) {
+      const chave = p.data.slice(0, 7);
+      if (!mapa.has(chave)) mapa.set(chave, []);
+      mapa.get(chave)!.push(p);
+    }
+    return Array.from(mapa.entries()).sort((a, b) => b[0].localeCompare(a[0]));
+  }, [pedidosFiltrados]);
 
   const outrosLimpos = outrosItens.filter((i) => i.ingredienteId !== "");
 
