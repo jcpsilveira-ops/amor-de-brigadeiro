@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { PageShell, EmptyState, FieldError } from "@/components/PageShell";
 import { ConfirmDelete } from "@/components/ConfirmDelete";
 import { Button } from "@/components/ui/button";
