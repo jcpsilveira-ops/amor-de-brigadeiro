@@ -36,7 +36,7 @@ import {
 } from "@/lib/queries";
 import { Checkbox } from "@/components/ui/checkbox";
 
-import { dataBR, dinheiro, limitarPreco } from "@/lib/domain";
+import { dataBR, dinheiro4, limitarPreco4 } from "@/lib/domain";
 
 export const Route = createFileRoute("/ingredientes")({
   head: () => ({
@@ -222,7 +222,8 @@ function IngredientesPage() {
                     if (editando && nova !== editando.unidade) {
                       const equivale = converterQuantidade(1, editando.unidade, nova);
                       if (equivale !== null && equivale > 0) {
-                        setCusto(limitarPreco(String(dinheiro(editando.custoUnitario / equivale))));
+                        // 4 casas preservam o custo por grama/ml (1 kg -> g divide por 1000).
+                        setCusto(limitarPreco4(String(dinheiro4(editando.custoUnitario / equivale))));
                       }
                     } else if (editando) {
                       setCusto(String(editando.custoUnitario));
@@ -249,7 +250,7 @@ function IngredientesPage() {
                   id="custo"
                   inputMode="decimal"
                   value={custo}
-                  onChange={(e) => setCusto(limitarPreco(e.target.value))}
+                  onChange={(e) => setCusto(limitarPreco4(e.target.value))}
                   placeholder="0,00"
                 />
                 <FieldError message={(tocado || custo !== "") ? erros["custoUnitario"] : undefined} />

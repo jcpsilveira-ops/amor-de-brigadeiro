@@ -127,12 +127,24 @@ const precoField = (opts: { min?: "positivo" | "naoNegativo"; msg?: string } = {
   return base.refine(temNoMaximo2Casas, MSG_CASAS).transform(dinheiro);
 };
 
+/** Custo unitário de ingrediente admite até 4 casas (preço por grama/ml). */
+export const temNoMaximo4Casas = (v: number): boolean =>
+  Number.isFinite(v) && Math.abs(v * 10000 - Math.round(v * 10000)) < 1e-7;
+export const dinheiro4 = (v: number): number =>
+  Number.isFinite(v) ? Math.round(v * 10000) / 10000 : 0;
+const custoUnitarioField = z.coerce
+  .number({ invalid_type_error: "Informe um número" })
+  .max(1_000_000)
+  .positive("O custo deve ser maior que zero")
+  .refine(temNoMaximo4Casas, "Use no máximo 4 casas decimais (ex.: 0,0125)")
+  .transform(dinheiro4);
+
 /* ------------------------------- validação ------------------------------- */
 
 export const ingredienteSchema = z.object({
   nome: z.string().trim().min(2, "Informe o nome do ingrediente").max(80),
   unidade: z.enum(UNIDADES),
-  custoUnitario: precoField({ min: "positivo", msg: "O custo deve ser maior que zero" }),
+  custoUnitario: custoUnitarioField,
   estoqueQuantidade: z.coerce
     .number({ invalid_type_error: "Informe um número" })
     .nonnegative("O estoque não pode ser negativo")
@@ -336,4 +348,12 @@ export const limitarPreco = (texto: string): string => {
   const [inteiro, ...resto] = limpo.split(".");
   if (resto.length === 0) return inteiro ?? "";
   return `${inteiro}.${resto.join("").slice(0, 2)}`;
+};
+
+/** Como limitarPreco, mas admite 4 casas (custo unitário por grama/ml). */
+export const limitarPreco4 = (texto: string): string => {
+  const limpo = texto.replace(",", ".").replace(/[^\d.]/g, "");
+  const [inteiro, ...resto] = limpo.split(".");
+  if (resto.length === 0) return inteiro ?? "";
+  return `${inteiro}.${resto.join("").slice(0, 4)}`;
 };
