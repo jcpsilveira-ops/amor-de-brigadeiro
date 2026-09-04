@@ -559,8 +559,12 @@ function PedidosPage() {
                       </TableRow>
                     );
                   })}
-                </TableBody>
-              </Table>
+                        </TableBody>
+                      </Table>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
