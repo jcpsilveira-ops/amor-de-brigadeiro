@@ -60,6 +60,16 @@ export const Route = createFileRoute("/pedidos")({
 const SEM_COBERTURA = "sem";
 const SEM_BOLO = "sem-bolo";
 const SEM_CURSO = "sem-curso";
+const TODOS = "todos";
+
+const nomeMes = (chave: string) => {
+  const [ano, mes] = chave.split("-");
+  const rotulo = new Date(Number(ano), Number(mes) - 1, 1).toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
+  return rotulo.charAt(0).toUpperCase() + rotulo.slice(1);
+};
 
 function PedidosPage() {
   const { data: pedidos = [], isLoading } = usePedidos();
