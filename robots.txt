@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://jcpsilveira-ops.github.io/amor-de-brigadeiro/
